@@ -255,10 +255,11 @@
 		5800FFB722A8CDA5005A860B /* Example */ = {
 			isa = PBXGroup;
 			children = (
+				58C6E5DE22A9EFDF005A9685 /* CounterExample */,
+				58C6E5DD22A9EFCE005A9685 /* MoviesExample */,
 				58C6E5DA22A9E9D2005A9685 /* BentoExperiment */,
 				5800FFB822A8CDA5005A860B /* AppDelegate.swift */,
 				5800FFBA22A8CDA5005A860B /* SceneDelegate.swift */,
-				5800FFBC22A8CDA5005A860B /* Counter.swift */,
 				5800FFBE22A8CDA7005A860B /* Assets.xcassets */,
 				5800FFC322A8CDA7005A860B /* LaunchScreen.storyboard */,
 				5800FFC622A8CDA7005A860B /* Info.plist */,
@@ -320,6 +321,21 @@
 				58C6E5DB22A9E9E3005A9685 /* Bento.swift */,
 			);
 			path = BentoExperiment;
+			sourceTree = "<group>";
+		};
+		58C6E5DD22A9EFCE005A9685 /* MoviesExample */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = MoviesExample;
+			sourceTree = "<group>";
+		};
+		58C6E5DE22A9EFDF005A9685 /* CounterExample */ = {
+			isa = PBXGroup;
+			children = (
+				5800FFBC22A8CDA5005A860B /* Counter.swift */,
+			);
+			path = CounterExample;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
