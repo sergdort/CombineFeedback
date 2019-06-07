@@ -28,11 +28,20 @@ A Reducer is a pure function with a signature of `(State, Event) -> State`. Whil
 
 ### Feedback
 
-While `State` represents where the system is at a given time, `Event` represents a state change, and a `Reducer` is the pure function that enacts the event causing the state to change, there is not as of yet any type to decide which event should take place given a particular current state. That's the job of the `Feedback`. It's essentially a "processing engine", listening to changes in the current `State` and emitting the corresponding next events to take place. It's represented by a pure function with a signature of `(AnyPublisher<State, Never>) -> AnyPublisher<Event, Never>`. Feedbacks don't directly mutate states. Instead, they only emit events which then cause states to change in reducers.
+While `State` represents where the system is at a given time, `Event` represents a state change, and a `Reducer` is the pure function that enacts the event causing the state to change, there is not as of yet any type to decide which event should take place given a particular current state. That's the job of the `Feedback`. It's essentially a "processing engine", listening to changes in the current `State` and emitting the corresponding next events to take place. Feedbacks don't directly mutate states. Instead, they only emit events which then cause states to change in reducers.
+
+To some extent it's like reactive [Middleware](https://redux.js.org/advanced/middleware) in [Redux](https://redux.js.org) having a signature of `(AnyPublisher<State, Never>) -> AnyPublisher<Event, Never>` allows us to observe `State` changes and perform some side effects based on its changes e.g if a system is in `loading` state we can start fetching data from network.
+
+
 
 ### UI as a Feedback 🤯
 
-This repo contains an [example](CombineFeedbackUI/SwiftUIFeedback.swift) of UIFeedback loop inspired by the work of [@Krunoslav Zaher](https://twitter.com/KrunoslavZaher) in [RxFeedback-React](https://github.com/NoTests/RxFeedback-React) specifically [here](https://github.com/NoTests/RxFeedback-React/blob/master/src/index.ts#L37)
+This repo contains an [example](CombineFeedbackUI/SwiftUIFeedback.swift) of UIFeedback loop inspired by the work of [@Krunoslav Zaher](https://twitter.com/KrunoslavZaher) in [RxFeedback-React](https://github.com/NoTests/RxFeedback-React) specifically [here](https://github.com/NoTests/RxFeedback-React/blob/master/src/index.ts#L37).
+
+Why `UI` can be treated as a `Feedback` loop:
+
+- To some extent, UI is a part of the system. When the state changes we want to react to it and render new information to the user.
+- User may interact with our system by pressing buttons and views emitting `Event` into it
 
 ##### Example
 
