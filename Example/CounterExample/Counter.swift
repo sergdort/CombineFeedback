@@ -48,7 +48,7 @@ struct CounterRenderer: Renderer {
             }) {
                 Text("-").font(.largeTitle)
             }
-            Text("Hello World \(state.count)")
+            Text("\(state.count)")
             Button(action: {
                 callback.send(event: .increment)
             }) {
@@ -65,7 +65,7 @@ struct CounterRenderer: Renderer {
                 Text("-").font(.largeTitle)
             }
             ForEach(0...state.count) { (count) in
-                Text("Hello World \(count)")
+                Text("\(count)")
             }
             Button(action: {
                 callback.send(event: .increment)
