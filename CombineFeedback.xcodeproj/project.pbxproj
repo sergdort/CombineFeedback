@@ -153,6 +153,7 @@
 		58C6E5DB22A9E9E3005A9685 /* Bento.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bento.swift; sourceTree = "<group>"; };
 		58C6E5DF22A9F027005A9685 /* Movies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Movies.swift; sourceTree = "<group>"; };
 		58C6E5E122AA3108005A9685 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		58C6E5E322AA3B3B005A9685 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -210,6 +211,7 @@
 			isa = PBXGroup;
 			children = (
 				58C6E5E122AA3108005A9685 /* README.md */,
+				58C6E5E322AA3B3B005A9685 /* LICENSE */,
 				5800FF9222A89BE6005A860B /* CombineFeedback */,
 				5800FF9D22A89BE6005A860B /* CombineFeedbackTests */,
 				5800FFEB22A9DDE5005A860B /* CombineFeedbackUI */,
