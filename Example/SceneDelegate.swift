@@ -8,9 +8,22 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         let window = UIWindow(frame: UIScreen.main.bounds)
-        window.rootViewController = UIHostingController(
-            rootView: Widget(renderer: CounterRenderer(), system: CounterSystem())
-        )
+        let tabbarController = UITabBarController()
+        tabbarController.viewControllers = [
+            UIHostingController(
+                rootView: NavigationView {
+                    Widget(renderer: CounterRenderer(), system: CounterSystem())
+                        .navigationBarTitle(Text("Counter"))
+                }
+            ),
+            UIHostingController(
+                rootView: NavigationView {
+                    Widget(renderer: MoviesRenderer(), system: MoviesSystem())
+                        .navigationBarTitle(Text("Movies"))
+                }
+            )
+        ]
+        window.rootViewController = tabbarController
         self.window = window
         window.makeKeyAndVisible()
     }
