@@ -1,6 +1,7 @@
 import Combine
 import Foundation
 
+// This is a temporary workaround as there are not schedulers in the first release
 public struct DispatchQueueScheduler: Scheduler {
     public typealias SchedulerTimeType = DispatchTime
     public typealias SchedulerOptions = Never
@@ -72,14 +73,14 @@ extension Double: SchedulerTimeIntervalConvertible {
     }
 
     public static func milliseconds(_ ms: Int) -> Double {
-        return Double(ms) / 1000
+        return Double(ms)
     }
 
     public static func microseconds(_ us: Int) -> Double {
-        return Double(us) / 1_000_000
+        return Double(us)
     }
 
     public static func nanoseconds(_ ns: Int) -> Double {
-        return Double(ns) / 1_000_000_000
+        return Double(ns)
     }
 }
