@@ -47,6 +47,6 @@ Why `UI` can be treated as a `Feedback` loop:
 
 | Counter | Movies |
 | --- | --- |
-|![](diagrams/counter.gif) | ![](diagrams/movies.gif) |
+|<img align="left" src="https://github.com/ivanvorobei/CombineFeedback/blob/master/diagrams/counter.gif" width="400"/> | <img align="left" src="https://github.com/ivanvorobei/CombineFeedback/blob/master/diagrams/movies.gif"/> |
 
 ##### More examples to come stay tuned 🚀
