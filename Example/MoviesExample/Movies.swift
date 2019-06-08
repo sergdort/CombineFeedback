@@ -79,12 +79,9 @@ struct MoviesRenderer: Renderer {
     private let imageFetcher = ImageFetcher()
 
     func render(state: State, callback: Callback<Event>) -> AnyView {
-        if state.movies.isEmpty {
-            return EmptyView().eraseToAnyView()
-        }
         return List {
-            ForEach(0...10) { idx in
-                MovieCell(movie: state.movies[idx])
+            ForEach(state.movies.identified(by: \.id)) { movie in
+                MovieCell(movie: movie)
             }
         }
         .environmentObject(ConstBindable(value: imageFetcher))
