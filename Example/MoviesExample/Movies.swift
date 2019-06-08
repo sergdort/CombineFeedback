@@ -32,6 +32,12 @@ struct MoviesSystem: System {
             copy.status = .failed(error)
 
             return copy
+        case .fetchNext:
+            var copy = state
+
+            copy.status = .loading
+
+            return copy
         }
     }
 
@@ -47,6 +53,7 @@ struct MoviesSystem: System {
     enum Event {
         case didLoad(Results)
         case didFail(NSError)
+        case fetchNext
     }
 
     struct State {
@@ -80,8 +87,16 @@ struct MoviesRenderer: Renderer {
 
     func render(state: State, callback: Callback<Event>) -> AnyView {
         return List {
-            ForEach(state.movies.identified(by: \.id)) { movie in
-                MovieCell(movie: movie)
+            ForEach(state.movies.identified(by: \.id)) { movie -> AnyView  in
+                if state.movies.last == movie {
+                    return MovieCell(movie: movie)
+                        .onAppear { // Fetch next batch every time reach to the end of the list
+                            callback.send(event: .fetchNext)
+                        }
+                        .eraseToAnyView()
+                }
+                return MovieCell(movie: movie)
+                    .eraseToAnyView()
             }
         }
         .environmentObject(ConstBindable(value: imageFetcher))
@@ -134,7 +149,7 @@ struct Results: Codable {
     }
 }
 
-struct Movie: Codable {
+struct Movie: Codable, Equatable {
     let id: Int
     let overview: String
     let title: String
@@ -214,7 +229,6 @@ extension URLSession {
                     if let data = data, let httpReponse = httpReponse, 200..<300 ~= httpReponse.statusCode {
                         promise(Result.success((data, httpReponse)))
                     } else if let httpReponse = httpReponse {
-                        print("🧨🧨🧨🧨", request.url)
                         promise(.failure(.request(code: httpReponse.statusCode, error: error)))
                     } else {
                         promise(.failure(.unknown))
