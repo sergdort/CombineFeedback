@@ -37,6 +37,7 @@
 		5800FFFF22A9DDE5005A860B /* CombineFeedbackUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5800FFEA22A9DDE5005A860B /* CombineFeedbackUI.framework */; };
 		58C6E5DC22A9E9E3005A9685 /* Bento.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58C6E5DB22A9E9E3005A9685 /* Bento.swift */; };
 		58C6E5E022A9F027005A9685 /* Movies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58C6E5DF22A9F027005A9685 /* Movies.swift */; };
+		58C6E5E722AB14DB005A9685 /* AsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58C6E5E622AB14DB005A9685 /* AsyncImage.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -154,6 +155,7 @@
 		58C6E5DF22A9F027005A9685 /* Movies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Movies.swift; sourceTree = "<group>"; };
 		58C6E5E122AA3108005A9685 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		58C6E5E322AA3B3B005A9685 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		58C6E5E622AB14DB005A9685 /* AsyncImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncImage.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -261,6 +263,7 @@
 		5800FFB722A8CDA5005A860B /* Example */ = {
 			isa = PBXGroup;
 			children = (
+				58C6E5E522AB149D005A9685 /* Views */,
 				58C6E5DE22A9EFDF005A9685 /* CounterExample */,
 				58C6E5DD22A9EFCE005A9685 /* MoviesExample */,
 				58C6E5DA22A9E9D2005A9685 /* BentoExperiment */,
@@ -343,6 +346,14 @@
 				5800FFBC22A8CDA5005A860B /* Counter.swift */,
 			);
 			path = CounterExample;
+			sourceTree = "<group>";
+		};
+		58C6E5E522AB149D005A9685 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				58C6E5E622AB14DB005A9685 /* AsyncImage.swift */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -613,6 +624,7 @@
 				5800FFB922A8CDA5005A860B /* AppDelegate.swift in Sources */,
 				5800FFBB22A8CDA5005A860B /* SceneDelegate.swift in Sources */,
 				58C6E5DC22A9E9E3005A9685 /* Bento.swift in Sources */,
+				58C6E5E722AB14DB005A9685 /* AsyncImage.swift in Sources */,
 				5800FFBD22A8CDA5005A860B /* Counter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

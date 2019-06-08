@@ -1,7 +1,7 @@
-import Foundation
 import Combine
 import CombineFeedback
 import CombineFeedbackUI
+import Foundation
 import SwiftUI
 
 struct MoviesSystem: System {
@@ -36,8 +36,8 @@ struct MoviesSystem: System {
     }
 
     private static func whenLoading() -> Feedback<State, Event> {
-        return Feedback(lensing: { $0.nextPage }) { (page) in
-            return URLSession.shared
+        return Feedback(lensing: { $0.nextPage }) { page in
+            URLSession.shared
                 .fetchMovies(page: page)
                 .map(Event.didLoad)
                 .replaceError(replace: Event.didFail)
@@ -65,6 +65,7 @@ struct MoviesSystem: System {
             }
         }
     }
+
     enum Status {
         case idle
         case loading
@@ -72,38 +73,49 @@ struct MoviesSystem: System {
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 struct MoviesRenderer: Renderer {
     typealias State = MoviesSystem.State
     typealias Event = MoviesSystem.Event
+    private let imageFetcher = ImageFetcher()
 
     func render(state: State, callback: Callback<Event>) -> AnyView {
-        List {
-            ForEach(state.movies) { (movie) in
-                MovieCell(movie: movie)
+        if state.movies.isEmpty {
+            return EmptyView().eraseToAnyView()
+        }
+        return List {
+            ForEach(0...10) { idx in
+                MovieCell(movie: state.movies[idx])
             }
         }
+        .environmentObject(ConstBindable(value: imageFetcher))
         .eraseToAnyView()
     }
 }
 
 struct MovieCell: View {
+    @EnvironmentObject private var fetcher: ConstBindable<ImageFetcher>
     var movie: Movie
 
+    private var poster: AnyPublisher<UIImage, Never> {
+        return fetcher.value.image(for: movie.posterURL)
+    }
+
     var body: some View {
-        return Text(movie.title)
+        return HStack {
+            AsyncImage(source: poster, placeholder: UIImage(systemName: "film")!)
+                .frame(width: 77, height: 130)
+                .clipped()
+            Text(movie.title).font(.title)
+        }
+    }
+}
+
+final class ConstBindable<T>: BindableObject {
+    let didChange = PassthroughSubject<Void, Never>()
+    let value: T
+
+    init(value: T) {
+        self.value = value
     }
 }
 
@@ -114,7 +126,7 @@ struct Results: Codable {
     let results: [Movie]
 
     static func empty() -> Results {
-        return Results.init(page: 0, totalResults: 0, totalPages: 0, results: [])
+        return Results(page: 0, totalResults: 0, totalPages: 0, results: [])
     }
 
     enum CodingKeys: String, CodingKey {
@@ -131,12 +143,12 @@ struct Movie: Codable {
     let title: String
     let posterPath: String?
 
-    var posterURL: URL? {
+    var posterURL: URL {
         return posterPath
             .map {
-                "https://image.tmdb.org/t/p/w342/\($0)"
+                "https://image.tmdb.org/t/p/w154\($0)"
             }
-            .flatMap(URL.init(string:))
+            .flatMap(URL.init(string:))!
     }
 
     enum CodingKeys: String, CodingKey {
@@ -146,8 +158,6 @@ struct Movie: Codable {
         case posterPath = "poster_path"
     }
 }
-
-extension Movie: Identifiable {}
 
 let correctAPIKey = "d4f0bdb3e246e2cb3555211e765c89e3"
 var shouldFail = false
@@ -163,11 +173,11 @@ extension URLSession {
         let url = URL(string: "https://api.themoviedb.org/3/discover/movie?api_key=\(shouldFail ? "" : correctAPIKey)&sort_by=popularity.desc&page=\(page)")!
         let request = URLRequest(url: url)
 
-        return self.send(request: request)
+        return send(request: request)
             .map { $0.data }
             .decode(type: Results.self, decoder: JSONDecoder())
             .mapError { (error) -> NSError in
-                return error as NSError
+                error as NSError
             }
             .eraseToAnyPublisher()
     }
@@ -177,8 +187,14 @@ extension Publisher {
     public func replaceError(
         replace: @escaping (Failure) -> Self.Output
     ) -> AnyPublisher<Self.Output, Never> {
-        return self.catch { error in
-            return Publishers.Just(replace(error))
+        return `catch` { error in
+            Publishers.Just(replace(error))
+        }.eraseToAnyPublisher()
+    }
+
+    public func ignoreError() -> AnyPublisher<Output, Never> {
+        return `catch` { _ in
+            Publishers.Empty()
         }.eraseToAnyPublisher()
     }
 }
@@ -189,16 +205,23 @@ enum RequestError: Error {
 }
 
 extension URLSession {
+    func send(url: URL) -> Publishers.Future<(data: Data, response: HTTPURLResponse), RequestError> {
+        return send(request: URLRequest(url: url))
+    }
+
     func send(request: URLRequest) -> Publishers.Future<(data: Data, response: HTTPURLResponse), RequestError> {
-        return Publishers.Future { (promise) in
-            self.dataTask(with: request) { (data, response, error) in
-                let httpReponse = response as? HTTPURLResponse
-                if let data = data, let httpReponse = httpReponse, 200..<300 ~= httpReponse.statusCode {
-                    promise(Result.success((data, httpReponse)))
-                } else if let httpReponse = httpReponse {
-                    promise(.failure(.request(code: httpReponse.statusCode, error: error)))
-                } else {
-                    promise(.failure(.unknown))
+        return Publishers.Future { promise in
+            self.dataTask(with: request) { data, response, error in
+                DispatchQueue.main.async {
+                    let httpReponse = response as? HTTPURLResponse
+                    if let data = data, let httpReponse = httpReponse, 200..<300 ~= httpReponse.statusCode {
+                        promise(Result.success((data, httpReponse)))
+                    } else if let httpReponse = httpReponse {
+                        print("🧨🧨🧨🧨", request.url)
+                        promise(.failure(.request(code: httpReponse.statusCode, error: error)))
+                    } else {
+                        promise(.failure(.unknown))
+                    }
                 }
             }
             .resume()
