@@ -32,6 +32,12 @@ struct MoviesSystem: System {
             copy.status = .failed(error)
 
             return copy
+        case .retry:
+            var copy = state
+
+            copy.status = .loading
+
+            return copy
         case .fetchNext:
             var copy = state
 
@@ -53,6 +59,7 @@ struct MoviesSystem: System {
     enum Event {
         case didLoad(Results)
         case didFail(NSError)
+        case retry
         case fetchNext
     }
 
@@ -71,6 +78,15 @@ struct MoviesSystem: System {
                 return nil
             }
         }
+
+        var error: NSError? {
+            switch status {
+            case .failed(let error):
+                return error
+            default:
+                return nil
+            }
+        }
     }
 
     enum Status {
@@ -86,11 +102,32 @@ struct MoviesRenderer: Renderer {
     private let imageFetcher = ImageFetcher()
 
     func render(state: State, callback: Callback<Event>) -> AnyView {
+        if let error = state.error, state.movies.isEmpty {
+            return renderError(error, callback: callback)
+        }
+        return renderMovies(state.movies, callback: callback)
+    }
+
+    private func renderError(_ error: Error, callback: Callback<Event>) -> AnyView {
+        return VStack {
+            Text(error.localizedDescription)
+            Button(action: {
+                callback.send(event: .retry)
+            }) {
+                Text("Retry")
+            }
+        }
+        .padding()
+        .eraseToAnyView()
+    }
+
+    private func renderMovies(_ movies: [Movie], callback: Callback<Event>) -> AnyView {
         return List {
-            ForEach(state.movies.identified(by: \.id)) { movie -> AnyView  in
-                if state.movies.last == movie {
+            ForEach(movies.identified(by: \.id)) { movie -> AnyView in
+                if movies.last == movie {
                     return MovieCell(movie: movie)
-                        .onAppear { // Fetch next batch every time reach to the end of the list
+                        .onAppear {
+                            // Fetch next batch every time reach to the end of the list
                             callback.send(event: .fetchNext)
                         }
                         .eraseToAnyView()
@@ -119,15 +156,6 @@ struct MovieCell: View {
                 .clipped()
             Text(movie.title).font(.title)
         }
-    }
-}
-
-final class ConstBindable<T>: BindableObject {
-    let didChange = PassthroughSubject<Void, Never>()
-    let value: T
-
-    init(value: T) {
-        self.value = value
     }
 }
 
@@ -192,50 +220,5 @@ extension URLSession {
                 error as NSError
             }
             .eraseToAnyPublisher()
-    }
-}
-
-extension Publisher {
-    public func replaceError(
-        replace: @escaping (Failure) -> Self.Output
-    ) -> AnyPublisher<Self.Output, Never> {
-        return `catch` { error in
-            Publishers.Just(replace(error))
-        }.eraseToAnyPublisher()
-    }
-
-    public func ignoreError() -> AnyPublisher<Output, Never> {
-        return `catch` { _ in
-            Publishers.Empty()
-        }.eraseToAnyPublisher()
-    }
-}
-
-enum RequestError: Error {
-    case request(code: Int, error: Error?)
-    case unknown
-}
-
-extension URLSession {
-    func send(url: URL) -> Publishers.Future<(data: Data, response: HTTPURLResponse), RequestError> {
-        return send(request: URLRequest(url: url))
-    }
-
-    func send(request: URLRequest) -> Publishers.Future<(data: Data, response: HTTPURLResponse), RequestError> {
-        return Publishers.Future { promise in
-            self.dataTask(with: request) { data, response, error in
-                DispatchQueue.main.async {
-                    let httpReponse = response as? HTTPURLResponse
-                    if let data = data, let httpReponse = httpReponse, 200..<300 ~= httpReponse.statusCode {
-                        promise(Result.success((data, httpReponse)))
-                    } else if let httpReponse = httpReponse {
-                        promise(.failure(.request(code: httpReponse.statusCode, error: error)))
-                    } else {
-                        promise(.failure(.unknown))
-                    }
-                }
-            }
-            .resume()
-        }
     }
 }
