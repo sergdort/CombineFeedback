@@ -4,19 +4,27 @@ import CombineFeedbackUI
 import Foundation
 import SwiftUI
 
-struct MoviesSystem: System {
-    let initial = MoviesSystem.State(
+final class MoviesViewModel: ViewModel<MoviesViewModel.State, MoviesViewModel.Event> {
+    let initial = MoviesViewModel.State(
         batch: Results.empty(),
         movies: [],
         status: .loading
     )
     var feedbacks: [Feedback<State, Event>] {
         return [
-            MoviesSystem.whenLoading()
+            MoviesViewModel.whenLoading()
         ]
     }
 
-    func reducer(state: State, event: Event) -> State {
+    init() {
+        super.init(
+            initial: initial,
+            feedbacks: [MoviesViewModel.whenLoading()],
+            reducer: MoviesViewModel.reducer(state:event:)
+        )
+    }
+
+    private static func reducer(state: State, event: Event) -> State {
         switch event {
         case .didLoad(let batch):
             var copy = state
@@ -97,8 +105,8 @@ struct MoviesSystem: System {
 }
 
 struct MoviesRenderer: Renderer {
-    typealias State = MoviesSystem.State
-    typealias Event = MoviesSystem.Event
+    typealias State = MoviesViewModel.State
+    typealias Event = MoviesViewModel.Event
     private let imageFetcher = ImageFetcher()
 
     func render(state: State, callback: Callback<Event>) -> AnyView {

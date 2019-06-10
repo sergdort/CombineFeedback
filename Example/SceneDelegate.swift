@@ -1,9 +1,8 @@
-import UIKit
-import SwiftUI
 import CombineFeedbackUI
+import SwiftUI
+import UIKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
-
     var window: UIWindow?
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
@@ -11,7 +10,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let tabbarController = UITabBarController()
         let counter = UIHostingController(
             rootView: NavigationView {
-                return Widget(renderer: CounterRenderer(), system: CounterSystem())
+                Widget(viewModel: CounterViewModel(), renderer: CounterRenderer())
                     .navigationBarTitle(Text("Counter"))
             }
         )
@@ -22,7 +21,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         )
         let movies = UIHostingController(
             rootView: NavigationView {
-                Widget(renderer: MoviesRenderer(), system: MoviesSystem())
+                Widget(viewModel: MoviesViewModel(), renderer: MoviesRenderer())
                     .navigationBarTitle(Text("Movies"))
             }
         )
@@ -38,4 +37,3 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window.makeKeyAndVisible()
     }
 }
-

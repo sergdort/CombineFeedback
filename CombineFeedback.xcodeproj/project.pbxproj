@@ -9,11 +9,8 @@
 /* Begin PBXBuildFile section */
 		5800000022A9DDE5005A860B /* CombineFeedbackUI.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5800FFEA22A9DDE5005A860B /* CombineFeedbackUI.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		5800000822A9DE14005A860B /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800000722A9DE14005A860B /* Renderer.swift */; };
-		5800000A22A9DE3B005A860B /* Callback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800000922A9DE3B005A860B /* Callback.swift */; };
-		5800000C22A9DE62005A860B /* System.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800000B22A9DE62005A860B /* System.swift */; };
 		5800000D22A9DE8F005A860B /* CombineFeedback.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5800FF9022A89BE6005A860B /* CombineFeedback.framework */; };
 		5800000E22A9DE8F005A860B /* CombineFeedback.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5800FF9022A89BE6005A860B /* CombineFeedback.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		5800001322A9DEAA005A860B /* SwiftUIFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800001222A9DEAA005A860B /* SwiftUIFeedback.swift */; };
 		5800001522A9DEEA005A860B /* Widget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800001422A9DEEA005A860B /* Widget.swift */; };
 		5800FF9A22A89BE6005A860B /* CombineFeedback.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5800FF9022A89BE6005A860B /* CombineFeedback.framework */; };
 		5800FF9F22A89BE6005A860B /* CombineFeedbackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FF9E22A89BE6005A860B /* CombineFeedbackTests.swift */; };
@@ -38,6 +35,8 @@
 		583971BF22ADB9FF00139CC0 /* ConstBindable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583971BE22ADB9FF00139CC0 /* ConstBindable.swift */; };
 		583971C122ADBA7000139CC0 /* URLSessionExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583971C022ADBA7000139CC0 /* URLSessionExtensions.swift */; };
 		583971C322ADBA9900139CC0 /* PublisherExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583971C222ADBA9900139CC0 /* PublisherExtensions.swift */; };
+		583971C522ADFA1F00139CC0 /* ViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583971C422ADFA1F00139CC0 /* ViewModel.swift */; };
+		589A1BE522AED94C00B9130C /* Callback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 589A1BE322AECD9100B9130C /* Callback.swift */; };
 		58C6E5DC22A9E9E3005A9685 /* Bento.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58C6E5DB22A9E9E3005A9685 /* Bento.swift */; };
 		58C6E5E022A9F027005A9685 /* Movies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58C6E5DF22A9F027005A9685 /* Movies.swift */; };
 		58C6E5E722AB14DB005A9685 /* AsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58C6E5E622AB14DB005A9685 /* AsyncImage.swift */; };
@@ -123,9 +122,6 @@
 
 /* Begin PBXFileReference section */
 		5800000722A9DE14005A860B /* Renderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; };
-		5800000922A9DE3B005A860B /* Callback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Callback.swift; sourceTree = "<group>"; };
-		5800000B22A9DE62005A860B /* System.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = System.swift; sourceTree = "<group>"; };
-		5800001222A9DEAA005A860B /* SwiftUIFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftUIFeedback.swift; sourceTree = "<group>"; };
 		5800001422A9DEEA005A860B /* Widget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Widget.swift; sourceTree = "<group>"; };
 		5800FF9022A89BE6005A860B /* CombineFeedback.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = CombineFeedback.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5800FF9322A89BE6005A860B /* CombineFeedback.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CombineFeedback.h; sourceTree = "<group>"; };
@@ -157,6 +153,8 @@
 		583971BE22ADB9FF00139CC0 /* ConstBindable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConstBindable.swift; sourceTree = "<group>"; };
 		583971C022ADBA7000139CC0 /* URLSessionExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSessionExtensions.swift; sourceTree = "<group>"; };
 		583971C222ADBA9900139CC0 /* PublisherExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublisherExtensions.swift; sourceTree = "<group>"; };
+		583971C422ADFA1F00139CC0 /* ViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModel.swift; sourceTree = "<group>"; };
+		589A1BE322AECD9100B9130C /* Callback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Callback.swift; sourceTree = "<group>"; };
 		58C6E5DB22A9E9E3005A9685 /* Bento.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bento.swift; sourceTree = "<group>"; };
 		58C6E5DF22A9F027005A9685 /* Movies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Movies.swift; sourceTree = "<group>"; };
 		58C6E5E122AA3108005A9685 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -313,10 +311,9 @@
 			children = (
 				5800FFEC22A9DDE5005A860B /* CombineFeedbackUI.h */,
 				5800FFED22A9DDE5005A860B /* Info.plist */,
+				589A1BE322AECD9100B9130C /* Callback.swift */,
+				583971C422ADFA1F00139CC0 /* ViewModel.swift */,
 				5800000722A9DE14005A860B /* Renderer.swift */,
-				5800000922A9DE3B005A860B /* Callback.swift */,
-				5800000B22A9DE62005A860B /* System.swift */,
-				5800001222A9DEAA005A860B /* SwiftUIFeedback.swift */,
 				5800001422A9DEEA005A860B /* Widget.swift */,
 			);
 			path = CombineFeedbackUI;
@@ -661,10 +658,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5800001322A9DEAA005A860B /* SwiftUIFeedback.swift in Sources */,
-				5800000A22A9DE3B005A860B /* Callback.swift in Sources */,
+				589A1BE522AED94C00B9130C /* Callback.swift in Sources */,
 				5800001522A9DEEA005A860B /* Widget.swift in Sources */,
-				5800000C22A9DE62005A860B /* System.swift in Sources */,
+				583971C522ADFA1F00139CC0 /* ViewModel.swift in Sources */,
 				5800000822A9DE14005A860B /* Renderer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

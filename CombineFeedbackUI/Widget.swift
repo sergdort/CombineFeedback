@@ -1,48 +1,51 @@
 import Combine
+import CombineFeedback
 import SwiftUI
 
-public struct Widget<R: Renderer, S: System>: View where R.State == S.State, R.Event == S.Event {
-    private let uiFeedback: SwiftUIFeedback<R>
-    private let system: S
-    @State private var disposable: AnyCancellable? = nil
-    @State private var view: AnyView = EmptyView().eraseToAnyView()
+public struct Widget<R: Renderer>: View {
+    @ObjectBinding private var viewModel: ViewModel<R.State, R.Event>
+    private let renderer: AnyRenderer<R>
 
-    public init(renderer: R, system: S) {
-        self.uiFeedback = SwiftUIFeedback(renderer: renderer)
-        self.system = system
+    public init(viewModel: ViewModel<R.State, R.Event>, renderer: R) {
+        self.viewModel = viewModel
+        self.renderer = AnyRenderer(renderer: renderer, callback: viewModel.send)
     }
 
     public var body: some View {
-        return view.onAppear(perform: viewWillAppear)
-            .onDisappear(perform: viewWillDisappear)
+        return renderer.map(viewModel.state)
     }
 
-    private func viewWillAppear() {
-        var feedbacks = system.feedbacks
-        feedbacks.append(uiFeedback.bind(to: $view))
-        self.disposable = Publishers.system(
-            initial: system.initial,
-            feedbacks: feedbacks,
-            reduce: system.reducer
-        )
-        .subscribe(EmptySubject())
-    }
+    private struct AnyRenderer<R: Renderer> {
+        let renderer: R
+        let callback: (R.Event) -> Void
 
-    private func viewWillDisappear() {
-        self.disposable?.cancel()
-    }
-
-    private final class EmptySubject<Output, Failure: Error>: Subject {
-        func receive<S>(subscriber: S)
-            where S: Subscriber, Failure == S.Failure, Output == S.Input {
+        func map(_ state: R.State) -> AnyView {
+            return renderer.render(state: state, callback: Callback(send: callback))
         }
-        func send(_ value: Output) {}
-        func send(completion: Subscribers.Completion<Failure>) {}
+    }
+}
+
+extension Feedback {
+    static var input: (feedback: Feedback<State, Event>, observer: Callback<Event>) {
+        let subject = PassthroughSubject<Event, Never>()
+        let feedback = Feedback<State, Event>(events: { _ in
+            subject.eraseToAnyPublisher()
+        })
+        return (feedback, Callback(subject: subject.eraseToAnySubject()))
     }
 }
 
 extension View {
     func eraseToAnyView() -> AnyView {
         return AnyView(self)
+    }
+
+    func bind<P: Publisher, Value>(
+        _ publisher: P,
+        to state: Binding<Value>
+    ) -> SubscriptionView<P, Self> where P.Failure == Never, P.Output == Value {
+        return onReceive(publisher) { value in
+            state.value = value
+        }
     }
 }

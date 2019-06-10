@@ -3,7 +3,7 @@ import CombineFeedback
 import CombineFeedbackUI
 import SwiftUI
 
-struct CounterSystem: System {
+final class CounterViewModel: ViewModel<CounterViewModel.State, CounterViewModel.Event> {
     struct State {
         var count = 0
     }
@@ -13,13 +13,18 @@ struct CounterSystem: System {
         case decrement
     }
 
-    let initial = State()
-    let feedbacks: [Feedback<CounterSystem.State, CounterSystem.Event>] = []
+    init() {
+        super.init(
+            initial: State(),
+            feedbacks: [],
+            reducer: CounterViewModel.reducer(state:event:)
+        )
+    }
 
-    func reducer(
-        state: CounterSystem.State,
-        event: CounterSystem.Event
-    ) -> CounterSystem.State {
+    private static func reducer(
+        state: State,
+        event: Event
+    ) -> State {
         switch event {
         case .increment:
             return State(count: state.count + 1)
@@ -30,8 +35,8 @@ struct CounterSystem: System {
 }
 
 struct CounterRenderer: Renderer {
-    typealias State = CounterSystem.State
-    typealias Event = CounterSystem.Event
+    typealias State = CounterViewModel.State
+    typealias Event = CounterViewModel.Event
 
     func render(state: State, callback: Callback<Event>) -> AnyView {
         if state.count <= 0 {
