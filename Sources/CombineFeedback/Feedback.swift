@@ -8,7 +8,7 @@ public struct Feedback<State, Event> {
     /// state.
     ///
     /// - parameters:
-    ///   - events: The transform which derives a `Signal` of events from the
+    ///   - events: The transform which derives a `Publisher` of events from the
     ///             latest state.
     public init<E: Publisher>(
         events: @escaping (AnyPublisher<State, Never>) -> E
@@ -20,13 +20,13 @@ public struct Feedback<State, Event> {
     }
 
     /// Creates a Feedback which re-evaluates the given effect every time the
-    /// `Signal` derived from the latest state yields a new value.
+    /// `Publisher` derived from the latest state yields a new value.
     ///
     /// If the previous effect is still alive when a new one is about to start,
     /// the previous one would automatically be cancelled.
     ///
     /// - parameters:
-    ///   - transform: The transform which derives a `Signal` of values from the
+    ///   - transform: The transform which derives a `Publisher` of values from the
     ///                latest state.
     ///   - effects: The side effect accepting transformed values produced by
     ///              `transform` and yielding events that eventually affect
