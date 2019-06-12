@@ -109,18 +109,18 @@ struct MoviesRenderer: Renderer {
     typealias Event = MoviesViewModel.Event
     private let imageFetcher = ImageFetcher()
 
-    func render(state: State, callback: Callback<Event>) -> AnyView {
-        if let error = state.error, state.movies.isEmpty {
-            return renderError(error, callback: callback)
+    func render(context: Context<State, Event>) -> AnyView {
+        if context.error != nil, context.movies.isEmpty {
+            return renderError(context: context)
         }
-        return renderMovies(state.movies, callback: callback)
+        return renderMovies(context: context)
     }
 
-    private func renderError(_ error: Error, callback: Callback<Event>) -> AnyView {
+    private func renderError(context: Context<State, Event>) -> AnyView {
         return VStack {
-            Text(error.localizedDescription)
+            Text(context.error?.localizedDescription ?? "")
             Button(action: {
-                callback.send(event: .retry)
+                context.send(event: .retry)
             }) {
                 Text("Retry")
             }
@@ -129,14 +129,14 @@ struct MoviesRenderer: Renderer {
         .eraseToAnyView()
     }
 
-    private func renderMovies(_ movies: [Movie], callback: Callback<Event>) -> AnyView {
+    private func renderMovies(context: Context<State, Event>) -> AnyView {
         return List {
-            ForEach(movies.identified(by: \.id)) { movie -> AnyView in
-                if movies.last == movie {
+            ForEach(context.movies.identified(by: \.id)) { movie -> AnyView in
+                if context.movies.last == movie {
                     return MovieCell(movie: movie)
                         .onAppear {
                             // Fetch next batch every time reach to the end of the list
-                            callback.send(event: .fetchNext)
+                            context.send(event: .fetchNext)
                         }
                         .eraseToAnyView()
                 }

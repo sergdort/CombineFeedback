@@ -38,42 +38,42 @@ struct CounterRenderer: Renderer {
     typealias State = CounterViewModel.State
     typealias Event = CounterViewModel.Event
 
-    func render(state: State, callback: Callback<Event>) -> AnyView {
-        if state.count <= 0 {
-            return renderStack(state: state, callback: callback)
+    func render(context: Context<State, Event>) -> AnyView {
+        if context.count <= 0 {
+            return renderStack(context: context)
         }
 
-        return renderList(state: state, callback: callback)
+        return renderList(context: context)
     }
 
-    private func renderStack(state: State, callback: Callback<Event>) -> AnyView {
+    private func renderStack(context: Context<State, Event>) -> AnyView {
         HStack {
             Button(action: {
-                callback.send(event: .decrement)
+                context.send(event: .decrement)
             }) {
                 Text("-").font(.largeTitle)
             }
-            Text("\(state.count)")
+            Text("\(context.count)")
             Button(action: {
-                callback.send(event: .increment)
+                context.send(event: .increment)
             }) {
                 Text("+").font(.largeTitle)
             }
         }.eraseToAnyView()
     }
 
-    func renderList(state: State, callback: Callback<Event>) -> AnyView {
+    func renderList(context: Context<State, Event>) -> AnyView {
         List {
             Button(action: {
-                callback.send(event: .decrement)
+                context.send(event: .decrement)
             }) {
                 Text("-").font(.largeTitle)
             }
-            ForEach(0...state.count) { (count) in
+            ForEach(0...context.count) { (count) in
                 Text("\(count)")
             }
             Button(action: {
-                callback.send(event: .increment)
+                context.send(event: .increment)
             }) {
                 Text("+").font(.largeTitle)
             }

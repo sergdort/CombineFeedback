@@ -1,7 +1,7 @@
 import Combine
 
 public struct Feedback<State, Event> {
-    let events: (AnyPublisher<State, Never>) -> AnyPublisher<Event, Never>
+    public let events: (AnyPublisher<State, Never>) -> AnyPublisher<Event, Never>
 
     /// Creates an arbitrary Feedback, which evaluates side effects reactively
     /// to the latest state, and eventually produces events that affect the
