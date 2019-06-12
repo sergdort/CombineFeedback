@@ -160,6 +160,7 @@
 		58C6E5E122AA3108005A9685 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		58C6E5E322AA3B3B005A9685 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		58C6E5E622AB14DB005A9685 /* AsyncImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncImage.swift; sourceTree = "<group>"; };
+		742D7D6522B02A7100A97AF3 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -216,12 +217,11 @@
 		5800FF8622A89BE6005A860B = {
 			isa = PBXGroup;
 			children = (
+				742D7D6522B02A7100A97AF3 /* Package.swift */,
+				742D7D6222B024D100A97AF3 /* Sources */,
+				742D7D6322B0254600A97AF3 /* Tests */,
 				58C6E5E122AA3108005A9685 /* README.md */,
 				58C6E5E322AA3B3B005A9685 /* LICENSE */,
-				5800FF9222A89BE6005A860B /* CombineFeedback */,
-				5800FF9D22A89BE6005A860B /* CombineFeedbackTests */,
-				5800FFEB22A9DDE5005A860B /* CombineFeedbackUI */,
-				5800FFF822A9DDE5005A860B /* CombineFeedbackUITests */,
 				5800FFB722A8CDA5005A860B /* Example */,
 				5800FFCE22A8CDA7005A860B /* ExampleTests */,
 				5800FF9122A89BE6005A860B /* Products */,
@@ -368,6 +368,24 @@
 				58C6E5E622AB14DB005A9685 /* AsyncImage.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		742D7D6222B024D100A97AF3 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				5800FF9222A89BE6005A860B /* CombineFeedback */,
+				5800FFEB22A9DDE5005A860B /* CombineFeedbackUI */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		742D7D6322B0254600A97AF3 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				5800FF9D22A89BE6005A860B /* CombineFeedbackTests */,
+				5800FFF822A9DDE5005A860B /* CombineFeedbackUITests */,
+			);
+			path = Tests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -734,7 +752,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = CombineFeedbackUI/Info.plist;
+				INFOPLIST_FILE = Sources/CombineFeedbackUI/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -759,7 +777,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = CombineFeedbackUI/Info.plist;
+				INFOPLIST_FILE = Sources/CombineFeedbackUI/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -779,7 +797,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
-				INFOPLIST_FILE = CombineFeedbackUITests/Info.plist;
+				INFOPLIST_FILE = Tests/CombineFeedbackUITests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -798,7 +816,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
-				INFOPLIST_FILE = CombineFeedbackUITests/Info.plist;
+				INFOPLIST_FILE = Tests/CombineFeedbackUITests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -941,7 +959,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = CombineFeedback/Info.plist;
+				INFOPLIST_FILE = Sources/CombineFeedback/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -966,7 +984,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = CombineFeedback/Info.plist;
+				INFOPLIST_FILE = Sources/CombineFeedback/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -986,7 +1004,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
-				INFOPLIST_FILE = CombineFeedbackTests/Info.plist;
+				INFOPLIST_FILE = Tests/CombineFeedbackTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1004,7 +1022,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
-				INFOPLIST_FILE = CombineFeedbackTests/Info.plist;
+				INFOPLIST_FILE = Tests/CombineFeedbackTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

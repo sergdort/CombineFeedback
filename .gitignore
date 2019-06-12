@@ -47,6 +47,11 @@ DerivedData/
 
 build/
 
+####
+# Swift Package Manager build output directory
+.build
+# Swift Package Manager Xcode SPM integration
+.swiftpm
 
 #####
 # Xcode private settings (window sizes, bookmarks, breakpoints, custom executables, smart groups)
