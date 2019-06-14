@@ -1,7 +1,7 @@
 import Combine
 
 extension Publisher {
-    func flatMapLatest<U>(
+    public func flatMapLatest<U>(
         _ transformation: @escaping (Self.Output) -> U
     ) -> Publishers.FlatMapLatest<Self, U>
         where U: Publisher, U.Failure == Self.Failure {
@@ -10,7 +10,7 @@ extension Publisher {
 }
 
 extension Publishers {
-    struct FlatMapLatest<Upstream, P>: Publisher
+    public struct FlatMapLatest<Upstream, P>: Publisher
         where P: Publisher, Upstream: Publisher, P.Failure == Upstream.Failure {
         public typealias Output = P.Output
         public typealias Failure = Upstream.Failure
