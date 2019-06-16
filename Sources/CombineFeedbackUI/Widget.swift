@@ -2,26 +2,29 @@ import Combine
 import CombineFeedback
 import SwiftUI
 
-public struct Widget<R: Renderer>: View {
-    @ObjectBinding private var viewModel: ViewModel<R.State, R.Event>
-    private let renderer: R
+public struct Widget<S, E>: View {
+    // For some reasong using @ObjectBinding private var viewModel: ViewModel<S, E>
+    // crashes the compiler
+    private let viewModel: ObjectBinding<ViewModel<S, E>>
+    private let render: (Context<S, E>) -> AnyView
 
-    public init(viewModel: ViewModel<R.State, R.Event>, renderer: R) {
-        self.viewModel = viewModel
-        self.renderer = renderer
+    public init<R: Renderer>(
+        viewModel: ViewModel<S, E>,
+        renderer: R
+    ) where R.State == S, R.Event == E {
+        self.viewModel = ObjectBinding(initialValue: viewModel)
+        self.render = renderer.render(context:)
+    }
+
+    public init(
+        viewModel: ViewModel<S, E>,
+        render: @escaping (Context<S, E>) -> AnyView
+    ) {
+        self.viewModel = ObjectBinding(initialValue: viewModel)
+        self.render = render
     }
 
     public var body: some View {
-        return renderer.render(context: Context(viewModel: viewModel))
-    }
-}
-
-extension Feedback {
-    static var input: (feedback: Feedback<State, Event>, observer: (Event) -> Void) {
-        let subject = PassthroughSubject<Event, Never>()
-        let feedback = Feedback<State, Event>(events: { _ in
-            subject.eraseToAnyPublisher()
-        })
-        return (feedback, subject.eraseToAnySubject().send)
+        return render(Context(viewModel: viewModel.value))
     }
 }

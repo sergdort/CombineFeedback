@@ -74,6 +74,14 @@ extension Feedback {
             self.events(state).map(f).eraseToAnyPublisher()
         })
     }
+    
+    static var input: (feedback: Feedback, observer: (Event) -> Void) {
+        let subject = PassthroughSubject<Event, Never>()
+        let feedback = Feedback(events: { _ in
+            return subject
+        })
+        return (feedback, subject.send)
+    }
 }
 
 extension Array {
