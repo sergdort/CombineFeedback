@@ -21,7 +21,6 @@ extension Publishers {
                 .scan(initial, reduce)
                 .handleEvents(receiveOutput: state.send)
                 .receive(on: scheduler)
-                .prepend(initial)
                 .eraseToAnyPublisher()
         }
         .eraseToAnyPublisher()
