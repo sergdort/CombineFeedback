@@ -38,31 +38,38 @@ struct CounterRenderer: Renderer {
     typealias State = CounterViewModel.State
     typealias Event = CounterViewModel.Event
 
-    func render(context: Context<State, Event>) -> AnyView {
-        if context.count <= 0 {
-            return renderStack(context: context)
+    func render(context: Context<State, Event>) -> some View {
+        return Group {
+            if context.count <= 0 {
+                renderStack(context: context)
+            } else {
+                renderList(context: context)
+            }
         }
-
-        return renderList(context: context)
     }
 
-    private func renderStack(context: Context<State, Event>) -> AnyView {
-        HStack {
+    private func renderStack(context: Context<State, Event>) -> some View {
+        return HStack {
             Button(action: {
                 context.send(event: .decrement)
             }) {
-                Text("-").font(.largeTitle)
+                return Text("-").font(.largeTitle)
             }
             Text("\(context.count)")
+                .iff(context.count%2 != 0) {
+                    $0.color(.red)
+                }
+                .font(.largeTitle)
+                .cornerRadius(20, antialiased: false)
             Button(action: {
                 context.send(event: .increment)
             }) {
                 Text("+").font(.largeTitle)
             }
-        }.eraseToAnyView()
+        }
     }
 
-    func renderList(context: Context<State, Event>) -> AnyView {
+    func renderList(context: Context<State, Event>) -> some View {
         List {
             Button(action: {
                 context.send(event: .decrement)
@@ -77,7 +84,7 @@ struct CounterRenderer: Renderer {
             }) {
                 Text("+").font(.largeTitle)
             }
-        }.eraseToAnyView()
+        }
     }
 }
 

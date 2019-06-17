@@ -131,17 +131,13 @@ struct MoviesRenderer: Renderer {
 
     private func renderMovies(context: Context<State, Event>) -> AnyView {
         return List {
-            ForEach(context.movies.identified(by: \.id)) { movie -> AnyView in
-                if context.movies.last == movie {
-                    return MovieCell(movie: movie)
-                        .onAppear {
-                            // Fetch next batch every time reach to the end of the list
+            ForEach(context.movies.identified(by: \.id)) { movie in
+                return MovieCell(movie: movie)
+                    .iff(context.movies.last == movie) { cell in
+                        return cell.onAppear {
                             context.send(event: .fetchNext)
                         }
-                        .eraseToAnyView()
-                }
-                return MovieCell(movie: movie)
-                    .eraseToAnyView()
+                    }
             }
         }
         .environmentObject(ConstBindable(value: imageFetcher))
@@ -164,6 +160,27 @@ struct MovieCell: View {
                 .clipped()
             Text(movie.title).font(.title)
         }
+    }
+}
+
+extension View {
+    func iff(_ condition: Bool, modifier: (Self) -> Self) -> Self {
+        return condition ? modifier(self) : self
+    }
+    
+    func iff<TrueContent: View>(_ condition: Bool, modifier:  (Self) -> TrueContent) -> ConditionalContent<TrueContent, Self> {
+        if condition {
+            return ViewBuilder.buildEither(first: modifier(self))
+        }
+        return ViewBuilder.buildEither(second: self)
+    }
+
+    func some<Value>(_ optional: Value?, modifier: (Value, Self) -> AnyView) -> some View {
+        guard let value = optional else {
+            return eraseToAnyView()
+        }
+
+        return modifier(value, self).eraseToAnyView()
     }
 }
 
