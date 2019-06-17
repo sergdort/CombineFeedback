@@ -4,22 +4,18 @@ import Foundation
 import SwiftUI
 
 open class ViewModel<S, E>: BindableObject {
-    private let input = Feedback<S, Update>.input
     public let didChange = PassthroughSubject<Void, Never>()
-    private var sink: Subscribers.Sink<AnyPublisher<S, Never>>?
-    public private(set) var state: S {
-        didSet {
-            self.didChange.send(())
-        }
-    }
+    public let state: AnyPublisher<S, Never>
+    internal let initial: S
+    private let input = Feedback<S, Update>.input
 
     public init(
         initial: S,
         feedbacks: [Feedback<S, E>],
         reducer: @escaping (S, E) -> S
     ) {
-        self.state = initial
-        self.sink = Publishers.system(
+        self.initial = initial
+        self.state = Publishers.system(
             initial: initial,
             feedbacks: feedbacks.map { $0.mapEvent(Update.event) }
                 .appending(self.input.feedback),
@@ -31,9 +27,7 @@ open class ViewModel<S, E>: BindableObject {
                     return mutation.mutate(state)
                 }
             }
-        ).sink { state in
-            self.state = state
-        }
+        )
     }
 
     public final func send(event: E) {
@@ -62,10 +56,6 @@ open class ViewModel<S, E>: BindableObject {
             }
         }
     }
-
-    deinit {
-        sink?.cancel()
-    }
 }
 
 extension Feedback {
@@ -74,7 +64,7 @@ extension Feedback {
             self.events(state).map(f).eraseToAnyPublisher()
         })
     }
-    
+
     static var input: (feedback: Feedback, observer: (Event) -> Void) {
         let subject = PassthroughSubject<Event, Never>()
         let feedback = Feedback(events: { _ in

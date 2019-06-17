@@ -2,29 +2,43 @@ import Combine
 import CombineFeedback
 import SwiftUI
 
-public struct Widget<S, E>: View {
-    // For some reasong using @ObjectBinding private var viewModel: ViewModel<S, E>
-    // crashes the compiler
-    private let viewModel: ObjectBinding<ViewModel<S, E>>
-    private let render: (Context<S, E>) -> AnyView
+public struct Widget<S, E, Content: View>: View {
+    private let view: State<Content>
+    private let viewPublisher: AnyPublisher<Content, Never>
 
     public init<R: Renderer>(
         viewModel: ViewModel<S, E>,
         renderer: R
-    ) where R.State == S, R.Event == E {
-        self.viewModel = ObjectBinding(initialValue: viewModel)
-        self.render = renderer.render(context:)
+    ) where R.State == S, R.Event == E, R.Content == Content {
+        self.init(viewModel: viewModel, render: renderer.render)
     }
 
     public init(
         viewModel: ViewModel<S, E>,
-        render: @escaping (Context<S, E>) -> AnyView
+        render: @escaping (Context<S, E>) -> Content
     ) {
-        self.viewModel = ObjectBinding(initialValue: viewModel)
-        self.render = render
+        self.view = State(
+            initialValue: render(Context(state: viewModel.initial, viewModel: viewModel))
+        )
+        self.viewPublisher = viewModel.state
+            .map {
+                return render(Context(state: $0, viewModel: viewModel))
+            }
+            .eraseToAnyPublisher()
     }
 
     public var body: some View {
-        return render(Context(viewModel: viewModel.value))
+        return view.value.bind(viewPublisher, to: view.binding)
+    }
+}
+
+extension View {
+    func bind<P: Publisher, Value>(
+        _ publisher: P,
+        to binding: Binding<Value>
+    ) -> SubscriptionView<P, Self> where P.Failure == Never, P.Output == Value {
+        return onReceive(publisher) { value in
+            binding.value = value
+        }
     }
 }

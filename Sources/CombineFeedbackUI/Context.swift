@@ -2,14 +2,16 @@ import SwiftUI
 
 @dynamicMemberLookup
 public struct Context<S, E> {
+    private let state: S
     private let viewModel: ViewModel<S, E>
     
-    public init(viewModel: ViewModel<S, E>) {
+    public init(state: S, viewModel: ViewModel<S, E>) {
+        self.state = state
         self.viewModel = viewModel
     }
     
     public subscript<U>(dynamicMember keyPath: KeyPath<S, U>) -> U {
-        return viewModel.state[keyPath: keyPath]
+        return state[keyPath: keyPath]
     }
     
     public func send(event: E) {
@@ -19,7 +21,7 @@ public struct Context<S, E> {
     public func binding<U>(for keyPath: WritableKeyPath<S, U>) -> Binding<U> {
         return Binding(
             getValue: {
-                self.viewModel.state[keyPath: keyPath]
+                self.state[keyPath: keyPath]
             },
             setValue: {
                 self.viewModel.mutate(keyPath: keyPath, value: $0)
