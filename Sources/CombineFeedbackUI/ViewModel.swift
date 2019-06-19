@@ -30,11 +30,11 @@ open class ViewModel<State, Event> {
         )
     }
 
-    public func send(event: Event) {
+    open func send(event: Event) {
         self.input.observer(.event(event))
     }
 
-    public func mutate<V>(keyPath: WritableKeyPath<State, V>, value: V) {
+    open func mutate<V>(keyPath: WritableKeyPath<State, V>, value: V) {
         self.input.observer(.mutation(Mutation(keyPath: keyPath, value: value)))
     }
 

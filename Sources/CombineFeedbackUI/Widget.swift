@@ -6,13 +6,6 @@ public struct Widget<State, Event, Content: View>: View {
     private let view: SwiftUI.State<Content>
     private let viewPublisher: AnyPublisher<Content, Never>
 
-    public init<R: Renderer>(
-        viewModel: ViewModel<State, Event>,
-        renderer: R
-    ) where R.State == State, R.Event == Event, R.Content == Content {
-        self.init(viewModel: viewModel, render: renderer.render)
-    }
-
     public init(
         viewModel: ViewModel<State, Event>,
         render: @escaping (Context<State, Event>) -> Content
