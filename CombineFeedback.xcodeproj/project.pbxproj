@@ -19,7 +19,6 @@
 		5800FFAE22A89C09005A860B /* Feedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FFAA22A89C08005A860B /* Feedback.swift */; };
 		5800FFAF22A89C09005A860B /* FlatMapLatest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FFAB22A89C08005A860B /* FlatMapLatest.swift */; };
 		5800FFB022A89C09005A860B /* System.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FFAC22A89C08005A860B /* System.swift */; };
-		5800FFB122A89C09005A860B /* DispatchQueueScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FFAD22A89C08005A860B /* DispatchQueueScheduler.swift */; };
 		5800FFB922A8CDA5005A860B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FFB822A8CDA5005A860B /* AppDelegate.swift */; };
 		5800FFBB22A8CDA5005A860B /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FFBA22A8CDA5005A860B /* SceneDelegate.swift */; };
 		5800FFBD22A8CDA5005A860B /* Counter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FFBC22A8CDA5005A860B /* Counter.swift */; };
@@ -132,7 +131,6 @@
 		5800FFAA22A89C08005A860B /* Feedback.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Feedback.swift; sourceTree = "<group>"; };
 		5800FFAB22A89C08005A860B /* FlatMapLatest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FlatMapLatest.swift; sourceTree = "<group>"; };
 		5800FFAC22A89C08005A860B /* System.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = System.swift; sourceTree = "<group>"; };
-		5800FFAD22A89C08005A860B /* DispatchQueueScheduler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DispatchQueueScheduler.swift; sourceTree = "<group>"; };
 		5800FFB622A8CDA5005A860B /* Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Example.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5800FFB822A8CDA5005A860B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		5800FFBA22A8CDA5005A860B /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -244,7 +242,6 @@
 			isa = PBXGroup;
 			children = (
 				5800FF9322A89BE6005A860B /* CombineFeedback.h */,
-				5800FFAD22A89C08005A860B /* DispatchQueueScheduler.swift */,
 				5800FFAA22A89C08005A860B /* Feedback.swift */,
 				5800FFAB22A89C08005A860B /* FlatMapLatest.swift */,
 				5800FFAC22A89C08005A860B /* System.swift */,
@@ -625,7 +622,6 @@
 				5800FFAF22A89C09005A860B /* FlatMapLatest.swift in Sources */,
 				5800FFB022A89C09005A860B /* System.swift in Sources */,
 				5800FFAE22A89C09005A860B /* Feedback.swift in Sources */,
-				5800FFB122A89C09005A860B /* DispatchQueueScheduler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

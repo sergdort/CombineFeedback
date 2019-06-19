@@ -1,24 +1,24 @@
 import Combine
 import CombineFeedback
 import Foundation
-import SwiftUI
 
-open class ViewModel<S, E>: BindableObject {
-    public let didChange = PassthroughSubject<Void, Never>()
-    public let state: AnyPublisher<S, Never>
-    internal let initial: S
-    private let input = Feedback<S, Update>.input
+open class ViewModel<State, Event> {
+    public let state: AnyPublisher<State, Never>
+    internal let initial: State
+    private let input = Feedback<State, Update>.input
 
-    public init(
-        initial: S,
-        feedbacks: [Feedback<S, E>],
-        reducer: @escaping (S, E) -> S
+    public init<S: Scheduler>(
+        initial: State,
+        feedbacks: [Feedback<State, Event>],
+        scheduler: S,
+        reducer: @escaping (State, Event) -> State
     ) {
         self.initial = initial
         self.state = Publishers.system(
             initial: initial,
             feedbacks: feedbacks.map { $0.mapEvent(Update.event) }
                 .appending(self.input.feedback),
+            scheduler: scheduler,
             reduce: { state, update in
                 switch update {
                 case .event(let event):
@@ -30,23 +30,23 @@ open class ViewModel<S, E>: BindableObject {
         )
     }
 
-    public final func send(event: E) {
+    public func send(event: Event) {
         self.input.observer(.event(event))
     }
 
-    public func mutate<V>(keyPath: WritableKeyPath<S, V>, value: V) {
+    public func mutate<V>(keyPath: WritableKeyPath<State, V>, value: V) {
         self.input.observer(.mutation(Mutation(keyPath: keyPath, value: value)))
     }
 
     private enum Update {
-        case event(E)
+        case event(Event)
         case mutation(Mutation)
     }
 
     private struct Mutation {
-        let mutate: (S) -> S
+        let mutate: (State) -> State
 
-        init<V>(keyPath: WritableKeyPath<S, V>, value: V) {
+        init<V>(keyPath: WritableKeyPath<State, V>, value: V) {
             self.mutate = { state in
                 var copy = state
 

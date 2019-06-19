@@ -2,10 +2,10 @@ import Combine
 import Foundation
 
 extension Publishers {
-    public static func system<State, Event>(
+    public static func system<State, Event, S: Scheduler>(
         initial: State,
         feedbacks: [Feedback<State, Event>],
-        scheduler: DispatchQueueScheduler = .main,
+        scheduler: S,
         reduce: @escaping (State, Event) -> State
     ) -> AnyPublisher<State, Never> {
         return Publishers.Deferred { () -> AnyPublisher<State, Never> in
