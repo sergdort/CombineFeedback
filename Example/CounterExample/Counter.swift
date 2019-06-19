@@ -17,6 +17,7 @@ final class CounterViewModel: ViewModel<CounterViewModel.State, CounterViewModel
         super.init(
             initial: State(),
             feedbacks: [],
+            scheduler: DispatchQueue.main,
             reducer: CounterViewModel.reducer(state:event:)
         )
     }
@@ -34,53 +35,22 @@ final class CounterViewModel: ViewModel<CounterViewModel.State, CounterViewModel
     }
 }
 
-struct CounterRenderer: Renderer {
+struct CounterView: View {
     typealias State = CounterViewModel.State
     typealias Event = CounterViewModel.Event
+    
+    let context: Context<State, Event>
 
-    func render(context: Context<State, Event>) -> some View {
-        return Group {
-            if context.count <= 0 {
-                renderStack(context: context)
-            } else {
-                renderList(context: context)
-            }
-        }
-    }
-
-    private func renderStack(context: Context<State, Event>) -> some View {
-        return HStack {
+    var body: some View {
+        Form {
             Button(action: {
-                context.send(event: .decrement)
+                self.context.send(event: .decrement)
             }) {
                 return Text("-").font(.largeTitle)
             }
-            Text("\(context.count)")
-                .iff(context.count%2 != 0) {
-                    $0.color(.red)
-                }
-                .font(.largeTitle)
-                .cornerRadius(20, antialiased: false)
+            Text("\(context.count)").font(.largeTitle)
             Button(action: {
-                context.send(event: .increment)
-            }) {
-                Text("+").font(.largeTitle)
-            }
-        }
-    }
-
-    func renderList(context: Context<State, Event>) -> some View {
-        List {
-            Button(action: {
-                context.send(event: .decrement)
-            }) {
-                Text("-").font(.largeTitle)
-            }
-            ForEach(0...context.count) { (count) in
-                Text("\(count)")
-            }
-            Button(action: {
-                context.send(event: .increment)
+                self.context.send(event: .increment)
             }) {
                 Text("+").font(.largeTitle)
             }

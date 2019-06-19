@@ -10,7 +10,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let tabbarController = UITabBarController()
         let counter = UIHostingController(
             rootView: NavigationView {
-                Widget(viewModel: CounterViewModel(), renderer: CounterRenderer())
+                Widget(viewModel: CounterViewModel(), render: CounterView.init)
                     .navigationBarTitle(Text("Counter"))
             }
         )
@@ -21,7 +21,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         )
         let movies = UIHostingController(
             rootView: NavigationView {
-                Widget(viewModel: MoviesViewModel(), renderer: MoviesRenderer())
+                return Widget(viewModel: MoviesViewModel(), render: MoviesView.init)
+                    .environmentObject(ConstBindable(value: ImageFetcher()))
                     .navigationBarTitle(Text("Movies"))
             }
         )

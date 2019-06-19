@@ -42,7 +42,7 @@ class ImageFetcher {
         return Publishers.Deferred { () -> AnyPublisher<UIImage, Never> in
             if let image = self.cache.object(forKey: url as NSURL) {
                 return Publishers.Just(image)
-                    .receive(on: DispatchQueueScheduler.main)
+                    .receive(on: DispatchQueue.main)
                     .eraseToAnyPublisher()
             }
 
@@ -50,7 +50,7 @@ class ImageFetcher {
                 .send(url: url)
                 .map { $0.data }
                 .compactMap(UIImage.init(data:))
-                .receive(on: DispatchQueueScheduler.main)
+                .receive(on: DispatchQueue.main)
                 .handleEvents(receiveOutput: { image in
                     self.cache.setObject(image, forKey: url as NSURL)
                 })

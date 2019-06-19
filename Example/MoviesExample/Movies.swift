@@ -20,6 +20,7 @@ final class MoviesViewModel: ViewModel<MoviesViewModel.State, MoviesViewModel.Ev
         super.init(
             initial: initial,
             feedbacks: [MoviesViewModel.whenLoading()],
+            scheduler: DispatchQueue.main,
             reducer: MoviesViewModel.reducer(state:event:)
         )
     }
@@ -104,44 +105,21 @@ final class MoviesViewModel: ViewModel<MoviesViewModel.State, MoviesViewModel.Ev
     }
 }
 
-struct MoviesRenderer: Renderer {
+struct MoviesView: View {
     typealias State = MoviesViewModel.State
     typealias Event = MoviesViewModel.Event
-    private let imageFetcher = ImageFetcher()
+    let context: Context<State, Event>
 
-    func render(context: Context<State, Event>) -> AnyView {
-        if context.error != nil, context.movies.isEmpty {
-            return renderError(context: context)
-        }
-        return renderMovies(context: context)
-    }
-
-    private func renderError(context: Context<State, Event>) -> AnyView {
-        return VStack {
-            Text(context.error?.localizedDescription ?? "")
-            Button(action: {
-                context.send(event: .retry)
-            }) {
-                Text("Retry")
-            }
-        }
-        .padding()
-        .eraseToAnyView()
-    }
-
-    private func renderMovies(context: Context<State, Event>) -> AnyView {
-        return List {
+    var body: some View {
+        List {
             ForEach(context.movies.identified(by: \.id)) { movie in
-                return MovieCell(movie: movie)
-                    .iff(context.movies.last == movie) { cell in
-                        return cell.onAppear {
-                            context.send(event: .fetchNext)
-                        }
+                MovieCell(movie: movie).onAppear {
+                    if self.context.movies.last == movie {
+                        self.context.send(event: .fetchNext)
                     }
+                }
             }
         }
-        .environmentObject(ConstBindable(value: imageFetcher))
-        .eraseToAnyView()
     }
 }
 
@@ -155,32 +133,14 @@ struct MovieCell: View {
 
     var body: some View {
         return HStack {
-            AsyncImage(source: poster, placeholder: UIImage(systemName: "film")!)
-                .frame(width: 77, height: 130)
-                .clipped()
+            AsyncImage(
+                source: poster,
+                placeholder: UIImage(systemName: "film")!
+            )
+            .frame(width: 77, height: 130)
+            .clipped()
             Text(movie.title).font(.title)
         }
-    }
-}
-
-extension View {
-    func iff(_ condition: Bool, modifier: (Self) -> Self) -> Self {
-        return condition ? modifier(self) : self
-    }
-    
-    func iff<TrueContent: View>(_ condition: Bool, modifier:  (Self) -> TrueContent) -> ConditionalContent<TrueContent, Self> {
-        if condition {
-            return ViewBuilder.buildEither(first: modifier(self))
-        }
-        return ViewBuilder.buildEither(second: self)
-    }
-
-    func some<Value>(_ optional: Value?, modifier: (Value, Self) -> AnyView) -> some View {
-        guard let value = optional else {
-            return eraseToAnyView()
-        }
-
-        return modifier(value, self).eraseToAnyView()
     }
 }
 
@@ -230,8 +190,6 @@ var shouldFail = false
 func switchFail() {
     shouldFail = !shouldFail
 }
-
-extension JSONDecoder: TopLevelDecoder {}
 
 extension URLSession {
     func fetchMovies(page: Int) -> AnyPublisher<Results, NSError> {
