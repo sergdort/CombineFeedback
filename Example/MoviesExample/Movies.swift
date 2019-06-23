@@ -28,31 +28,17 @@ final class MoviesViewModel: ViewModel<MoviesViewModel.State, MoviesViewModel.Ev
     private static func reducer(state: State, event: Event) -> State {
         switch event {
         case .didLoad(let batch):
-            var copy = state
-
-            copy.batch = batch
-            copy.movies += batch.results
-            copy.status = .idle
-
-            return copy
+            return state.set(\.batch, batch)
+                .set(\.movies, state.movies + batch.results)
+                .set(\.status, .idle)
         case .didFail(let error):
-            var copy = state
-
-            copy.status = .failed(error)
-
-            return copy
+            return state.set(\.status, .failed(error))
         case .retry:
-            var copy = state
-
-            copy.status = .loading
-
-            return copy
+            return state
+                .set(\.status, .loading)
         case .fetchNext:
-            var copy = state
-
-            copy.status = .loading
-
-            return copy
+            return state
+                .set(\.status, .loading)
         }
     }
 
@@ -72,7 +58,7 @@ final class MoviesViewModel: ViewModel<MoviesViewModel.State, MoviesViewModel.Ev
         case fetchNext
     }
 
-    struct State {
+    struct State: Builder {
         var batch: Results
         var movies: [Movie]
         var status: Status
@@ -196,7 +182,7 @@ extension URLSession {
         let url = URL(string: "https://api.themoviedb.org/3/discover/movie?api_key=\(shouldFail ? "" : correctAPIKey)&sort_by=popularity.desc&page=\(page)")!
         let request = URLRequest(url: url)
 
-        return send(request: request)
+        return dataTaskPublisher(for: request)
             .map { $0.data }
             .decode(type: Results.self, decoder: JSONDecoder())
             .mapError { (error) -> NSError in

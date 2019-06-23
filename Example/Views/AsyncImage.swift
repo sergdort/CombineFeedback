@@ -47,7 +47,7 @@ class ImageFetcher {
             }
 
             return URLSession.shared
-                .send(url: url)
+                .dataTaskPublisher(for: url)
                 .map { $0.data }
                 .compactMap(UIImage.init(data:))
                 .receive(on: DispatchQueue.main)

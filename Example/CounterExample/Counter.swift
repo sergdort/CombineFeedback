@@ -4,7 +4,7 @@ import CombineFeedbackUI
 import SwiftUI
 
 final class CounterViewModel: ViewModel<CounterViewModel.State, CounterViewModel.Event> {
-    struct State {
+    struct State: Builder {
         var count = 0
     }
 
@@ -28,9 +28,9 @@ final class CounterViewModel: ViewModel<CounterViewModel.State, CounterViewModel
     ) -> State {
         switch event {
         case .increment:
-            return State(count: state.count + 1)
+            return state.set(\.count, state.count + 1)
         case .decrement:
-            return State(count: state.count - 1)
+            return state.set(\.count, state.count - 1)
         }
     }
 }
