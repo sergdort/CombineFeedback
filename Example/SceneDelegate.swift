@@ -31,8 +31,20 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             image: UIImage(systemName: "film"),
             selectedImage: UIImage(systemName: "film.fill")
         )
+        let signIn = UIHostingController(
+            rootView: NavigationView {
+                return Widget(viewModel: SignInViewModel(), render: SignInView.init)
+                    .navigationBarTitle(Text("Sign In"))
+            }
+        )
+        
+        signIn.tabBarItem = UITabBarItem(
+            title: nil,
+            image: UIImage(systemName: "person"),
+            selectedImage: UIImage(systemName: "person.fill")
+        )
 
-        tabbarController.viewControllers = [counter, movies]
+        tabbarController.viewControllers = [counter, movies, signIn]
         window.rootViewController = tabbarController
         self.window = window
         window.makeKeyAndVisible()
