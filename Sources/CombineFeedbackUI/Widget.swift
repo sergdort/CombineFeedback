@@ -8,7 +8,7 @@ public struct Widget<State, Event, Content: View>: View {
 
     public init(
         viewModel: ViewModel<State, Event>,
-        render: @escaping (Context<State, Event>) -> Content
+        @ViewBuilder render: @escaping (Context<State, Event>) -> Content
     ) {
         self.view = SwiftUI.State(
             initialValue: render(Context(state: viewModel.initial, viewModel: viewModel))
