@@ -141,8 +141,8 @@ Sometimes tho we are only interested in the particular value of `State ` propert
 
 ```
 struct State  {
-        var email = ""
-        var password = ""
+    var email = ""
+    var password = ""
 }
 
 viewModel.mutate(keyPath: \.email, "example@example.com")
@@ -155,7 +155,7 @@ viewModel.mutate(keyPath: \.email, "example@example.com")
 
 ```
 Widget(viewModel: SignInViewModel()) { context in
-	SignInView(context: context)
+    SignInView(context: context)
 }
 ```
 
@@ -165,8 +165,8 @@ Widget(viewModel: SignInViewModel()) { context in
 
 ```
 struct State  {
-        var email = ""
-        var password = ""
+    var email = ""
+    var password = ""
 }
 enum Event {
 	case signIn
