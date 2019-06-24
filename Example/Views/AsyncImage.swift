@@ -59,3 +59,18 @@ class ImageFetcher {
         .eraseToAnyPublisher()
     }
 }
+
+struct ImageFetcherKey: EnvironmentKey {
+    static let defaultValue: ImageFetcher = ImageFetcher()
+}
+
+extension EnvironmentValues {
+    var imageFetcher: ImageFetcher {
+        get {
+            return self[ImageFetcherKey.self]
+        }
+        set {
+            self[ImageFetcherKey.self] = newValue
+        }
+    }
+}

@@ -110,11 +110,11 @@ struct MoviesView: View {
 }
 
 struct MovieCell: View {
-    @EnvironmentObject private var fetcher: ConstBindable<ImageFetcher>
+    @Environment(\.imageFetcher) var fetcher: ImageFetcher
     var movie: Movie
 
     private var poster: AnyPublisher<UIImage, Never> {
-        return fetcher.value.image(for: movie.posterURL)
+        return fetcher.image(for: movie.posterURL)
     }
 
     var body: some View {

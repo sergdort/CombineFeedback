@@ -22,7 +22,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let movies = UIHostingController(
             rootView: NavigationView {
                 return Widget(viewModel: MoviesViewModel(), render: MoviesView.init)
-                    .environmentObject(ConstBindable(value: ImageFetcher()))
                     .navigationBarTitle(Text("Movies"))
             }
         )
