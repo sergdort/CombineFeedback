@@ -192,9 +192,9 @@ struct SignInView: View {
 }
 ```
 
-##### Example
+### Example
 
-| Counter | Infinite List | SignIn Form
-| --- | --- | --- |
-|<img src="diagrams/counter.gif" width="250"/> | <img src="diagrams/movies.gif" width="250"/> | <img src="diagrams/signin.png" width="250"/>
+| Counter | Infinite List | SignIn Form | Traffic Light |
+| --- | --- | --- | --- |
+|<img src="diagrams/counter.gif" width="250"/> | <img src="diagrams/movies.gif" width="250"/> | <img src="diagrams/signin.png" width="250"/> | <img src="diagrams/traffic_light.gif" width="250"/> 
 
