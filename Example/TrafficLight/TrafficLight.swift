@@ -24,7 +24,7 @@ final class TrafficLightViewModel: ViewModel<TrafficLightViewModel.State, Traffi
                 return Publishers.Empty().eraseToAnyPublisher()
             }
             
-            return Publishers.Just(Event.next)
+            return Publishers.Once(Event.next)
                 .delay(for: 1, scheduler: DispatchQueue.main)
                 .eraseToAnyPublisher()
         })
@@ -36,7 +36,7 @@ final class TrafficLightViewModel: ViewModel<TrafficLightViewModel.State, Traffi
                 return Publishers.Empty().eraseToAnyPublisher()
             }
             
-            return Publishers.Just(Event.next)
+            return Publishers.Once(Event.next)
                 .delay(for: 1, scheduler: DispatchQueue.main)
                 .eraseToAnyPublisher()
         })
@@ -48,7 +48,7 @@ final class TrafficLightViewModel: ViewModel<TrafficLightViewModel.State, Traffi
                 return Publishers.Empty().eraseToAnyPublisher()
             }
             
-            return Publishers.Just(Event.next)
+            return Publishers.Once(Event.next)
                 .delay(for: 1, scheduler: DispatchQueue.main)
                 .eraseToAnyPublisher()
         })
@@ -104,20 +104,20 @@ final class TrafficLightViewModel: ViewModel<TrafficLightViewModel.State, Traffi
 }
 
 struct TrafficLightView: View {
-    var context: Context<TrafficLightViewModel.State, TrafficLightViewModel.Event>
+    let context: Context<TrafficLightViewModel.State, TrafficLightViewModel.Event>
     
     var body: some View {
         return VStack {
             Circle()
-                .frame(width: 200, height: 200)
+                .frame(width: 150, height: 150)
                 .animation(.default)
                 .foregroundColor(Color.red.opacity(context.isRed ? 1 : 0.5))
             Circle()
-                .frame(width: 200, height: 200)
+                .frame(width: 150, height: 150)
                 .animation(.default)
                 .foregroundColor(Color.yellow.opacity(context.isYellow ? 1 : 0.5))
             Circle()
-                .frame(width: 200, height: 200)
+                .frame(width: 150, height: 150)
                 .animation(.default)
                 .foregroundColor(Color.green.opacity(context.isGreen ? 1 : 0.5))
         }

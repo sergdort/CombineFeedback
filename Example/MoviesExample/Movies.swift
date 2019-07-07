@@ -99,9 +99,11 @@ struct MoviesView: View {
     var body: some View {
         List {
             ForEach(context.movies.identified(by: \.id)) { movie in
-                MovieCell(movie: movie).onAppear {
-                    if self.context.movies.last == movie {
-                        self.context.send(event: .fetchNext)
+                NavigationLink(destination: Widget(viewModel: MoviesViewModel(), render: MoviesView.init)) {
+                    MovieCell(movie: movie).onAppear {
+                        if self.context.movies.last == movie {
+                            self.context.send(event: .fetchNext)
+                        }
                     }
                 }
             }

@@ -5,7 +5,7 @@ extension Publisher {
         replace: @escaping (Failure) -> Self.Output
     ) -> AnyPublisher<Self.Output, Never> {
         return `catch` { error in
-            Publishers.Just(replace(error))
+            Publishers.Once(replace(error))
         }.eraseToAnyPublisher()
     }
 
