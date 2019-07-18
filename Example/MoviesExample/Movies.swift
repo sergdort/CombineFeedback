@@ -98,7 +98,7 @@ struct MoviesView: View {
 
     var body: some View {
         List {
-            ForEach(context.movies.identified(by: \.id)) { movie in
+            ForEach(context.movies) { movie in
                 NavigationLink(destination: Widget(viewModel: MoviesViewModel(), render: MoviesView.init)) {
                     MovieCell(movie: movie).onAppear {
                         if self.context.movies.last == movie {
@@ -150,7 +150,7 @@ struct Results: Codable {
     }
 }
 
-struct Movie: Codable, Equatable {
+struct Movie: Codable, Equatable, Identifiable {
     let id: Int
     let overview: String
     let title: String

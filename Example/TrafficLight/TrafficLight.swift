@@ -21,10 +21,10 @@ final class TrafficLightViewModel: ViewModel<TrafficLightViewModel.State, Traffi
     private static func whenRed() -> Feedback<State, Event> {
         return Feedback(effects: { state -> AnyPublisher<Event, Never> in
             guard case .red = state else {
-                return Publishers.Empty().eraseToAnyPublisher()
+                return Empty().eraseToAnyPublisher()
             }
             
-            return Publishers.Once(Event.next)
+            return Result.Publisher(Event.next)
                 .delay(for: 1, scheduler: DispatchQueue.main)
                 .eraseToAnyPublisher()
         })
@@ -33,10 +33,10 @@ final class TrafficLightViewModel: ViewModel<TrafficLightViewModel.State, Traffi
     private static func whenYellow() -> Feedback<State, Event> {
         return Feedback(effects: { state -> AnyPublisher<Event, Never> in
             guard case .yellow = state else {
-                return Publishers.Empty().eraseToAnyPublisher()
+                return Empty().eraseToAnyPublisher()
             }
             
-            return Publishers.Once(Event.next)
+            return Result.Publisher(Event.next)
                 .delay(for: 1, scheduler: DispatchQueue.main)
                 .eraseToAnyPublisher()
         })
@@ -45,10 +45,10 @@ final class TrafficLightViewModel: ViewModel<TrafficLightViewModel.State, Traffi
     private static func whenGreen() -> Feedback<State, Event> {
         return Feedback(effects: { state -> AnyPublisher<Event, Never> in
             guard case .green = state else {
-                return Publishers.Empty().eraseToAnyPublisher()
+                return Empty().eraseToAnyPublisher()
             }
             
-            return Publishers.Once(Event.next)
+            return Result.Publisher(Event.next)
                 .delay(for: 1, scheduler: DispatchQueue.main)
                 .eraseToAnyPublisher()
         })
