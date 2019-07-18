@@ -10,6 +10,7 @@ class CombineFeedbackTests: XCTestCase {
         let system = Publishers.system(
             initial: initial,
             feedbacks: [],
+            scheduler: DispatchQueue.main,
             reduce: { (state: String, event: String) in
                 state + event
             }
@@ -24,11 +25,12 @@ class CombineFeedbackTests: XCTestCase {
 
     func test_reducer_with_one_feedback_loop() {
         let feedback = Feedback<String, String>(effects: { _ -> AnyPublisher<String, Never> in
-            Publishers.Just("_a").eraseToAnyPublisher()
+            Just("_a").eraseToAnyPublisher()
         })
         let system = Publishers.system(
             initial: "initial",
             feedbacks: [feedback],
+            scheduler: DispatchQueue.main,
             reduce: { (state: String, event: String) in
                 state + event
             }
@@ -40,9 +42,10 @@ class CombineFeedbackTests: XCTestCase {
         _ = system.output(in: 0...3)
             .collect()
             .sink {
-            result = $0
-            exp.fulfill()
-        }
+                dump($0)
+                result = $0
+                exp.fulfill()
+            }
 
         waitForExpectations(timeout: 1, handler: nil)
 
@@ -57,14 +60,15 @@ class CombineFeedbackTests: XCTestCase {
 
     func test_reduce_with_two_immediate_feedback_loops() {
         let feedback1 = Feedback<String, String>(effects: { _ in
-            Publishers.Just("_a")
+            Just("_a")
         })
         let feedback2 = Feedback<String, String>(effects: { _ in
-            Publishers.Just("_b")
+            Just("_b")
         })
         let system = Publishers.system(
             initial: "initial",
             feedbacks: [feedback1, feedback2],
+            scheduler: DispatchQueue.main,
             reduce: { (state: String, event: String) in
                 state + event
             }
@@ -102,6 +106,7 @@ class CombineFeedbackTests: XCTestCase {
                     subject.eraseToAnyPublisher()
                 }),
             ],
+            scheduler: DispatchQueue.main,
             reduce: { (state: String, event: String) -> String in
                 state + event
             }

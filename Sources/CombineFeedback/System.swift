@@ -8,7 +8,7 @@ extension Publishers {
         scheduler: S,
         reduce: @escaping (State, Event) -> State
     ) -> AnyPublisher<State, Never> {
-        return Publishers.Deferred { () -> AnyPublisher<State, Never> in
+        return Deferred { () -> AnyPublisher<State, Never> in
             let state = CurrentValueSubject<State, Never>(initial)
 
             let events = feedbacks

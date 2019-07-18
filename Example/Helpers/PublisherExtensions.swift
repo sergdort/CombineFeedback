@@ -5,13 +5,13 @@ extension Publisher {
         replace: @escaping (Failure) -> Self.Output
     ) -> AnyPublisher<Self.Output, Never> {
         return `catch` { error in
-            Publishers.Once(replace(error))
+            Result.Publisher(replace(error))
         }.eraseToAnyPublisher()
     }
 
     public func ignoreError() -> AnyPublisher<Output, Never> {
         return `catch` { _ in
-            Publishers.Empty()
+            Empty()
         }.eraseToAnyPublisher()
     }
 }

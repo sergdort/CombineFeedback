@@ -38,7 +38,7 @@ final class SignInViewModel: ViewModel<SignInViewModel.State, SignInViewModel.Ev
     static func whenSubmiting(api: GithubAPI) -> Feedback<State, Event> {
         return Feedback(effects: { (state) -> AnyPublisher<Event, Never> in
             guard state.status.isSubmitting else {
-                return Publishers.Empty().eraseToAnyPublisher()
+                return Empty().eraseToAnyPublisher()
             }
             
             return api
@@ -246,14 +246,14 @@ extension Builder {
 final class GithubAPI {
     func usernameAvailable(username: String) -> AnyPublisher<Bool, Never> {
         // Fake implementation
-        return Publishers.Once(Int.random(in: 0...100) % 2 == 0)
+        return Result.Publisher(Int.random(in: 0...100) % 2 == 0)
             .delay(for: 0.3, scheduler: DispatchQueue.main)
             .eraseToAnyPublisher()
     }
     
     func singIn(username: String, email: String, password: String) -> AnyPublisher<Bool, Never> {
         // Fake implementation
-        return Publishers.Once(true)
+        return Result.Publisher(true)
             .delay(for: 0.3, scheduler: DispatchQueue.main)
             .eraseToAnyPublisher()
     }
