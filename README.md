@@ -139,7 +139,7 @@ When we send `.fetchNext` event, it goes to the `reducer` where we put our syste
 
 Sometimes tho we are only interested in the particular value of `State ` property to be changed. E.g if we are building a signup form and we just want to change `email` property on the state. We can do something like this
 
-```
+```swift
 struct State  {
     var email = ""
     var password = ""
@@ -153,7 +153,7 @@ viewModel.mutate(keyPath: \.email, "example@example.com")
 `Widget<State, Event>` - is a convenience `View` that takes a `ViewModel` and  `render` closure which renders new content every time the `State` changes.
 
 
-```
+```swift
 Widget(viewModel: SignInViewModel()) { context in
     SignInView(context: context)
 }
@@ -163,7 +163,7 @@ Widget(viewModel: SignInViewModel()) { context in
 
 `Context<State, Event>` - is a rendering context that we can use to interact with UI and render information. Via  `@dynamicMemberLookup` it has all of the properties of the `State` and several conveniences methods for more seamless integration with SwiftUI. (Credits to [@andersio](https://github.com/andersio))
 
-```
+```swift
 struct State  {
     var email = ""
     var password = ""
@@ -192,9 +192,9 @@ struct SignInView: View {
 }
 ```
 
-##### Example
+### Example
 
-| Counter | Infinite List | SignIn Form
-| --- | --- | --- |
-|<img src="diagrams/counter.gif" width="250"/> | <img src="diagrams/movies.gif" width="250"/> | <img src="diagrams/signin.png" width="250"/>
+| Counter | Infinite List | SignIn Form | Traffic Light |
+| --- | --- | --- | --- |
+|<img src="diagrams/counter.gif" width="250"/> | <img src="diagrams/movies.gif" width="250"/> | <img src="diagrams/signin.png" width="250"/> | <img src="diagrams/traffic_light.gif" width="250"/> 
 

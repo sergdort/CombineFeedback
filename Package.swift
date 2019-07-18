@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "CombineFeedbackk",
+    name: "CombineFeedback",
     platforms: [
         .macOS(.v10_15),
         .iOS(.v13)

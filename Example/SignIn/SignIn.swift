@@ -146,8 +146,8 @@ struct SignInView: View {
             Section {
                 HStack {
                     TextField(
-                        context.binding(for: \.userName, event: Event.didChageUserName),
-                        placeholder: Text("Username")
+                        "Username",
+                        text: context.binding(for: \.userName, event: Event.didChageUserName)
                     )
                     .textFieldStyle(.roundedBorder)
                     .textContentType(.username)
@@ -160,20 +160,20 @@ struct SignInView: View {
                     }
                 }
                 TextField(
-                    context.binding(for: \.email),
-                    placeholder: Text("Email")
+                    "Username",
+                    text: context.binding(for: \.email)
                 )
                 .textFieldStyle(.roundedBorder)
                 .textContentType(.emailAddress)
                 TextField(
-                    context.binding(for: \.password),
-                    placeholder: Text("Password")
+                    "Password",
+                    text: context.binding(for: \.password)
                 )
                 .textFieldStyle(.roundedBorder)
                 .textContentType(.newPassword)
                 TextField(
-                    context.binding(for: \.repeatPassword),
-                    placeholder: Text("Repeat Password")
+                    "Repeat Password",
+                    text: context.binding(for: \.repeatPassword)
                 )
                 .textFieldStyle(.roundedBorder)
                 .textContentType(.newPassword)
@@ -246,14 +246,14 @@ extension Builder {
 final class GithubAPI {
     func usernameAvailable(username: String) -> AnyPublisher<Bool, Never> {
         // Fake implementation
-        return Publishers.Just(Int.random(in: 0...100) % 2 == 0)
+        return Publishers.Once(Int.random(in: 0...100) % 2 == 0)
             .delay(for: 0.3, scheduler: DispatchQueue.main)
             .eraseToAnyPublisher()
     }
     
     func singIn(username: String, email: String, password: String) -> AnyPublisher<Bool, Never> {
         // Fake implementation
-        return Publishers.Just(true)
+        return Publishers.Once(true)
             .delay(for: 0.3, scheduler: DispatchQueue.main)
             .eraseToAnyPublisher()
     }
