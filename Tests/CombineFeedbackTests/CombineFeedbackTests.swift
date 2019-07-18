@@ -57,10 +57,10 @@ class CombineFeedbackTests: XCTestCase {
 
     func test_reduce_with_two_immediate_feedback_loops() {
         let feedback1 = Feedback<String, String>(effects: { _ in
-            Publishers.Just("_a")
+            Just("_a")
         })
         let feedback2 = Feedback<String, String>(effects: { _ in
-            Publishers.Just("_b")
+            Just("_b")
         })
         let system = Publishers.system(
             initial: "initial",

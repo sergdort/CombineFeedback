@@ -39,9 +39,9 @@ class ImageFetcher {
     private let cache = NSCache<NSURL, UIImage>()
 
     func image(for url: URL) -> AnyPublisher<UIImage, Never> {
-        return Publishers.Deferred { () -> AnyPublisher<UIImage, Never> in
+        return Deferred { () -> AnyPublisher<UIImage, Never> in
             if let image = self.cache.object(forKey: url as NSURL) {
-                return Publishers.Once(image)
+                return Just(image)
                     .receive(on: DispatchQueue.main)
                     .eraseToAnyPublisher()
             }

@@ -127,7 +127,7 @@ When we send `.fetchNext` event, it goes to the `reducer` where we put our syste
     private static func whenLoading() -> Feedback<State, Event> {
         return Feedback(effects: { state -> AnyPublisher<Event, Never> in
             guard case .loading = state.status else {
-                return Publishers.Empty().eraseToAnyPublisher()
+                return Empty().eraseToAnyPublisher()
             }
             return URLSession.shared
                 .fetchMovies(page: state.batch + 1)

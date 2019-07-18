@@ -98,7 +98,7 @@ struct MoviesView: View {
 
     var body: some View {
         List {
-            ForEach(context.movies.identified(by: \.id)) { movie in
+          ForEach(context.movies, id:\.id) { movie in
                 NavigationLink(destination: Widget(viewModel: MoviesViewModel(), render: MoviesView.init)) {
                     MovieCell(movie: movie).onAppear {
                         if self.context.movies.last == movie {
