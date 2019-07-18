@@ -66,7 +66,7 @@ public struct Feedback<State, Event> {
             },
             effects: {
                 $0.map(effects)?
-                    .eraseToAnyPublisher() ?? Publishers.Empty().eraseToAnyPublisher()
+                    .eraseToAnyPublisher() ?? Empty().eraseToAnyPublisher()
             }
         )
     }
@@ -93,7 +93,7 @@ public struct Feedback<State, Event> {
 
             },
             effects: {
-                $0.map(effects)?.eraseToAnyPublisher() ?? Publishers.Empty().eraseToAnyPublisher()
+                $0.map(effects)?.eraseToAnyPublisher() ?? Empty().eraseToAnyPublisher()
             }
         )
     }
@@ -115,7 +115,7 @@ public struct Feedback<State, Event> {
         self.init(
             deriving: { $0 },
             effects: { state in
-                predicate(state) ? effects(state).eraseToAnyPublisher() : Publishers.Empty().eraseToAnyPublisher()
+                predicate(state) ? effects(state).eraseToAnyPublisher() : Empty().eraseToAnyPublisher()
             }
         )
     }
