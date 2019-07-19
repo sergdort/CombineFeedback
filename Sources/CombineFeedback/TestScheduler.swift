@@ -1,8 +1,6 @@
 import Foundation
 import Combine
 
-
-
 /// A scheduler that implements virtualized time, for use in testing.
 /// This implementation is *heavily* based on the TestScheduler in
 /// ReactiveSwift: https://github.com/ReactiveCocoa/ReactiveSwift/blob/master/Sources/Scheduler.swift
