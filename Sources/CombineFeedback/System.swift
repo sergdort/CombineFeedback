@@ -19,6 +19,7 @@ extension Publishers {
             return Publishers.MergeMany(events)
                 .receive(on: scheduler)
                 .scan(initial, reduce)
+                .prepend(initial)
                 .handleEvents(receiveOutput: state.send)
                 .receive(on: scheduler)
                 .eraseToAnyPublisher()
