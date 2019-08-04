@@ -28,7 +28,7 @@ extension View {
     func bind<P: Publisher, Value>(
         _ publisher: P,
         to state: Binding<Value>
-    ) -> SubscriptionView<P, Self> where P.Failure == Never, P.Output == Value {
+    ) -> some View where P.Failure == Never, P.Output == Value {
         return onReceive(publisher) { value in
             state.value = value
         }
