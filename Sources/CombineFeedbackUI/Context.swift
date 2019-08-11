@@ -20,10 +20,10 @@ public struct Context<State, Event> {
     
     public func binding<U>(for keyPath: KeyPath<State, U>, event: @escaping (U) -> Event) -> Binding<U> {
         return Binding(
-            getValue: {
+            get: {
                 self.state[keyPath: keyPath]
             },
-            setValue: {
+            set: {
                 self.viewModel.send(event: event($0))
             }
         )
@@ -31,10 +31,10 @@ public struct Context<State, Event> {
     
     public func binding<U>(for keyPath: WritableKeyPath<State, U>) -> Binding<U> {
         return Binding(
-            getValue: {
+            get: {
                 self.state[keyPath: keyPath]
             },
-            setValue: {
+            set: {
                 self.viewModel.mutate(keyPath: keyPath, value: $0)
             }
         )
