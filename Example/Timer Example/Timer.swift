@@ -9,7 +9,7 @@ final class TimerViewModel: ViewModel<TimerViewModel.State, TimerViewModel.Event
         var displayTime: String = TimerViewModel.emptyTime
         var time: Date = Date()
         var latestPausedTime: Date? = Date()
-        var negativeTimeDelta: TimeInterval = 0
+        var timePaused: TimeInterval = 0
         var isPaused: Bool = true
     }
     
@@ -41,13 +41,13 @@ final class TimerViewModel: ViewModel<TimerViewModel.State, TimerViewModel.Event
         })
     }
     
-    static var emptyTime: String {
+    private static var emptyTime: String {
         return TimerViewModel.timeFormatter.string(from: Date(timeIntervalSinceReferenceDate: 0),
                                                    to: Date(timeIntervalSinceReferenceDate: 0))!
         
     }
     
-    static var timeFormatter: DateComponentsFormatter = {
+    private static var timeFormatter: DateComponentsFormatter = {
         let dateFormatter = DateComponentsFormatter()
         dateFormatter.unitsStyle = .abbreviated
         dateFormatter.allowedUnits = [.hour, .minute, .second]
@@ -65,8 +65,7 @@ final class TimerViewModel: ViewModel<TimerViewModel.State, TimerViewModel.Event
         case .startPause:
             if state.isPaused {
                 let moreDeltaTime = Date().timeIntervalSince(state.latestPausedTime!)
-                print(moreDeltaTime)
-                return state.set(\.negativeTimeDelta, state.negativeTimeDelta + moreDeltaTime)
+                return state.set(\.timePaused, state.timePaused + moreDeltaTime)
                     .set(\.latestPausedTime, nil)
                     .set(\.isPaused, false)
             } else {
@@ -76,13 +75,13 @@ final class TimerViewModel: ViewModel<TimerViewModel.State, TimerViewModel.Event
         case .reset:
             return state.set(\.time, Date())
                 .set(\.displayTime, emptyTime)
-                .set(\.negativeTimeDelta, 0)
+                .set(\.timePaused, 0)
                 .set(\.latestPausedTime, Date())
                 .set(\.isPaused, true)
             
         case .heartBeat:
             if !state.isPaused {
-                let newTime: String = displayTime(state.time, state.negativeTimeDelta)
+                let newTime: String = displayTime(state.time, state.timePaused)
                 return state.set(\.displayTime, newTime)
             }
             return state
