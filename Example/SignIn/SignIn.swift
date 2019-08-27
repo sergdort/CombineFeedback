@@ -11,7 +11,7 @@ final class SignInViewModel: ViewModel<SignInViewModel.State, SignInViewModel.Ev
                 SignInViewModel.whenChangingUserName(api: GithubAPI()),
                 SignInViewModel.whenSubmiting(api: GithubAPI())
             ],
-            scheduler: RunLoop.main,
+            scheduler: DispatchQueue.main,
             reducer: SignInViewModel.reduce
         )
     }
@@ -141,6 +141,8 @@ struct SignInView: View {
         self.context = context
     }
     
+    @SwiftUI.State var userName: String = ""
+    
     var body: some View {
         return Form {
             Section {
@@ -179,8 +181,20 @@ struct SignInView: View {
                 .textContentType(.newPassword)
             }
             Section {
+                // Seems like a bug in switch view amimation
+                // ¯\_(ツ)_/¯
                 Toggle(isOn: context.binding(for: \.termsAccepted)) {
                     Text("Accept Terms and Conditions")
+                }
+                // When wrapping `UISwitch` into UIViewRepresentable
+                // everything works
+                HStack(
+                    alignment: .center,
+                    spacing: 8
+                ) {
+                    Text("Accept Terms and Conditions")
+                    Spacer()
+                    Switch(isOn: context.binding(for: \.termsAccepted))
                 }
             }
             Section {
@@ -262,5 +276,45 @@ final class GithubAPI {
 extension String {
     var urlEscaped: String {
         return self.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) ?? ""
+    }
+}
+
+struct Switch: UIViewRepresentable {
+    let isOn: Binding<Bool>
+    let animated = true
+    
+    func makeUIView(context: UIViewRepresentableContext<Switch>) -> UISwitch {
+        let view = UISwitch(frame: .zero)
+        
+        view.addTarget(
+            context.coordinator,
+            action: #selector(Target.action(_:)),
+            for: .valueChanged
+        )
+        
+        return view
+    }
+    
+    func updateUIView(_ uiView: UISwitch, context: UIViewRepresentableContext<Switch>) {
+        uiView.setOn(isOn.wrappedValue, animated: animated)
+    }
+    
+    func makeCoordinator() -> Target {
+        return Target { (view) in
+            self.isOn.wrappedValue = view.isOn
+        }
+    }
+    
+    class Target: NSObject {
+        init(action: @escaping (UISwitch) -> Void) {
+            self._action = action
+        }
+        
+        private let _action: (UISwitch) -> Void
+        
+        @objc
+        func action(_ sender: UISwitch) {
+            _action(sender)
+        }
     }
 }
