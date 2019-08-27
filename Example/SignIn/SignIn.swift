@@ -149,7 +149,7 @@ struct SignInView: View {
                         "Username",
                         text: context.binding(for: \.userName, event: Event.didChageUserName)
                     )
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
                     .textContentType(.username)
                     Group {
                         if context.status.isCheckingUserName {
@@ -163,19 +163,19 @@ struct SignInView: View {
                     "Username",
                     text: context.binding(for: \.email)
                 )
-                .textFieldStyle(.roundedBorder)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
                 .textContentType(.emailAddress)
                 TextField(
                     "Password",
                     text: context.binding(for: \.password)
                 )
-                .textFieldStyle(.roundedBorder)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
                 .textContentType(.newPassword)
                 TextField(
                     "Repeat Password",
                     text: context.binding(for: \.repeatPassword)
                 )
-                .textFieldStyle(.roundedBorder)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
                 .textContentType(.newPassword)
             }
             Section {
