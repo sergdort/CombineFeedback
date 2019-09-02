@@ -1,5 +1,6 @@
 import Combine
 @testable import CombineFeedback
+import Thresher
 import XCTest
 
 class CombineFeedbackTests: XCTestCase {

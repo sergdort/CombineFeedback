@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -38,7 +38,7 @@
 		583971C522ADFA1F00139CC0 /* ViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583971C422ADFA1F00139CC0 /* ViewModel.swift */; };
 		58C6E5E022A9F027005A9685 /* Movies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58C6E5DF22A9F027005A9685 /* Movies.swift */; };
 		58C6E5E722AB14DB005A9685 /* AsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58C6E5E622AB14DB005A9685 /* AsyncImage.swift */; };
-		7415E15122E1B4F000117DA3 /* TestScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A3948222E0B7E20061CE51 /* TestScheduler.swift */; };
+		74936CB4231D7579000DB91D /* Thresher in Frameworks */ = {isa = PBXBuildFile; productRef = 74936CB3231D7579000DB91D /* Thresher */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -158,7 +158,6 @@
 		58C6E5E322AA3B3B005A9685 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		58C6E5E622AB14DB005A9685 /* AsyncImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncImage.swift; sourceTree = "<group>"; };
 		742D7D6522B02A7100A97AF3 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
-		74A3948222E0B7E20061CE51 /* TestScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestScheduler.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -174,6 +173,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5800FF9A22A89BE6005A860B /* CombineFeedback.framework in Frameworks */,
+				74936CB4231D7579000DB91D /* Thresher in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -263,7 +263,6 @@
 				5800FFAA22A89C08005A860B /* Feedback.swift */,
 				5800FFAB22A89C08005A860B /* FlatMapLatest.swift */,
 				5800FFAC22A89C08005A860B /* System.swift */,
-				74A3948222E0B7E20061CE51 /* TestScheduler.swift */,
 				5800FF9422A89BE6005A860B /* Info.plist */,
 			);
 			path = CombineFeedback;
@@ -447,6 +446,9 @@
 				5800FF9C22A89BE6005A860B /* PBXTargetDependency */,
 			);
 			name = CombineFeedbackTests;
+			packageProductDependencies = (
+				74936CB3231D7579000DB91D /* Thresher */,
+			);
 			productName = CombineFeedbackTests;
 			productReference = 5800FF9922A89BE6005A860B /* CombineFeedbackTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -571,6 +573,9 @@
 				Base,
 			);
 			mainGroup = 5800FF8622A89BE6005A860B;
+			packageReferences = (
+				74936CB2231D7579000DB91D /* XCRemoteSwiftPackageReference "Thresher" */,
+			);
 			productRefGroup = 5800FF9122A89BE6005A860B /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -639,7 +644,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				5800FFAF22A89C09005A860B /* FlatMapLatest.swift in Sources */,
-				7415E15122E1B4F000117DA3 /* TestScheduler.swift in Sources */,
 				5800FFB022A89C09005A860B /* System.swift in Sources */,
 				5800FFAE22A89C09005A860B /* Feedback.swift in Sources */,
 			);
@@ -1186,6 +1190,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		74936CB2231D7579000DB91D /* XCRemoteSwiftPackageReference "Thresher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "git@github.com:mluisbrown/Thresher.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		74936CB3231D7579000DB91D /* Thresher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 74936CB2231D7579000DB91D /* XCRemoteSwiftPackageReference "Thresher" */;
+			productName = Thresher;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 5800FF8722A89BE6005A860B /* Project object */;
 }

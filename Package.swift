@@ -14,11 +14,12 @@ let package = Package(
         .library(name: "CombineFeedbackUI", targets: ["CombineFeedbackUI"]),
     ],
     dependencies: [
+        .package(url: "https://github.com/mluisbrown/Thresher.git", .branch("master")),
     ],
     targets: [
         .target(name: "CombineFeedback"),
         .target(name: "CombineFeedbackUI", dependencies: ["CombineFeedback"]),
-        .testTarget(name: "CombineFeedbackTests", dependencies: ["CombineFeedback"]),
+        .testTarget(name: "CombineFeedbackTests", dependencies: ["CombineFeedback", "Thresher"]),
         .testTarget(name: "CombineFeedbackUITests", dependencies: ["CombineFeedback", "CombineFeedbackUI"]),
     ],
     swiftLanguageVersions: [.v5]
