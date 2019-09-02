@@ -38,6 +38,7 @@
 		583971C522ADFA1F00139CC0 /* ViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583971C422ADFA1F00139CC0 /* ViewModel.swift */; };
 		58C6E5E022A9F027005A9685 /* Movies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58C6E5DF22A9F027005A9685 /* Movies.swift */; };
 		58C6E5E722AB14DB005A9685 /* AsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58C6E5E622AB14DB005A9685 /* AsyncImage.swift */; };
+		7415E15122E1B4F000117DA3 /* TestScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A3948222E0B7E20061CE51 /* TestScheduler.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -157,6 +158,7 @@
 		58C6E5E322AA3B3B005A9685 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		58C6E5E622AB14DB005A9685 /* AsyncImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncImage.swift; sourceTree = "<group>"; };
 		742D7D6522B02A7100A97AF3 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
+		74A3948222E0B7E20061CE51 /* TestScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestScheduler.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -261,6 +263,7 @@
 				5800FFAA22A89C08005A860B /* Feedback.swift */,
 				5800FFAB22A89C08005A860B /* FlatMapLatest.swift */,
 				5800FFAC22A89C08005A860B /* System.swift */,
+				74A3948222E0B7E20061CE51 /* TestScheduler.swift */,
 				5800FF9422A89BE6005A860B /* Info.plist */,
 			);
 			path = CombineFeedback;
@@ -636,6 +639,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5800FFAF22A89C09005A860B /* FlatMapLatest.swift in Sources */,
+				7415E15122E1B4F000117DA3 /* TestScheduler.swift in Sources */,
 				5800FFB022A89C09005A860B /* System.swift in Sources */,
 				5800FFAE22A89C09005A860B /* Feedback.swift in Sources */,
 			);

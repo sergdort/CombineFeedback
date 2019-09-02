@@ -7,10 +7,11 @@ class CombineFeedbackTests: XCTestCase {
         let initial = "initial"
         var result = [String]()
 
+        let scheduler = TestScheduler()
         let system = Publishers.system(
             initial: initial,
             feedbacks: [],
-            scheduler: DispatchQueue.main,
+            scheduler: scheduler,
             reduce: { (state: String, event: String) in
                 state + event
             }
@@ -20,6 +21,8 @@ class CombineFeedbackTests: XCTestCase {
             result.append($0)
         }
 
+        scheduler.advance()
+
         XCTAssertEqual(result, ["initial"])
     }
 
@@ -27,15 +30,15 @@ class CombineFeedbackTests: XCTestCase {
         let feedback = Feedback<String, String>(effects: { _ -> AnyPublisher<String, Never> in
             Just("_a").eraseToAnyPublisher()
         })
+        let scheduler = TestScheduler()
         let system = Publishers.system(
             initial: "initial",
             feedbacks: [feedback],
-            scheduler: DispatchQueue.main,
+            scheduler: scheduler,
             reduce: { (state: String, event: String) in
                 state + event
             }
         )
-        let exp = expectation(description: #function)
 
         var result: [String] = []
 
@@ -44,10 +47,9 @@ class CombineFeedbackTests: XCTestCase {
             .sink {
                 dump($0)
                 result = $0
-                exp.fulfill()
             }
 
-        waitForExpectations(timeout: 1, handler: nil)
+        scheduler.run()
 
         let expected = [
             "initial",
@@ -65,24 +67,22 @@ class CombineFeedbackTests: XCTestCase {
         let feedback2 = Feedback<String, String>(effects: { _ in
             Just("_b")
         })
+        let scheduler = TestScheduler()
         let system = Publishers.system(
             initial: "initial",
             feedbacks: [feedback1, feedback2],
-            scheduler: DispatchQueue.main,
+            scheduler: scheduler,
             reduce: { (state: String, event: String) in
                 state + event
             }
         )
         var results: [String] = []
 
-        let exp = expectation(description: #function)
-
         _ = system.output(in: 0...5).collect().sink {
             results = $0
-            exp.fulfill()
         }
 
-        waitForExpectations(timeout: 1, handler: nil)
+        scheduler.run()
 
         let expected = [
             "initial",
@@ -98,7 +98,7 @@ class CombineFeedbackTests: XCTestCase {
 
     func test_should_observe_signals_immediately() {
         let subject = PassthroughSubject<String, Never>()
-        let exp = expectation(description: #function)
+        let scheduler = TestScheduler()
         let system = Publishers.system(
             initial: "initial",
             feedbacks: [
@@ -106,7 +106,7 @@ class CombineFeedbackTests: XCTestCase {
                     subject.eraseToAnyPublisher()
                 }),
             ],
-            scheduler: DispatchQueue.main,
+            scheduler: scheduler,
             reduce: { (state: String, event: String) -> String in
                 state + event
             }
@@ -117,17 +117,14 @@ class CombineFeedbackTests: XCTestCase {
         _ = system.sink(
             receiveValue: {
                 value = $0
-                if $0 == "initial_a" {
-                    exp.fulfill()
-                }
             }
         )
 
+        scheduler.advance()
         XCTAssertEqual("initial", value)
 
         subject.send("_a")
-
-        waitForExpectations(timeout: 1, handler: nil)
+        scheduler.advance()
 
         XCTAssertEqual("initial_a", value)
     }

@@ -18,9 +18,9 @@ struct AsyncImage: View {
     }
 
     var body: some View {
-        return Image(uiImage: image.binding.value)
+        return Image(uiImage: image.wrappedValue)
             .resizable()
-            .bind(source, to: image.binding.animation(animation))
+            .bind(source, to: image.projectedValue.animation(animation))
     }
 }
 
@@ -28,9 +28,9 @@ extension View {
     func bind<P: Publisher, Value>(
         _ publisher: P,
         to state: Binding<Value>
-    ) -> SubscriptionView<P, Self> where P.Failure == Never, P.Output == Value {
+    ) -> some View where P.Failure == Never, P.Output == Value {
         return onReceive(publisher) { value in
-            state.value = value
+            state.wrappedValue = value
         }
     }
 }

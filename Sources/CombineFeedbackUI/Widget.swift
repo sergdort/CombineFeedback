@@ -21,7 +21,7 @@ public struct Widget<State, Event, Content: View>: View {
     }
 
     public var body: some View {
-        return view.value.bind(viewPublisher, to: view.binding)
+        return view.wrappedValue.bind(viewPublisher, to: view.projectedValue)
     }
 }
 
@@ -29,9 +29,9 @@ extension View {
     func bind<P: Publisher, Value>(
         _ publisher: P,
         to binding: Binding<Value>
-    ) -> SubscriptionView<P, Self> where P.Failure == Never, P.Output == Value {
+    ) -> some View where P.Failure == Never, P.Output == Value {
         return onReceive(publisher) { value in
-            binding.value = value
+            binding.wrappedValue = value
         }
     }
 }
