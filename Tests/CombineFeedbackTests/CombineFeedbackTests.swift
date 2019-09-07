@@ -128,4 +128,58 @@ class CombineFeedbackTests: XCTestCase {
 
         XCTAssertEqual("initial_a", value)
     }
+  
+    func test_system_in_a_system() {
+        let scheduler = TestScheduler()
+      
+        let feedback1 = Feedback<String, String>(effects: { state -> AnyPublisher<String, Never> in
+          if state.count % 3 == 1 {
+              return Just("a").eraseToAnyPublisher()
+          } else {
+              return Empty<String,Never>().eraseToAnyPublisher()
+          }
+        })
+        
+        let feedback2 = Feedback<String, String>(effects: { state -> AnyPublisher<String, Never> in
+          if state.count % 3 == 0 {
+              return Just("d").eraseToAnyPublisher()
+          } else {
+              return Empty<String,Never>().eraseToAnyPublisher()
+          }
+        })
+      
+        let innerSystem = Feedback<String, String>{ (stringPublisher: AnyPublisher<String, Never>) ->  AnyPublisher<String, Never> in
+            return stringPublisher.flatMap { (string) -> AnyPublisher<String, Never> in
+                return Publishers.system(initial: string,
+                                         feedbacks: [feedback1, feedback2],
+                                         scheduler: scheduler) { (state: String, event: String) -> String in
+                                                return state + event
+                }.filter({ (state) -> Bool in
+                    state.count % 2 == 0
+                }).map({ (state) -> String in
+                    return state + "c"
+                }).eraseToAnyPublisher()
+            }.eraseToAnyPublisher()
+        }
+      
+        let outerSystem = Publishers.system(
+            initial: "initial",
+            feedbacks: [innerSystem],
+            scheduler: scheduler,
+            reduce: { (state: String, event: String) -> String in
+                return event
+            }
+        )
+
+        var value: String?
+
+        _ = outerSystem.sink(
+            receiveValue: {
+                value = $0
+            }
+        )
+
+        scheduler.advance()
+        XCTAssertEqual("initialacdc", value)
+    }
 }
