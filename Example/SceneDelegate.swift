@@ -63,7 +63,20 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             selectedImage: UIImage(systemName: "tortoise.fill")
         )
 
-        tabbarController.viewControllers = [counter, movies, signIn, trafficLight]
+        let account = UIHostingController(
+            rootView: NavigationView {
+                return Widget(viewModel: UserAccountViewModel(),
+                              render: UserAccountView.init)
+            }
+        )
+
+        account.tabBarItem = UITabBarItem(
+            title: nil,
+            image: UIImage(systemName: "at"),
+            selectedImage: UIImage(systemName: "at.fill")
+        )
+
+        tabbarController.viewControllers = [counter, movies, signIn, trafficLight, account]
         window.rootViewController = tabbarController
         self.window = window
         window.makeKeyAndVisible()

@@ -2,8 +2,8 @@ import SwiftUI
 
 struct Activity: UIViewRepresentable {
     typealias UIViewType = UIActivityIndicatorView
-    
-    var style: UIActivityIndicatorView.Style
+    var isAnimating: Binding<Bool>
+    let style: UIActivityIndicatorView.Style
     
     func makeUIView(context: UIViewRepresentableContext<Activity>) -> UIActivityIndicatorView {
         let view = UIActivityIndicatorView(style: style)
@@ -11,13 +11,15 @@ struct Activity: UIViewRepresentable {
         return view
     }
     
-    func updateUIView(_ uiView: UIActivityIndicatorView, context: UIViewRepresentableContext<Activity>) {}
+    public func updateUIView(_ uiView: UIActivityIndicatorView, context: UIViewRepresentableContext<Activity>) {
+        isAnimating.wrappedValue ? uiView.startAnimating() : uiView.stopAnimating()
+    }
 }
 
 #if DEBUG
 struct Activity_Previews : PreviewProvider {
     static var previews: some View {
-        Activity(style: .medium)
+        Activity(isAnimating: .constant(true), style: .medium)
     }
 }
 #endif
