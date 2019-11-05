@@ -14,8 +14,6 @@ public struct UserAccountView: View {
     private let loginViewModel: LoginViewModel
     private let registrationViewModel: RegistrationViewModel
 
-    private let authenticationSubject: PassthroughSubject<LoggedAccount?, Never> = PassthroughSubject()
-
     private let cancellable: AnyCancellable
 
     public init(context: Context<State, Event>) {
