@@ -155,7 +155,7 @@ struct SignInView: View {
                     .textContentType(.username)
                     Group {
                         if context.status.isCheckingUserName {
-                            Activity(style: .medium)
+                            Activity(isAnimating: .constant(true), style: .medium)
                         } else {
                             Image(systemName: context.isAvailable ? "hand.thumbsup.fill" : "xmark.seal.fill")
                         }
@@ -210,7 +210,7 @@ struct SignInView: View {
                     }
                     Group {
                         if context.status.isSubmitting {
-                            Activity(style: .medium)
+                            Activity(isAnimating: .constant(true), style: .medium)
                         } else {
                             EmptyView()
                         }
