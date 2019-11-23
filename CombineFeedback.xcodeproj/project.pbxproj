@@ -11,6 +11,7 @@
 		253D324122B185FA002F3B7F /* Context.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253D323F22B1858C002F3B7F /* Context.swift */; };
 		25C57B2C22BC2C33007CB4D6 /* Activity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C57B2B22BC2C33007CB4D6 /* Activity.swift */; };
 		25F23C2922CA984E00894863 /* TrafficLight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F23C2822CA984E00894863 /* TrafficLight.swift */; };
+		3C1B30282300624E00E7AE4D /* Timer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C1B30272300624E00E7AE4D /* Timer.swift */; };
 		5800000022A9DDE5005A860B /* CombineFeedbackUI.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5800FFEA22A9DDE5005A860B /* CombineFeedbackUI.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		5800000D22A9DE8F005A860B /* CombineFeedback.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5800FF9022A89BE6005A860B /* CombineFeedback.framework */; };
 		5800000E22A9DE8F005A860B /* CombineFeedback.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5800FF9022A89BE6005A860B /* CombineFeedback.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -124,6 +125,7 @@
 		253D323F22B1858C002F3B7F /* Context.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Context.swift; sourceTree = "<group>"; };
 		25C57B2B22BC2C33007CB4D6 /* Activity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Activity.swift; sourceTree = "<group>"; };
 		25F23C2822CA984E00894863 /* TrafficLight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrafficLight.swift; sourceTree = "<group>"; };
+		3C1B30272300624E00E7AE4D /* Timer.swift */ = {isa = PBXFileReference; indentWidth = 4; lastKnownFileType = sourcecode.swift; path = Timer.swift; sourceTree = "<group>"; tabWidth = 4; };
 		5800001422A9DEEA005A860B /* Widget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Widget.swift; sourceTree = "<group>"; };
 		5800FF9022A89BE6005A860B /* CombineFeedback.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = CombineFeedback.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5800FF9322A89BE6005A860B /* CombineFeedback.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CombineFeedback.h; sourceTree = "<group>"; };
@@ -136,7 +138,7 @@
 		5800FFAC22A89C08005A860B /* System.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = System.swift; sourceTree = "<group>"; };
 		5800FFB622A8CDA5005A860B /* Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Example.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5800FFB822A8CDA5005A860B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		5800FFBA22A8CDA5005A860B /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		5800FFBA22A8CDA5005A860B /* SceneDelegate.swift */ = {isa = PBXFileReference; indentWidth = 4; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; tabWidth = 4; };
 		5800FFBC22A8CDA5005A860B /* Counter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Counter.swift; sourceTree = "<group>"; };
 		5800FFBE22A8CDA7005A860B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5800FFC122A8CDA7005A860B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -228,6 +230,14 @@
 			path = TrafficLight;
 			sourceTree = "<group>";
 		};
+		3C1B30262300623E00E7AE4D /* Timer Example */ = {
+			isa = PBXGroup;
+			children = (
+				3C1B30272300624E00E7AE4D /* Timer.swift */,
+			);
+			path = "Timer Example";
+			sourceTree = "<group>";
+		};
 		5800FF8622A89BE6005A860B = {
 			isa = PBXGroup;
 			children = (
@@ -280,6 +290,7 @@
 		5800FFB722A8CDA5005A860B /* Example */ = {
 			isa = PBXGroup;
 			children = (
+				3C1B30262300623E00E7AE4D /* Timer Example */,
 				583971BD22ADB9DF00139CC0 /* Helpers */,
 				58C6E5E522AB149D005A9685 /* Views */,
 				58C6E5DE22A9EFDF005A9685 /* CounterExample */,
@@ -664,6 +675,7 @@
 				25C57B2C22BC2C33007CB4D6 /* Activity.swift in Sources */,
 				58C6E5E022A9F027005A9685 /* Movies.swift in Sources */,
 				252BF08422BAE05700BC4265 /* SignIn.swift in Sources */,
+				3C1B30282300624E00E7AE4D /* Timer.swift in Sources */,
 				5800FFB922A8CDA5005A860B /* AppDelegate.swift in Sources */,
 				5800FFBB22A8CDA5005A860B /* SceneDelegate.swift in Sources */,
 				583971C322ADBA9900139CC0 /* PublisherExtensions.swift in Sources */,
@@ -1050,6 +1062,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "Example/Preview\\ Content";
+				DEVELOPMENT_TEAM = BDB4XSJTE3;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Example/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1070,6 +1083,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "Example/Preview\\ Content";
+				DEVELOPMENT_TEAM = BDB4XSJTE3;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Example/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

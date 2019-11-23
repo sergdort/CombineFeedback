@@ -62,8 +62,19 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             image: UIImage(systemName: "tortoise"),
             selectedImage: UIImage(systemName: "tortoise.fill")
         )
-
-        tabbarController.viewControllers = [counter, movies, signIn, trafficLight]
+      
+        let timer = UIHostingController(rootView: NavigationView{
+            Widget(viewModel: TimerViewModel(), render: TimerView.init)
+                .navigationBarTitle(Text("Timer"))
+        })
+        
+        timer.tabBarItem = UITabBarItem(
+            title: nil,
+            image: UIImage(systemName: "timer"),
+            selectedImage: UIImage(systemName: "timer")
+        )
+      
+        tabbarController.viewControllers = [counter, movies, signIn, trafficLight, timer]
         window.rootViewController = tabbarController
         self.window = window
         window.makeKeyAndVisible()
