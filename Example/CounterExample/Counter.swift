@@ -3,41 +3,22 @@ import CombineFeedback
 import CombineFeedbackUI
 import SwiftUI
 
-final class CounterViewModel: ViewModel<CounterViewModel.State, CounterViewModel.Event> {
-    struct State: Builder {
-        var count = 0
-    }
-
-    enum Event {
-        case increment
-        case decrement
-    }
-
-    init() {
-        super.init(
-            initial: State(),
-            feedbacks: [],
-            scheduler: DispatchQueue.main,
-            reducer: CounterViewModel.reducer(state:event:)
-        )
-    }
-
-    private static func reducer(
-        state: State,
-        event: Event
-    ) -> State {
-        switch event {
-        case .increment:
-            return state.set(\.count, state.count + 1)
-        case .decrement:
-            return state.set(\.count, state.count - 1)
+extension Counter {
+    final class ViewModel: CombineFeedbackUI.ViewModel<Counter.State, Counter.Event> {
+        init() {
+            super.init(
+                initial: State(),
+                feedbacks: [],
+                scheduler: DispatchQueue.main,
+                reducer: Counter.reducer(state:event:)
+            )
         }
     }
 }
 
 struct CounterView: View {
-    typealias State = CounterViewModel.State
-    typealias Event = CounterViewModel.Event
+    typealias State = Counter.State
+    typealias Event = Counter.Event
     
     let context: Context<State, Event>
 

@@ -38,23 +38,31 @@ open class ViewModel<State, Event> {
         self.input.observer(.mutation(Mutation(keyPath: keyPath, value: value)))
     }
 
-    private enum Update {
-        case event(Event)
-        case mutation(Mutation)
+    func mutate(with mutation: Mutation<State>) {
+        self.input.observer(.mutation(mutation))
     }
 
-    private struct Mutation {
-        let mutate: (State) -> State
+    private enum Update {
+        case event(Event)
+        case mutation(Mutation<State>)
+    }
+}
 
-        init<V>(keyPath: WritableKeyPath<State, V>, value: V) {
-            self.mutate = { state in
-                var copy = state
+public struct Mutation<State> {
+    let mutate: (State) -> State
 
-                copy[keyPath: keyPath] = value
+    init<V>(keyPath: WritableKeyPath<State, V>, value: V) {
+        self.mutate = { state in
+            var copy = state
 
-                return copy
-            }
+            copy[keyPath: keyPath] = value
+
+            return copy
         }
+    }
+
+    init(mutate: @escaping (State) -> State) {
+        self.mutate = mutate
     }
 }
 

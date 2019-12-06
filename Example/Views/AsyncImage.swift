@@ -3,7 +3,7 @@ import Combine
 import CombineFeedback
 
 struct AsyncImage: View {
-    private let image: State<UIImage>
+    private let image: SwiftUI.State<UIImage>
     private let source: AnyPublisher<UIImage, Never>
     private let animation: Animation?
 
@@ -13,7 +13,7 @@ struct AsyncImage: View {
         animation: Animation? = nil
     ) {
         self.source = source
-        self.image = State(initialValue: placeholder)
+        self.image = SwiftUI.State(initialValue: placeholder)
         self.animation = animation
     }
 

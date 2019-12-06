@@ -3,108 +3,73 @@ import Combine
 import CombineFeedback
 import CombineFeedbackUI
 
-final class TrafficLightViewModel: ViewModel<TrafficLightViewModel.State, TrafficLightViewModel.Event> {
-    
-    init() {
-        super.init(
-            initial: .red,
-            feedbacks: [
-                TrafficLightViewModel.whenRed(),
-                TrafficLightViewModel.whenYellow(),
-                TrafficLightViewModel.whenGreen()
-            ],
-            scheduler: DispatchQueue.main,
-            reducer: TrafficLightViewModel.reduce
-        )
-    }
-    
-    private static func whenRed() -> Feedback<State, Event> {
-        return Feedback(effects: { state -> AnyPublisher<Event, Never> in
-            guard case .red = state else {
-                return Empty().eraseToAnyPublisher()
-            }
-            
-            return Result.Publisher(Event.next)
-                .delay(for: 1, scheduler: DispatchQueue.main)
-                .eraseToAnyPublisher()
-        })
-    }
-    
-    private static func whenYellow() -> Feedback<State, Event> {
-        return Feedback(effects: { state -> AnyPublisher<Event, Never> in
-            guard case .yellow = state else {
-                return Empty().eraseToAnyPublisher()
-            }
-            
-            return Result.Publisher(Event.next)
-                .delay(for: 1, scheduler: DispatchQueue.main)
-                .eraseToAnyPublisher()
-        })
-    }
-    
-    private static func whenGreen() -> Feedback<State, Event> {
-        return Feedback(effects: { state -> AnyPublisher<Event, Never> in
-            guard case .green = state else {
-                return Empty().eraseToAnyPublisher()
-            }
-            
-            return Result.Publisher(Event.next)
-                .delay(for: 1, scheduler: DispatchQueue.main)
-                .eraseToAnyPublisher()
-        })
-    }
+extension TrafficLight {
+    final class ViewModel: CombineFeedbackUI.ViewModel<TrafficLight.State, TrafficLight.Event> {
 
-    private static func reduce(state: State, event: Event) -> State {
-        switch state {
-        case .red:
-            return .yellow
-        case .yellow:
-            return .green
-        case .green:
-            return .red
+        init() {
+            super.init(
+                initial: .red,
+                feedbacks: [
+                    ViewModel.whenRed(),
+                    ViewModel.whenYellow(),
+                    ViewModel.whenGreen()
+                ],
+                scheduler: DispatchQueue.main,
+                reducer: TrafficLight.reducer
+            )
         }
-    }
-    
-    enum State {
-        case red
-        case yellow
-        case green
-        
-        var isRed: Bool {
-            switch self {
+
+        private static func whenRed() -> Feedback<State, Event> {
+            return Feedback(effects: { state -> AnyPublisher<Event, Never> in
+                guard case .red = state else {
+                    return Empty().eraseToAnyPublisher()
+                }
+
+                return Result.Publisher(Event.next)
+                    .delay(for: 1, scheduler: DispatchQueue.main)
+                    .eraseToAnyPublisher()
+            })
+        }
+
+        private static func whenYellow() -> Feedback<State, Event> {
+            return Feedback(effects: { state -> AnyPublisher<Event, Never> in
+                guard case .yellow = state else {
+                    return Empty().eraseToAnyPublisher()
+                }
+
+                return Result.Publisher(Event.next)
+                    .delay(for: 1, scheduler: DispatchQueue.main)
+                    .eraseToAnyPublisher()
+            })
+        }
+
+        private static func whenGreen() -> Feedback<State, Event> {
+            return Feedback(effects: { state -> AnyPublisher<Event, Never> in
+                guard case .green = state else {
+                    return Empty().eraseToAnyPublisher()
+                }
+
+                return Result.Publisher(Event.next)
+                    .delay(for: 1, scheduler: DispatchQueue.main)
+                    .eraseToAnyPublisher()
+            })
+        }
+
+        private static func reduce(state: State, event: Event) -> State {
+            switch state {
             case .red:
-                return true
-            default:
-                return false
-            }
-        }
-        
-        var isYellow: Bool {
-            switch self {
+                return .yellow
             case .yellow:
-                return true
-            default:
-                return false
-            }
-        }
-        
-        var isGreen: Bool {
-            switch self {
+                return .green
             case .green:
-                return true
-            default:
-                return false
+                return .red
             }
         }
-    }
-    
-    enum Event {
-        case next
     }
 }
 
 struct TrafficLightView: View {
-    let context: Context<TrafficLightViewModel.State, TrafficLightViewModel.Event>
+    let context: Context<TrafficLight.State, TrafficLight.Event>
     
     var body: some View {
         return VStack {
@@ -131,7 +96,7 @@ struct TrafficLightView_Preview: PreviewProvider {
     
     static var previews: some View {
         Widget(
-            viewModel: TrafficLightViewModel(),
+            viewModel: TrafficLight.ViewModel(),
             render: TrafficLightView.init
         )
     }

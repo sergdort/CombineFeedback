@@ -4,102 +4,53 @@ import CombineFeedbackUI
 import Foundation
 import SwiftUI
 
-final class MoviesViewModel: ViewModel<MoviesViewModel.State, MoviesViewModel.Event> {
-    let initial = MoviesViewModel.State(
-        batch: Results.empty(),
-        movies: [],
-        status: .loading
-    )
-    var feedbacks: [Feedback<State, Event>] {
-        return [
-            MoviesViewModel.whenLoading()
-        ]
-    }
-
-    init() {
-        super.init(
-            initial: initial,
-            feedbacks: [MoviesViewModel.whenLoading()],
-            scheduler: DispatchQueue.main,
-            reducer: MoviesViewModel.reducer(state:event:)
+extension Movies {
+    final class ViewModel: CombineFeedbackUI.ViewModel<Movies.State, Movies.Event> {
+        let initial = Movies.State(
+            batch: Results.empty(),
+            movies: [],
+            status: .loading
         )
-    }
-
-    private static func reducer(state: State, event: Event) -> State {
-        switch event {
-        case .didLoad(let batch):
-            return state.set(\.batch, batch)
-                .set(\.movies, state.movies + batch.results)
-                .set(\.status, .idle)
-        case .didFail(let error):
-            return state.set(\.status, .failed(error))
-        case .retry:
-            return state
-                .set(\.status, .loading)
-        case .fetchNext:
-            return state
-                .set(\.status, .loading)
+        var feedbacks: [Feedback<State, Event>] {
+            return [
+                ViewModel.whenLoading()
+            ]
         }
-    }
-
-    private static func whenLoading() -> Feedback<State, Event> {
-        return Feedback(lensing: { $0.nextPage }) { page in
-            URLSession.shared
-                .fetchMovies(page: page)
-                .map(Event.didLoad)
-                .replaceError(replace: Event.didFail)
+        
+        init() {
+            super.init(
+                initial: initial,
+                feedbacks: [ViewModel.whenLoading()],
+                scheduler: DispatchQueue.main,
+                reducer: Movies.reducer(state:event:)
+            )
         }
-    }
 
-    enum Event {
-        case didLoad(Results)
-        case didFail(NSError)
-        case retry
-        case fetchNext
-    }
-
-    struct State: Builder {
-        var batch: Results
-        var movies: [Movie]
-        var status: Status
-
-        var nextPage: Int? {
-            switch status {
-            case .loading:
-                return batch.page + 1
-            case .failed:
-                return nil
-            case .idle:
-                return nil
+        private static func whenLoading() -> Feedback<State, Event> {
+            return Feedback(lensing: { $0.nextPage }) { page in
+                URLSession.shared
+                    .fetchMovies(page: page)
+                    .map(Event.didLoad)
+                    .replaceError(replace: Event.didFail)
             }
         }
 
-        var error: NSError? {
-            switch status {
-            case .failed(let error):
-                return error
-            default:
-                return nil
-            }
-        }
-    }
-
-    enum Status {
-        case idle
-        case loading
-        case failed(NSError)
     }
 }
 
 struct MoviesView: View {
-    typealias State = MoviesViewModel.State
-    typealias Event = MoviesViewModel.Event
+    typealias State = Movies.State
+    typealias Event = Movies.Event
     let context: Context<State, Event>
+
+    init(context: Context<State, Event>) {
+        self.context = context
+    }
 
     var body: some View {
         List {
             ForEach(context.movies) { movie in
-                NavigationLink(destination: Widget(viewModel: MoviesViewModel(), render: MoviesView.init)) {
+                NavigationLink(destination: MoviesView(context: self.context)) {
                     MovieCell(movie: movie).onAppear {
                         if self.context.movies.last == movie {
                             self.context.send(event: .fetchNext)

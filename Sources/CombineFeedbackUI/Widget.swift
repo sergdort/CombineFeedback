@@ -11,11 +11,23 @@ public struct Widget<State, Event, Content: View>: View {
         @ViewBuilder render: @escaping (Context<State, Event>) -> Content
     ) {
         self.view = SwiftUI.State(
-            initialValue: render(Context(state: viewModel.initial, viewModel: viewModel))
+            initialValue: render(
+                Context(
+                    state: viewModel.initial,
+                    send: viewModel.send(event:),
+                    mutate: viewModel.mutate(with:)
+                )
+            )
         )
         self.viewPublisher = viewModel.state
             .map {
-                return render(Context(state: $0, viewModel: viewModel))
+                render(
+                    Context(
+                        state: $0,
+                        send: viewModel.send(event:),
+                        mutate: viewModel.mutate(with:)
+                    )
+                )
             }
             .eraseToAnyPublisher()
     }

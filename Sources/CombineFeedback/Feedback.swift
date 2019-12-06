@@ -135,3 +135,29 @@ public struct Feedback<State, Event> {
         self.init(deriving: { $0 }, effects: effects)
     }
 }
+
+extension Feedback {
+    public static func pullback<LocalState, LocalEvent>(
+        feedback: Feedback<LocalState, LocalEvent>,
+        value: KeyPath<State, LocalState>,
+        event: @escaping (LocalEvent) -> Event
+    ) -> Feedback<State, Event> {
+        Feedback<State, Event> { (state: AnyPublisher<State, Never>) -> AnyPublisher<Event, Never> in
+            feedback.events(
+                state.map(value).eraseToAnyPublisher()
+            )
+            .map(event).eraseToAnyPublisher()
+        }
+    }
+
+    public static func combine(_ feedbacks: Feedback<State, Event>...) -> Feedback<State, Event> {
+        return Feedback(events: { state -> Publishers.MergeMany<AnyPublisher<Event, Never>> in
+            let events = feedbacks
+                .map { feedbacks in
+                    return feedbacks.events(state)
+            }
+            return Publishers.MergeMany(events)
+        })
+    }
+}
+
