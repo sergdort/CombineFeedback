@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2511BEF323F20F3000B41C3E /* CasePaths in Frameworks */ = {isa = PBXBuildFile; productRef = 2511BEF223F20F3000B41C3E /* CasePaths */; };
 		252BF08422BAE05700BC4265 /* SignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252BF08322BAE05700BC4265 /* SignIn.swift */; };
 		253D324122B185FA002F3B7F /* Context.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253D323F22B1858C002F3B7F /* Context.swift */; };
 		25C57B2C22BC2C33007CB4D6 /* Activity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C57B2B22BC2C33007CB4D6 /* Activity.swift */; };
@@ -189,6 +190,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2511BEF323F20F3000B41C3E /* CasePaths in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -504,6 +506,9 @@
 			dependencies = (
 			);
 			name = CombineFeedback;
+			packageProductDependencies = (
+				2511BEF223F20F3000B41C3E /* CasePaths */,
+			);
 			productName = CombineFeedback;
 			productReference = 5800FF9022A89BE6005A860B /* CombineFeedback.framework */;
 			productType = "com.apple.product-type.framework";
@@ -651,6 +656,7 @@
 			mainGroup = 5800FF8622A89BE6005A860B;
 			packageReferences = (
 				74936CB2231D7579000DB91D /* XCRemoteSwiftPackageReference "Thresher" */,
+				2511BEF123F20F3000B41C3E /* XCRemoteSwiftPackageReference "swift-case-paths" */,
 			);
 			productRefGroup = 5800FF9122A89BE6005A860B /* Products */;
 			projectDirPath = "";
@@ -1280,6 +1286,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		2511BEF123F20F3000B41C3E /* XCRemoteSwiftPackageReference "swift-case-paths" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-case-paths";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.1.0;
+			};
+		};
 		74936CB2231D7579000DB91D /* XCRemoteSwiftPackageReference "Thresher" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "git@github.com:mluisbrown/Thresher.git";
@@ -1291,6 +1305,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		2511BEF223F20F3000B41C3E /* CasePaths */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2511BEF123F20F3000B41C3E /* XCRemoteSwiftPackageReference "swift-case-paths" */;
+			productName = CasePaths;
+		};
 		74936CB3231D7579000DB91D /* Thresher */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 74936CB2231D7579000DB91D /* XCRemoteSwiftPackageReference "Thresher" */;

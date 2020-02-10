@@ -2,6 +2,7 @@ import Combine
 import CombineFeedback
 import CombineFeedbackUI
 import Foundation
+import CasePaths
 
 struct State: Builder {
     var counter = Counter.State()
@@ -15,62 +16,18 @@ enum Event {
     case movies(Movies.Event)
     case signIn(SignIn.Event)
     case traficLight(TrafficLight.Event)
-
-    var counter: Counter.Event? {
-        get {
-            guard case let .counter(value) = self else { return nil }
-            return value
-        }
-        set {
-            guard case .counter = self, let newValue = newValue else { return }
-            self = .counter(newValue)
-        }
-    }
-
-    var movies: Movies.Event? {
-        get {
-            guard case let .movies(value) = self else { return nil }
-            return value
-        }
-        set {
-            guard case .movies = self, let newValue = newValue else { return }
-            self = .movies(newValue)
-        }
-    }
-
-    var signIn: SignIn.Event? {
-        get {
-            guard case let .signIn(value) = self else { return nil }
-            return value
-        }
-        set {
-            guard case .signIn = self, let newValue = newValue else { return }
-            self = .signIn(newValue)
-        }
-    }
-
-    var traficLight: TrafficLight.Event? {
-        get {
-            guard case let .traficLight(value) = self else { return nil }
-            return value
-        }
-        set {
-            guard case .traficLight = self, let newValue = newValue else { return }
-            self = .traficLight(newValue)
-        }
-    }
 }
 
 let countReducer: Reducer<State, Event> = pullback(
     Counter.reducer,
     value: \.counter,
-    event: \.counter
+    event: /Event.counter
 )
 
 let moviesReducer: Reducer<State, Event> = pullback(
     Movies.reducer,
     value: \.movies,
-    event: \.movies
+    event: /Event.movies
 )
 
 let moviesFeedback: Feedback<State, Event> = Feedback.pullback(
@@ -82,7 +39,7 @@ let moviesFeedback: Feedback<State, Event> = Feedback.pullback(
 let signInReducer: Reducer<State, Event> = pullback(
     SignIn.reducer,
     value: \.signIn,
-    event: \.signIn
+    event: /Event.signIn
 )
 
 let signInFeedback: Feedback<State, Event> = Feedback.pullback(
@@ -94,7 +51,7 @@ let signInFeedback: Feedback<State, Event> = Feedback.pullback(
 let traficLightReducer: Reducer<State, Event> = pullback(
     TrafficLight.reducer,
     value: \.traficLight,
-    event: \.traficLight
+    event: /Event.traficLight
 )
 
 let traficLightFeedback = Feedback<State, Event>.pullback(
