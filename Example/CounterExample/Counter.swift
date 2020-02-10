@@ -9,7 +9,6 @@ extension Counter {
             super.init(
                 initial: State(),
                 feedbacks: [],
-                scheduler: DispatchQueue.main,
                 reducer: Counter.reducer(state:event:)
             )
         }

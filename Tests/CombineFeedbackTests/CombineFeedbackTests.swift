@@ -1,56 +1,47 @@
 import Combine
 @testable import CombineFeedback
-import Thresher
 import XCTest
 
 class CombineFeedbackTests: XCTestCase {
+    var disposable: Cancellable!
+
     func test_emits_initial() {
         let initial = "initial"
         var result = [String]()
 
-        let scheduler = TestScheduler()
         let system = Publishers.system(
             initial: initial,
             feedbacks: [],
-            scheduler: scheduler,
             reduce: { (state: String, event: String) in
                 state + event
             }
         )
 
-        _ = system.sink {
+        disposable = system.sink {
             result.append($0)
         }
-
-        scheduler.advance()
 
         XCTAssertEqual(result, ["initial"])
     }
 
     func test_reducer_with_one_feedback_loop() {
-        let feedback = Feedback<String, String>(effects: { _ -> AnyPublisher<String, Never> in
-            Just("_a").eraseToAnyPublisher()
+        let feedback = Feedback<String, String>(effects: { _ in
+            Just("_a")
         })
-        let scheduler = TestScheduler()
         let system = Publishers.system(
             initial: "initial",
             feedbacks: [feedback],
-            scheduler: scheduler,
             reduce: { (state: String, event: String) in
                 state + event
             }
         )
 
         var result: [String] = []
-
-        _ = system.output(in: 0...3)
-            .collect()
+        disposable = system.output(in: 0...3).collect()
             .sink {
-                dump($0)
                 result = $0
             }
 
-        scheduler.run()
 
         let expected = [
             "initial",
@@ -68,11 +59,9 @@ class CombineFeedbackTests: XCTestCase {
         let feedback2 = Feedback<String, String>(effects: { _ in
             Just("_b")
         })
-        let scheduler = TestScheduler()
         let system = Publishers.system(
             initial: "initial",
             feedbacks: [feedback1, feedback2],
-            scheduler: scheduler,
             reduce: { (state: String, event: String) in
                 state + event
             }
@@ -82,8 +71,6 @@ class CombineFeedbackTests: XCTestCase {
         _ = system.output(in: 0...5).collect().sink {
             results = $0
         }
-
-        scheduler.run()
 
         let expected = [
             "initial",
@@ -99,7 +86,6 @@ class CombineFeedbackTests: XCTestCase {
 
     func test_should_observe_signals_immediately() {
         let subject = PassthroughSubject<String, Never>()
-        let scheduler = TestScheduler()
         let system = Publishers.system(
             initial: "initial",
             feedbacks: [
@@ -107,26 +93,21 @@ class CombineFeedbackTests: XCTestCase {
                     subject.eraseToAnyPublisher()
                 }),
             ],
-            scheduler: scheduler,
             reduce: { (state: String, event: String) -> String in
                 state + event
             }
         )
 
-        var value: String?
+        var results: [String] = []
 
         _ = system.sink(
             receiveValue: {
-                value = $0
+                results.append($0)
             }
         )
 
-        scheduler.advance()
-        XCTAssertEqual("initial", value)
-
+        XCTAssertEqual(["initial"], results)
         subject.send("_a")
-        scheduler.advance()
-
-        XCTAssertEqual("initial_a", value)
+        XCTAssertEqual(["initial", "initial_a"], results)
     }
 }

@@ -12,14 +12,13 @@ extension SignIn {
                     ViewModel.whenChangingUserName(api: GithubAPI()),
                     ViewModel.whenSubmiting(api: GithubAPI())
                 ],
-                scheduler: DispatchQueue.main,
                 reducer: SignIn.reducer
             )
         }
 
         static func whenChangingUserName(api: GithubAPI) -> Feedback<State, Event> {
-            return Feedback { state$ in
-                state$
+            return Feedback.custom { state, consumer in
+                state
                     .map {
                         $0.userName
                     }
@@ -32,7 +31,9 @@ extension SignIn {
                     .flatMapLatest { userName in
                         return api.usernameAvailable(username: userName)
                             .map(Event.isAvailable)
+                            .enqueue(to: consumer)
                     }
+                    .start()
             }
         }
 
@@ -77,6 +78,7 @@ struct SignInView: View {
                         }
                     }
                 }
+                Text(context.userName)
                 TextField(
                     "Username",
                     text: context.binding(for: \.email)

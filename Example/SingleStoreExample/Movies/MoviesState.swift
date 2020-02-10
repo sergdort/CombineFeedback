@@ -64,6 +64,7 @@ enum Movies {
                 .fetchMovies(page: page)
                 .map(Event.didLoad)
                 .replaceError(replace: Event.didFail)
+                .receive(on: DispatchQueue.main)
         }
     }
 

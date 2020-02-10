@@ -14,7 +14,6 @@ extension TrafficLight {
                     ViewModel.whenYellow(),
                     ViewModel.whenGreen()
                 ],
-                scheduler: DispatchQueue.main,
                 reducer: TrafficLight.reducer
             )
         }

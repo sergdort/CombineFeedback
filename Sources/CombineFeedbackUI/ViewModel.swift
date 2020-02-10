@@ -7,10 +7,9 @@ open class ViewModel<State, Event> {
     internal let initial: State
     private let input = Feedback<State, Update>.input
 
-    public init<S: Scheduler>(
+    public init(
         initial: State,
         feedbacks: [Feedback<State, Event>],
-        scheduler: S,
         reducer: @escaping (State, Event) -> State
     ) {
         self.initial = initial
@@ -18,7 +17,6 @@ open class ViewModel<State, Event> {
             initial: initial,
             feedbacks: feedbacks.map { $0.mapEvent(Update.event) }
                 .appending(self.input.feedback),
-            scheduler: scheduler,
             reduce: { state, update in
                 switch update {
                 case .event(let event):
@@ -63,22 +61,6 @@ public struct Mutation<State> {
 
     init(mutate: @escaping (State) -> State) {
         self.mutate = mutate
-    }
-}
-
-extension Feedback {
-    func mapEvent<U>(_ f: @escaping (Event) -> U) -> Feedback<State, U> {
-        return Feedback<State, U>(events: { state -> AnyPublisher<U, Never> in
-            self.events(state).map(f).eraseToAnyPublisher()
-        })
-    }
-
-    static var input: (feedback: Feedback, observer: (Event) -> Void) {
-        let subject = PassthroughSubject<Event, Never>()
-        let feedback = Feedback(events: { _ in
-            return subject
-        })
-        return (feedback, subject.send)
     }
 }
 

@@ -21,7 +21,6 @@ extension Movies {
             super.init(
                 initial: initial,
                 feedbacks: [ViewModel.whenLoading()],
-                scheduler: DispatchQueue.main,
                 reducer: Movies.reducer(state:event:)
             )
         }
@@ -32,6 +31,7 @@ extension Movies {
                     .fetchMovies(page: page)
                     .map(Event.didLoad)
                     .replaceError(replace: Event.didFail)
+                    .receive(on: DispatchQueue.main)
             }
         }
 

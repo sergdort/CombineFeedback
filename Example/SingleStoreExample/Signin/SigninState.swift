@@ -92,8 +92,8 @@ enum SignIn {
     }
 
     static func whenChangingUserName(api: GithubAPI) -> Feedback<State, Event> {
-        return Feedback { state$ in
-            state$
+        return Feedback.custom { state, consumer in
+            state
                 .map {
                     $0.userName
                 }
@@ -106,7 +106,9 @@ enum SignIn {
                 .flatMapLatest { userName in
                     return api.usernameAvailable(username: userName)
                         .map(Event.isAvailable)
+                        .enqueue(to: consumer)
                 }
+                .start()
         }
     }
 

@@ -25,7 +25,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                         signInFeedback,
                         traficLightFeedback
                     ],
-                    scheduler: DispatchQueue.main,
                     reducer: appReducer
                 ),
                 render: SingleStoreExampleView.init
