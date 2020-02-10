@@ -42,7 +42,6 @@ class ImageFetcher {
         return Deferred { () -> AnyPublisher<UIImage, Never> in
             if let image = self.cache.object(forKey: url as NSURL) {
                 return Result.Publisher(image)
-                    .receive(on: DispatchQueue.main)
                     .eraseToAnyPublisher()
             }
 
