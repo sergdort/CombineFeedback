@@ -24,6 +24,7 @@ extension Publishers {
                 .receive(on: scheduler)
                 .eraseToAnyPublisher()
         }
+        .share()
         .eraseToAnyPublisher()
     }
 }
