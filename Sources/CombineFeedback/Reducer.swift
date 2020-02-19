@@ -1,18 +1,14 @@
 import CasePaths
 
-public typealias Reducer<State, Event> = (State, Event) -> State
+public typealias Reducer<State, Event> = (inout State, Event) -> Void
 
 public func combine<State, Event>(
     _ reducers: Reducer<State, Event>...
 ) -> Reducer<State, Event> {
     return { state, event in
-        var newState = state
-
         for reducer in reducers {
-            newState = reducer(newState, event)
+            reducer(&state, event)
         }
-
-        return newState
     }
 }
 
@@ -23,11 +19,8 @@ public func pullback<LocalState, GlobalState, LocalEvent, GlobalEvent>(
 ) -> Reducer<GlobalState, GlobalEvent> {
     return { globalState, globalEvent in
         guard let localAction = event.extract(from: globalEvent) else {
-            return globalState
+            return
         }
-        var globalStateCopy = globalState
-        globalStateCopy[keyPath: value] = reducer(globalState[keyPath: value], localAction)
-
-        return globalStateCopy
+        reducer(&globalState[keyPath: value], localAction)
     }
 }

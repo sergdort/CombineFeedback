@@ -2,7 +2,7 @@ import Foundation
 import CombineFeedback
 
 enum Movies {
-    struct State: Builder {
+    struct State {
         var batch: Results
         var movies: [Movie]
         var status: Status
@@ -41,20 +41,18 @@ enum Movies {
         case fetchNext
     }
 
-    static func reducer(state: State, event: Event) -> State {
+    static func reducer(state: inout State, event: Event) {
         switch event {
         case .didLoad(let batch):
-            return state.set(\.batch, batch)
-                .set(\.movies, state.movies + batch.results)
-                .set(\.status, .idle)
+            state.movies += batch.results
+            state.status = .idle
+            state.batch = batch
         case .didFail(let error):
-            return state.set(\.status, .failed(error))
+            state.status = .failed(error)
         case .retry:
-            return state
-                .set(\.status, .loading)
+            state.status = .loading
         case .fetchNext:
-            return state
-                .set(\.status, .loading)
+            state.status = .loading
         }
     }
 

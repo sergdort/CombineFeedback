@@ -5,7 +5,7 @@ extension Publishers {
     public static func system<State, Event>(
         initial: State,
         feedbacks: [Feedback<State, Event>],
-        reduce: @escaping (State, Event) -> State
+        reduce: @escaping Reducer<State, Event>
     ) -> AnyPublisher<State, Never> {
         return Publishers.Feedbackloop(
             initial: initial,

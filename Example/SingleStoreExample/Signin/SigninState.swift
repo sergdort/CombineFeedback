@@ -2,7 +2,7 @@ import Combine
 import CombineFeedback
 
 enum SignIn {
-    struct State: Builder {
+    struct State {
         var userName = ""
         var email = ""
         var password = ""
@@ -65,22 +65,20 @@ enum SignIn {
         case signIn
     }
 
-    static func reducer(state: State, event: Event) -> State {
+    static func reducer(state: inout State, event: Event) {
         switch event {
         case .didChageUserName(let userName):
-            return state
-                .set(\.userName, userName)
-                .set(\.status, userName.isEmpty ? .idle : .checkingUserName)
+            state.userName = userName
+            state.status = userName.isEmpty ? .idle : .checkingUserName
         case .isAvailable(let isAvailable):
-            return state
-                .set(\.isAvailable, isAvailable)
-                .set(\.status, .idle)
+            state.isAvailable = isAvailable
+            state.status = .idle
         case .didFail(let error):
-            return state.set(\.status, .failed(error))
+            state.status = .failed(error)
         case .signIn:
-            return state.set(\.status, .submitting)
+            state.status = .submitting
         case .didSignIn:
-            return state.set(\.status, .idle)
+            state.status = .idle
         }
     }
 

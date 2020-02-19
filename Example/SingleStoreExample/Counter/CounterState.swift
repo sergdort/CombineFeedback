@@ -1,5 +1,5 @@
 enum Counter {
-    struct State: Builder {
+    struct State {
         var count = 0
     }
 
@@ -9,14 +9,14 @@ enum Counter {
     }
 
     static func reducer(
-        state: State,
+        state: inout State,
         event: Event
-    ) -> State {
+    ) {
         switch event {
         case .increment:
-            return state.set(\.count, state.count + 1)
+            state.count += 1
         case .decrement:
-            return state.set(\.count, state.count - 1)
+            state.count -= 1
         }
     }
 }

@@ -10,7 +10,7 @@ open class ViewModel<State, Event> {
     public init(
         initial: State,
         feedbacks: [Feedback<State, Event>],
-        reducer: @escaping (State, Event) -> State
+        reducer: @escaping Reducer<State, Event>
     ) {
         self.initial = initial
         self.state = Publishers.system(
@@ -20,9 +20,9 @@ open class ViewModel<State, Event> {
             reduce: { state, update in
                 switch update {
                 case .event(let event):
-                    return reducer(state, event)
+                    reducer(&state, event)
                 case .mutation(let mutation):
-                    return mutation.mutate(state)
+                    mutation.mutate(&state)
                 }
             }
         )
@@ -47,19 +47,15 @@ open class ViewModel<State, Event> {
 }
 
 public struct Mutation<State> {
-    let mutate: (State) -> State
+    let mutate: (inout State) -> Void
 
     init<V>(keyPath: WritableKeyPath<State, V>, value: V) {
         self.mutate = { state in
-            var copy = state
-
-            copy[keyPath: keyPath] = value
-
-            return copy
+            state[keyPath: keyPath] = value
         }
     }
 
-    init(mutate: @escaping (State) -> State) {
+    init(mutate: @escaping (inout State) -> Void) {
         self.mutate = mutate
     }
 }

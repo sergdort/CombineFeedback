@@ -4,12 +4,12 @@ extension Publishers {
     public struct Feedbackloop<Output, Event>: Publisher {
         public typealias Failure = Never
         let initial: Output
-        let reduce: (Output, Event) -> Output
+        let reduce: Reducer<Output, Event>
         let feedbacks: [Feedback<Output, Event>]
 
         public init(
             initial: Output,
-            reduce: @escaping (Output, Event) -> Output,
+            reduce: @escaping Reducer<Output, Event>,
             feedbacks: [Feedback<Output, Event>]
         ) {
             self.initial = initial

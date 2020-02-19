@@ -14,9 +14,9 @@ final class Floodgate<State, Event>: FeedbackEventConsumer<Event>, Subscription 
     private var hasStarted = false
 
     private let queue = Atomic(QueueState())
-    private let reducer: (State, Event) -> State
+    private let reducer: Reducer<State, Event>
 
-    init(state: State, reducer: @escaping (State, Event) -> State) {
+    init(state: State, reducer: @escaping Reducer<State, Event>) {
         self.state = state
         self.reducer = reducer
     }
@@ -85,7 +85,7 @@ final class Floodgate<State, Event>: FeedbackEventConsumer<Event>, Subscription 
     }
 
     private func consume(_ event: Event) {
-        state = reducer(state, event)
+        reducer(&state, event)
         stateDidChange.send(state)
     }
 }

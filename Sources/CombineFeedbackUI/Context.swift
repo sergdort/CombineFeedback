@@ -34,10 +34,8 @@ public struct Context<State, Event> {
                 self.send(event(localEvent))
             },
             mutate: { (mutation: Mutation<LocalState>)  in
-                let superMutation: Mutation<State> = Mutation  { (state) -> State in
-                    var copy = state
-                    copy[keyPath: value] = mutation.mutate(self.state[keyPath: value])
-                    return copy
+                let superMutation: Mutation<State> = Mutation  { state in
+                    mutation.mutate(&state[keyPath: value])
                 }
                 self.mutate(superMutation)
             }

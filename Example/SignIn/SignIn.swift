@@ -58,8 +58,6 @@ struct SignInView: View {
 
     let context: Context<State, Event>
 
-    @SwiftUI.State private var userName: String = ""
-
     var body: some View {
         return Form {
             Section {
@@ -80,7 +78,7 @@ struct SignInView: View {
                 }
                 Text(context.userName)
                 TextField(
-                    "Username",
+                    "Email",
                     text: context.binding(for: \.email)
                 )
                 .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -163,15 +161,6 @@ struct SignIn_Previews_Default: PreviewProvider {
 extension Publisher where Failure == Never {
     func promoteError<E: Error>(to: E.Type) -> Publishers.MapError<Self, E> {
         return mapError { _ -> E in }
-    }
-}
-
-protocol Builder {}
-extension Builder {
-    func set<T>(_ keyPath: WritableKeyPath<Self, T>, _ value: T) -> Self {
-        var copy = self
-        copy[keyPath: keyPath] = value
-        return copy
     }
 }
 

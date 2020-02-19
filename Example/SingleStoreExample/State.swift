@@ -4,7 +4,7 @@ import CombineFeedbackUI
 import Foundation
 import CasePaths
 
-struct State: Builder {
+struct State {
     var counter = Counter.State()
     var movies = Movies.State(batch: .empty(), movies: [], status: .loading)
     var signIn = SignIn.State()
