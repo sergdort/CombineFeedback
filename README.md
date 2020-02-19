@@ -24,7 +24,7 @@ Represents all possible events that can happen in your system which can cause a 
 
 ### Reducer 
 
-A Reducer is a pure function with a signature of `(State, Event) -> State`. While `Event` represents an action that results in a `State` change, it's actually not what _causes_ the change. An `Event` is just that, a representation of the intention to transition from one state to another. What actually causes the `State` to change, the embodiment of the corresponding `Event`, is a Reducer. A Reducer is the only place where a `State` can be changed.
+A Reducer is a pure function with a signature of `( inout State, Event) -> Void`. While `Event` represents an action that results in a `State` change, it's actually not what _causes_ the change. An `Event` is just that, a representation of the intention to transition from one state to another. What actually causes the `State` to change, the embodiment of the corresponding `Event`, is a Reducer. A Reducer is the only place where a `State` can be changed.
 
 ### Feedback
 
@@ -110,30 +110,29 @@ struct MoviesView: View {
 When we send `.fetchNext` event, it goes to the `reducer` where we put our system into `.loading`  state, which in response triggers effect in the `whenLoading` feedback, which is reacting to particular state changes
 
 ```swift
-    private static func reducer(state: State, event: Event) -> State {
+    static func reducer(state: inout State, event: Event) {
         switch event {
         case .didLoad(let batch):
-            return state.set(\.batch, batch)
-                .set(\.movies, state.movies + batch.results)
-                .set(\.status, .idle)
+            state.movies += batch.results
+            state.status = .idle
+            state.batch = batch
         case .didFail(let error):
-            return state.set(\.status, .failed(error))
+            state.status = .failed(error)
+        case .retry:
+            state.status = .loading
         case .fetchNext:
-            return state
-                .set(\.status, .loading)
+            state.status = .loading
         }
     }
 
-    private static func whenLoading() -> Feedback<State, Event> {
-        return Feedback(effects: { state -> AnyPublisher<Event, Never> in
-            guard case .loading = state.status else {
-                return Publishers.Empty().eraseToAnyPublisher()
-            }
-            return URLSession.shared
-                .fetchMovies(page: state.batch + 1)
+    static var feedback: Feedback<State, Event> {
+        return Feedback(lensing: { $0.nextPage }) { page in
+            URLSession.shared
+                .fetchMovies(page: page)
                 .map(Event.didLoad)
                 .replaceError(replace: Event.didFail)
-        })
+                .receive(on: DispatchQueue.main)
+        }
     }
 ```
 
