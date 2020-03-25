@@ -15,7 +15,7 @@ enum Event {
     case counter(Counter.Event)
     case movies(Movies.Event)
     case signIn(SignIn.Event)
-    case traficLight(TrafficLight.Event)
+    case trafficLight(TrafficLight.Event)
 }
 
 let countReducer: Reducer<State, Event> = pullback(
@@ -51,13 +51,13 @@ let signInFeedback: Feedback<State, Event> = Feedback.pullback(
 let traficLightReducer: Reducer<State, Event> = pullback(
     TrafficLight.reducer,
     value: \.traficLight,
-    event: /Event.traficLight
+    event: /Event.trafficLight
 )
 
-let traficLightFeedback = Feedback<State, Event>.pullback(
+let trafficLightFeedback = Feedback<State, Event>.pullback(
     feedback: TrafficLight.feedback,
     value: \.traficLight,
-    event: Event.traficLight
+    event: Event.trafficLight
 )
 
 let appReducer = combine(

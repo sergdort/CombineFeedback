@@ -4,7 +4,7 @@ import CombineFeedbackUI
 import SwiftUI
 
 extension Counter {
-    final class ViewModel: CombineFeedbackUI.ViewModel<Counter.State, Counter.Event> {
+    final class ViewModel: CombineFeedbackUI.Store<Counter.State, Counter.Event> {
         init() {
             super.init(
                 initial: State(),
@@ -19,20 +19,29 @@ struct CounterView: View {
     typealias State = Counter.State
     typealias Event = Counter.Event
     
-    let context: Context<State, Event>
+    @ObservedObject
+    var context: Context<State, Event>
+    
+    init(context: Context<State, Event>) {
+        self.context = context
+        logInit(of: self)
+    }
 
     var body: some View {
-        Form {
+        logBody(of: self)
+        return Form {
             Button(action: {
                 self.context.send(event: .decrement)
             }) {
                 return Text("-").font(.largeTitle)
             }
-            Text("\(context.count)").font(.largeTitle)
             Button(action: {
                 self.context.send(event: .increment)
             }) {
                 Text("+").font(.largeTitle)
+            }
+            ForEach((0..<context.count).reversed(), id: \.self) { (item) in
+                Text("\(item)")
             }
         }
     }

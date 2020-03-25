@@ -1,8 +1,9 @@
 import Combine
 import CombineFeedback
+import Foundation
 
 enum SignIn {
-    struct State {
+    struct State: Equatable {
         var userName = ""
         var email = ""
         var password = ""
@@ -21,9 +22,8 @@ enum SignIn {
                 && termsAccepted
         }
 
-        enum Status {
+        enum Status: Equatable {
             case checkingUserName
-            case failed(Error)
             case idle
             case submitting
             case signedIn
@@ -59,7 +59,6 @@ enum SignIn {
 
     enum Event {
         case isAvailable(Bool)
-        case didFail(Error)
         case didSignIn(Bool)
         case didChageUserName(String)
         case signIn
@@ -73,8 +72,6 @@ enum SignIn {
         case .isAvailable(let isAvailable):
             state.isAvailable = isAvailable
             state.status = .idle
-        case .didFail(let error):
-            state.status = .failed(error)
         case .signIn:
             state.status = .submitting
         case .didSignIn:
@@ -85,7 +82,7 @@ enum SignIn {
     static var feedback: Feedback<State, Event> {
         return Feedback.combine(
             whenChangingUserName(api: GithubAPI()),
-            whenSubmiting(api: GithubAPI())
+            whenSubmitting(api: GithubAPI())
         )
     }
 
@@ -110,7 +107,7 @@ enum SignIn {
         }
     }
 
-    static func whenSubmiting(api: GithubAPI) -> Feedback<State, Event> {
+    static func whenSubmitting(api: GithubAPI) -> Feedback<State, Event> {
         return Feedback(effects: { (state) -> AnyPublisher<Event, Never> in
             guard state.status.isSubmitting else {
                 return Empty().eraseToAnyPublisher()

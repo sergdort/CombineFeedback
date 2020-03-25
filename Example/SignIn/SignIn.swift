@@ -4,13 +4,13 @@ import CombineFeedbackUI
 import SwiftUI
 
 extension SignIn {
-    final class ViewModel: CombineFeedbackUI.ViewModel<SignIn.State, SignIn.Event> {
+    final class ViewModel: CombineFeedbackUI.Store<SignIn.State, SignIn.Event> {
         init(initial: State = State()) {
             super.init(
                 initial: initial,
                 feedbacks: [
                     ViewModel.whenChangingUserName(api: GithubAPI()),
-                    ViewModel.whenSubmiting(api: GithubAPI())
+                    ViewModel.whenSubmitting(api: GithubAPI())
                 ],
                 reducer: SignIn.reducer
             )
@@ -37,7 +37,7 @@ extension SignIn {
             }
         }
 
-        static func whenSubmiting(api: GithubAPI) -> Feedback<State, Event> {
+        static func whenSubmitting(api: GithubAPI) -> Feedback<State, Event> {
             return Feedback(effects: { (state) -> AnyPublisher<Event, Never> in
                 guard state.status.isSubmitting else {
                     return Empty().eraseToAnyPublisher()
@@ -56,9 +56,16 @@ struct SignInView: View {
     typealias State = SignIn.State
     typealias Event = SignIn.Event
 
-    let context: Context<State, Event>
+    @ObservedObject
+    var context: Context<State, Event>
+    
+    init(context: Context<State, Event>) {
+        self.context = context
+        logInit(of: self)
+    }
 
     var body: some View {
+        logBody(of: self)
         return Form {
             Section {
                 HStack {
@@ -91,26 +98,14 @@ struct SignInView: View {
                 .textContentType(.newPassword)
                 TextField(
                     "Repeat Password",
-                    text: context.binding(for: \.repeatPassword)
+                        text: context.binding(for: \.repeatPassword)
                 )
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .textContentType(.newPassword)
             }
             Section {
-                // Seems like a bug in switch view amimation
-                // ¯\_(ツ)_/¯
                 Toggle(isOn: context.binding(for: \.termsAccepted)) {
                     Text("Accept Terms and Conditions")
-                }
-                // When wrapping `UISwitch` into UIViewRepresentable
-                // everything works
-                HStack(
-                    alignment: .center,
-                    spacing: 8
-                ) {
-                    Text("Accept Terms and Conditions")
-                    Spacer()
-                    Switch(isOn: context.binding(for: \.termsAccepted))
                 }
             }
             Section {
@@ -141,7 +136,7 @@ struct SignInView: View {
 struct SignIn_Previews_Default: PreviewProvider {
     static var previews: some View {
         Widget(
-            viewModel: SignIn.ViewModel(
+            store: SignIn.ViewModel(
                 initial: SignIn.State(
                     userName: "",
                     email: "",
@@ -152,7 +147,7 @@ struct SignIn_Previews_Default: PreviewProvider {
                     isAvailable: false
                 )
             ),
-            render: SignInView.init(context:)
+            content: SignInView.init(context:)
         )
     }
 }

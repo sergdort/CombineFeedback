@@ -1,11 +1,21 @@
 import SwiftUI
+import Combine
 
 @dynamicMemberLookup
-public struct Context<State, Event> {
-    private let state: State
+public final class Context<State, Event>: ObservableObject {
+    @Published
+    private var state: State
+    private var bag = Set<AnyCancellable>()
     private let send: (Event) -> Void
     private let mutate: (Mutation<State>) -> Void
-
+    
+    init(store: Store<State, Event>) {
+        self.state = store.state
+        self.send = store.send
+        self.mutate = store.mutate
+        store.$state.assign(to: \.state, on: self).store(in: &bag)
+    }
+        
     public init(
         state: State,
         send: @escaping (Event) -> Void,
@@ -23,12 +33,20 @@ public struct Context<State, Event> {
     public func send(event: Event) {
         send(event)
     }
-
-    public func view<LocalState, LocalEvent>(
+    
+    public func view<LocalState: Equatable, LocalEvent>(
         value: WritableKeyPath<State, LocalState>,
         event: @escaping (LocalEvent) -> Event
     ) -> Context<LocalState, LocalEvent> {
-        return Context<LocalState, LocalEvent>(
+        view(value: value, event: event, removeDuplicates: ==)
+    }
+
+    public func view<LocalState, LocalEvent>(
+        value: WritableKeyPath<State, LocalState>,
+        event: @escaping (LocalEvent) -> Event,
+        removeDuplicates: @escaping (LocalState, LocalState) -> Bool
+    ) -> Context<LocalState, LocalEvent> {
+        let localContext = Context<LocalState, LocalEvent>(
             state: state[keyPath: value],
             send: { localEvent in
                 self.send(event(localEvent))
@@ -40,6 +58,13 @@ public struct Context<State, Event> {
                 self.mutate(superMutation)
             }
         )
+        
+        $state.map(value)
+            .removeDuplicates(by: removeDuplicates)
+            .assign(to: \.state, on: localContext)
+            .store(in: &localContext.bag)
+        
+        return localContext
     }
     
     public func binding<U>(for keyPath: KeyPath<State, U>, event: @escaping (U) -> Event) -> Binding<U> {

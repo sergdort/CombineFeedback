@@ -2,7 +2,7 @@ import Foundation
 import CombineFeedback
 
 enum Movies {
-    struct State {
+    struct State: Equatable {
         var batch: Results
         var movies: [Movie]
         var status: Status
@@ -27,7 +27,7 @@ enum Movies {
             }
         }
 
-        enum Status {
+        enum Status: Equatable {
             case idle
             case loading
             case failed(NSError)

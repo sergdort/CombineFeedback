@@ -18,16 +18,16 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     private func makeSingleStoreExample() -> UIViewController {
         return UIHostingController(
             rootView: Widget(
-                viewModel: ViewModel(
+                store: Store(
                     initial: State(),
                     feedbacks: [
                         moviesFeedback,
                         signInFeedback,
-                        traficLightFeedback
+                        trafficLightFeedback
                     ],
                     reducer: appReducer
                 ),
-                render: SingleStoreExampleView.init
+                content: SingleStoreExampleView.init
             )
         )
     }
@@ -37,7 +37,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         let counter = UIHostingController(
             rootView: NavigationView {
-                Widget(viewModel: Counter.ViewModel(), render: CounterView.init)
+                Widget(store: Counter.ViewModel(), content: CounterView.init)
                     .navigationBarTitle(Text("Counter"))
             }
         )
@@ -50,7 +50,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         let movies = UIHostingController(
             rootView: NavigationView {
-                return Widget(viewModel: Movies.ViewModel(), render: MoviesView.init)
+                return Widget(store: Movies.ViewModel(), content: MoviesView.init)
                     .navigationBarTitle(Text("Movies"))
             }
         )
@@ -63,7 +63,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         let signIn = UIHostingController(
             rootView: NavigationView {
-                return Widget(viewModel: SignIn.ViewModel(), render: SignInView.init)
+                return Widget(store: SignIn.ViewModel(), content: SignInView.init)
                     .navigationBarTitle(Text("Sign In"))
             }
         )
@@ -76,7 +76,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         let trafficLight = UIHostingController(
             rootView: NavigationView {
-                return Widget(viewModel: TrafficLight.ViewModel(), render: TrafficLightView.init)
+                return Widget(store: TrafficLight.ViewModel(), content: TrafficLightView.init)
                     .navigationBarTitle(Text("Traffic Light"))
             }
         )

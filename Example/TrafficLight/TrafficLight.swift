@@ -4,7 +4,7 @@ import CombineFeedback
 import CombineFeedbackUI
 
 extension TrafficLight {
-    final class ViewModel: CombineFeedbackUI.ViewModel<TrafficLight.State, TrafficLight.Event> {
+    final class ViewModel: CombineFeedbackUI.Store<TrafficLight.State, TrafficLight.Event> {
 
         init() {
             super.init(
@@ -66,40 +66,4 @@ extension TrafficLight {
         }
     }
 }
-
-struct TrafficLightView: View {
-    let context: Context<TrafficLight.State, TrafficLight.Event>
-    
-    var body: some View {
-        return VStack {
-            Circle()
-                .frame(width: 150, height: 150)
-                .animation(.default)
-                .foregroundColor(Color.red.opacity(context.isRed ? 1 : 0.5))
-            Circle()
-                .frame(width: 150, height: 150)
-                .animation(.default)
-                .foregroundColor(Color.yellow.opacity(context.isYellow ? 1 : 0.5))
-            Circle()
-                .frame(width: 150, height: 150)
-                .animation(.default)
-                .foregroundColor(Color.green.opacity(context.isGreen ? 1 : 0.5))
-        }
-        .padding()
-        .background(Color.black)
-    }
-}
-
-#if DEBUG
-struct TrafficLightView_Preview: PreviewProvider {
-    
-    static var previews: some View {
-        Widget(
-            viewModel: TrafficLight.ViewModel(),
-            render: TrafficLightView.init
-        )
-    }
-}
-#endif
-
 

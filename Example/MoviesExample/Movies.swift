@@ -5,7 +5,7 @@ import Foundation
 import SwiftUI
 
 extension Movies {
-    final class ViewModel: CombineFeedbackUI.ViewModel<Movies.State, Movies.Event> {
+    final class ViewModel: CombineFeedbackUI.Store<Movies.State, Movies.Event> {
         let initial = Movies.State(
             batch: Results.empty(),
             movies: [],
@@ -41,14 +41,17 @@ extension Movies {
 struct MoviesView: View {
     typealias State = Movies.State
     typealias Event = Movies.Event
-    let context: Context<State, Event>
+    @ObservedObject
+    var context: Context<State, Event>
 
     init(context: Context<State, Event>) {
         self.context = context
+        logInit(of: self)
     }
 
     var body: some View {
-        List {
+        logBody(of: self)
+        return List {
             ForEach(context.movies) { movie in
                 NavigationLink(destination: MoviesView(context: self.context)) {
                     MovieCell(movie: movie).onAppear {
@@ -67,7 +70,8 @@ struct MovieCell: View {
     var movie: Movie
 
     private var poster: AnyPublisher<UIImage, Never> {
-        return fetcher.image(for: movie.posterURL)
+        return movie.posterURL.map(fetcher.image)
+            .default(to: Empty().eraseToAnyPublisher())
     }
 
     var body: some View {
@@ -83,7 +87,7 @@ struct MovieCell: View {
     }
 }
 
-struct Results: Codable {
+struct Results: Codable, Equatable {
     let page: Int
     let totalResults: Int
     let totalPages: Int
@@ -107,12 +111,12 @@ struct Movie: Codable, Equatable, Identifiable {
     let title: String
     let posterPath: String?
 
-    var posterURL: URL {
+    var posterURL: URL? {
         return posterPath
             .map {
                 "https://image.tmdb.org/t/p/w154\($0)"
             }
-            .flatMap(URL.init(string:))!
+            .flatMap(URL.init(string:))
     }
 
     enum CodingKeys: String, CodingKey {
@@ -142,5 +146,11 @@ extension URLSession {
                 error as NSError
             }
             .eraseToAnyPublisher()
+    }
+}
+
+extension Optional {
+    func `default`(to value: Wrapped) -> Wrapped {
+        return self ?? value
     }
 }

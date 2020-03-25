@@ -4,9 +4,15 @@ import SwiftUI
 
 struct SingleStoreExampleView: View {
     let context: Context<State, Event>
+    
+    init(context: Context<State, Event>) {
+        self.context = context
+        logInit(of: self)
+    }
 
     var body: some View {
-        TabView {
+        logBody(of: self)
+        return TabView {
             NavigationView {
                 CounterView(context: context.view(value: \.counter, event: Event.counter))
                     .navigationBarTitle(Text("Counter"))
@@ -29,7 +35,7 @@ struct SingleStoreExampleView: View {
                 Image(systemName: "person")
             }
             NavigationView {
-                TrafficLightView(context: context.view(value: \.traficLight, event: Event.traficLight))
+                TrafficLightView(context: context.view(value: \.traficLight, event: Event.trafficLight))
                     .navigationBarTitle(Text("Traffic Light"))
             }
             .tabItem {

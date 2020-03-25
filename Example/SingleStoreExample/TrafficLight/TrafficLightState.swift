@@ -2,7 +2,7 @@ import Combine
 import CombineFeedback
 
 enum TrafficLight {
-    enum State {
+    enum State: Equatable {
         case red
         case yellow
         case green
@@ -52,6 +52,9 @@ enum TrafficLight {
 
     static var feedback: Feedback<State, Event> {
         return Feedback.combine(whenRed(), whenYellow(), whenGreen())
+//        return Feedback { (_) in
+//            return Empty()
+//        }
     }
 
     private static func whenRed() -> Feedback<State, Event> {
