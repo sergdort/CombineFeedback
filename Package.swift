@@ -13,9 +13,7 @@ let package = Package(
         .library(name: "CombineFeedback", targets: ["CombineFeedback"]),
         .library(name: "CombineFeedbackUI", targets: ["CombineFeedbackUI"]),
     ],
-    dependencies: [
-        .package(url: "https://github.com/mluisbrown/Thresher.git", .branch("master")),
-    ],
+    dependencies: [],
     targets: [
         .target(name: "CombineFeedback"),
         .target(name: "CombineFeedbackUI", dependencies: ["CombineFeedback"]),
