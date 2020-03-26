@@ -13,11 +13,16 @@ let package = Package(
         .library(name: "CombineFeedback", targets: ["CombineFeedback"]),
         .library(name: "CombineFeedbackUI", targets: ["CombineFeedbackUI"]),
     ],
-    dependencies: [],
+    dependencies: [
+        .package(
+            url: "https://github.com/pointfreeco/swift-case-paths.git",
+            from: Version(0, 1, 0)
+        )
+    ],
     targets: [
-        .target(name: "CombineFeedback"),
+        .target(name: "CombineFeedback", dependencies: ["CasePaths"]),
         .target(name: "CombineFeedbackUI", dependencies: ["CombineFeedback"]),
-        .testTarget(name: "CombineFeedbackTests", dependencies: ["CombineFeedback", "Thresher"]),
+        .testTarget(name: "CombineFeedbackTests", dependencies: ["CombineFeedback"]),
         .testTarget(name: "CombineFeedbackUITests", dependencies: ["CombineFeedback", "CombineFeedbackUI"]),
     ],
     swiftLanguageVersions: [.v5]

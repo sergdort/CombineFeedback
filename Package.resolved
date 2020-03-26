@@ -2,12 +2,12 @@
   "object": {
     "pins": [
       {
-        "package": "Thresher",
-        "repositoryURL": "https://github.com/mluisbrown/Thresher.git",
+        "package": "CasePaths",
+        "repositoryURL": "https://github.com/pointfreeco/swift-case-paths.git",
         "state": {
-          "branch": "master",
-          "revision": "37b1067465d726383c3da93db6886ac633b58847",
-          "version": null
+          "branch": null,
+          "revision": "a9c1e05518b6d95cf5844d823020376f2b6ff842",
+          "version": "0.1.0"
         }
       }
     ]

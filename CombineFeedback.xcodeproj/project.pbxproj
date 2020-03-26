@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		2510CDDF242BD9FF004A6422 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2510CDDE242BD9FF004A6422 /* Log.swift */; };
 		2510CDE1242BED63004A6422 /* ContextExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2510CDE0242BED63004A6422 /* ContextExtensions.swift */; };
-		2511BEF323F20F3000B41C3E /* CasePaths in Frameworks */ = {isa = PBXBuildFile; productRef = 2511BEF223F20F3000B41C3E /* CasePaths */; };
 		251445E724086A400062EE04 /* TrafficLightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 251445E624086A400062EE04 /* TrafficLightView.swift */; };
 		252BF08422BAE05700BC4265 /* SignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252BF08322BAE05700BC4265 /* SignIn.swift */; };
 		253D324122B185FA002F3B7F /* Context.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253D323F22B1858C002F3B7F /* Context.swift */; };
@@ -39,6 +38,7 @@
 		5800FFFA22A9DDE5005A860B /* CombineFeedbackUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FFF922A9DDE5005A860B /* CombineFeedbackUITests.swift */; };
 		5800FFFC22A9DDE5005A860B /* CombineFeedbackUI.h in Headers */ = {isa = PBXBuildFile; fileRef = 5800FFEC22A9DDE5005A860B /* CombineFeedbackUI.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5800FFFF22A9DDE5005A860B /* CombineFeedbackUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5800FFEA22A9DDE5005A860B /* CombineFeedbackUI.framework */; };
+		5822A2302434FEB400270514 /* CasePaths in Frameworks */ = {isa = PBXBuildFile; productRef = 5822A22F2434FEB400270514 /* CasePaths */; };
 		583971C322ADBA9900139CC0 /* PublisherExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583971C222ADBA9900139CC0 /* PublisherExtensions.swift */; };
 		583971C522ADFA1F00139CC0 /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583971C422ADFA1F00139CC0 /* Store.swift */; };
 		585CD869239A9D31004BE9CC /* State.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585CD868239A9D31004BE9CC /* State.swift */; };
@@ -54,7 +54,6 @@
 		58751A9A23ECBCA000EEF398 /* FeedbackLoop.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58751A9923ECBCA000EEF398 /* FeedbackLoop.swift */; };
 		58C6E5E022A9F027005A9685 /* Movies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58C6E5DF22A9F027005A9685 /* Movies.swift */; };
 		58C6E5E722AB14DB005A9685 /* AsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58C6E5E622AB14DB005A9685 /* AsyncImage.swift */; };
-		74936CB4231D7579000DB91D /* Thresher in Frameworks */ = {isa = PBXBuildFile; productRef = 74936CB3231D7579000DB91D /* Thresher */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -196,7 +195,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2511BEF323F20F3000B41C3E /* CasePaths in Frameworks */,
+				5822A2302434FEB400270514 /* CasePaths in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -205,7 +204,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				5800FF9A22A89BE6005A860B /* CombineFeedback.framework in Frameworks */,
-				74936CB4231D7579000DB91D /* Thresher in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -516,7 +514,7 @@
 			);
 			name = CombineFeedback;
 			packageProductDependencies = (
-				2511BEF223F20F3000B41C3E /* CasePaths */,
+				5822A22F2434FEB400270514 /* CasePaths */,
 			);
 			productName = CombineFeedback;
 			productReference = 5800FF9022A89BE6005A860B /* CombineFeedback.framework */;
@@ -537,7 +535,6 @@
 			);
 			name = CombineFeedbackTests;
 			packageProductDependencies = (
-				74936CB3231D7579000DB91D /* Thresher */,
 			);
 			productName = CombineFeedbackTests;
 			productReference = 5800FF9922A89BE6005A860B /* CombineFeedbackTests.xctest */;
@@ -664,8 +661,7 @@
 			);
 			mainGroup = 5800FF8622A89BE6005A860B;
 			packageReferences = (
-				74936CB2231D7579000DB91D /* XCRemoteSwiftPackageReference "Thresher" */,
-				2511BEF123F20F3000B41C3E /* XCRemoteSwiftPackageReference "swift-case-paths" */,
+				5822A22E2434FEB400270514 /* XCRemoteSwiftPackageReference "swift-case-paths" */,
 			);
 			productRefGroup = 5800FF9122A89BE6005A860B /* Products */;
 			projectDirPath = "";
@@ -1300,34 +1296,21 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		2511BEF123F20F3000B41C3E /* XCRemoteSwiftPackageReference "swift-case-paths" */ = {
+		5822A22E2434FEB400270514 /* XCRemoteSwiftPackageReference "swift-case-paths" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/pointfreeco/swift-case-paths";
+			repositoryURL = "git@github.com:pointfreeco/swift-case-paths.git";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 0.1.0;
 			};
 		};
-		74936CB2231D7579000DB91D /* XCRemoteSwiftPackageReference "Thresher" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "git@github.com:mluisbrown/Thresher.git";
-			requirement = {
-				branch = master;
-				kind = branch;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		2511BEF223F20F3000B41C3E /* CasePaths */ = {
+		5822A22F2434FEB400270514 /* CasePaths */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 2511BEF123F20F3000B41C3E /* XCRemoteSwiftPackageReference "swift-case-paths" */;
+			package = 5822A22E2434FEB400270514 /* XCRemoteSwiftPackageReference "swift-case-paths" */;
 			productName = CasePaths;
-		};
-		74936CB3231D7579000DB91D /* Thresher */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 74936CB2231D7579000DB91D /* XCRemoteSwiftPackageReference "Thresher" */;
-			productName = Thresher;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
