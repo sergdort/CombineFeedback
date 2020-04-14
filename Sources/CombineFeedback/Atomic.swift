@@ -1,12 +1,12 @@
 /// An atomic variable.
 import Foundation
 
-public final class Atomic<Value> {
+final class Atomic<Value> {
     private let lock: NSLock
     private var _value: Value
 
     /// Atomically get or set the value of the variable.
-    public var value: Value {
+    var value: Value {
         get {
             return withValue { $0 }
         }
@@ -20,7 +20,7 @@ public final class Atomic<Value> {
     ///
     /// - parameters:
     ///   - value: Initial value for `self`.
-    public init(_ value: Value) {
+    init(_ value: Value) {
         _value = value
         lock = NSLock()
     }
@@ -32,7 +32,7 @@ public final class Atomic<Value> {
     ///
     /// - returns: The result of the action.
     @discardableResult
-    public func modify<Result>(_ action: (inout Value) throws -> Result) rethrows -> Result {
+    func modify<Result>(_ action: (inout Value) throws -> Result) rethrows -> Result {
         lock.lock()
         defer { lock.unlock() }
 
@@ -47,7 +47,7 @@ public final class Atomic<Value> {
     ///
     /// - returns: The result of the action.
     @discardableResult
-    public func withValue<Result>(_ action: (Value) throws -> Result) rethrows -> Result {
+    func withValue<Result>(_ action: (Value) throws -> Result) rethrows -> Result {
         lock.lock()
         defer { lock.unlock() }
 
@@ -61,7 +61,7 @@ public final class Atomic<Value> {
     ///
     /// - returns: The old value.
     @discardableResult
-    public func swap(_ newValue: Value) -> Value {
+    func swap(_ newValue: Value) -> Value {
         return modify { (value: inout Value) in
             let oldValue = value
             value = newValue

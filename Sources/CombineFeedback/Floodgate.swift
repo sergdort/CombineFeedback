@@ -16,7 +16,7 @@ final class Floodgate<State, Event>: FeedbackEventConsumer<Event>, Subscription 
     private let queue = Atomic(QueueState())
     private let reducer: Reducer<State, Event>
 
-    init(state: State, reducer: @escaping Reducer<State, Event>) {
+    init(state: State, reducer: Reducer<State, Event>) {
         self.state = state
         self.reducer = reducer
     }

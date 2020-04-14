@@ -4,7 +4,7 @@ import CombineFeedback
 import CombineFeedbackUI
 
 extension TrafficLight {
-    final class ViewModel: CombineFeedbackUI.Store<TrafficLight.State, TrafficLight.Event> {
+    final class ViewModel: Store<TrafficLight.State, TrafficLight.Event> {
 
         init() {
             super.init(
@@ -14,7 +14,7 @@ extension TrafficLight {
                     ViewModel.whenYellow(),
                     ViewModel.whenGreen()
                 ],
-                reducer: TrafficLight.reducer
+                reducer: TrafficLight.reducer()
             )
         }
 

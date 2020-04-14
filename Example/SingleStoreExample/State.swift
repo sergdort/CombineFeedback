@@ -18,52 +18,49 @@ enum Event {
     case trafficLight(TrafficLight.Event)
 }
 
-let countReducer: Reducer<State, Event> = pullback(
-    Counter.reducer,
-    value: \.counter,
-    event: /Event.counter
-)
+let countReducer: Reducer<State, Event> = Counter.reducer()
+    .pullback(
+        value: \.counter,
+        event: /Event.counter
+    )
 
-let moviesReducer: Reducer<State, Event> = pullback(
-    Movies.reducer,
-    value: \.movies,
-    event: /Event.movies
-)
+let moviesReducer: Reducer<State, Event> = Movies.reducer()
+    .pullback(
+        value: \.movies,
+        event: /Event.movies
+    )
 
-let moviesFeedback: Feedback<State, Event> = Feedback.pullback(
-    feedback: Movies.feedback,
-    value: \.movies,
-    event: Event.movies
-)
+let moviesFeedback: Feedback<State, Event> = Movies.feedback
+    .pullback(
+        value: \.movies,
+        event: Event.movies
+    )
 
-let signInReducer: Reducer<State, Event> = pullback(
-    SignIn.reducer,
+let signInReducer: Reducer<State, Event> = SignIn.reducer().pullback(
     value: \.signIn,
     event: /Event.signIn
 )
 
-let signInFeedback: Feedback<State, Event> = Feedback.pullback(
-    feedback: SignIn.feedback,
-    value: \.signIn,
-    event: Event.signIn
-)
+let signInFeedback: Feedback<State, Event> = SignIn.feedback
+    .pullback(
+        value: \.signIn,
+        event: Event.signIn
+    )
 
-let traficLightReducer: Reducer<State, Event> = pullback(
-    TrafficLight.reducer,
-    value: \.traficLight,
-    event: /Event.trafficLight
-)
+let traficLightReducer: Reducer<State, Event> = TrafficLight.reducer()
+    .pullback(
+        value: \.traficLight,
+        event: /Event.trafficLight
+    )
 
-let trafficLightFeedback = Feedback<State, Event>.pullback(
-    feedback: TrafficLight.feedback,
+let trafficLightFeedback: Feedback<State, Event> = TrafficLight.feedback.pullback(
     value: \.traficLight,
     event: Event.trafficLight
 )
 
-let appReducer = combine(
+let appReducer = Reducer.combine(
     countReducer,
     moviesReducer,
     signInReducer,
     traficLightReducer
 )
-

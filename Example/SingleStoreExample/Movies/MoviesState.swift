@@ -41,18 +41,20 @@ enum Movies {
         case fetchNext
     }
 
-    static func reducer(state: inout State, event: Event) {
-        switch event {
-        case .didLoad(let batch):
-            state.movies += batch.results
-            state.status = .idle
-            state.batch = batch
-        case .didFail(let error):
-            state.status = .failed(error)
-        case .retry:
-            state.status = .loading
-        case .fetchNext:
-            state.status = .loading
+    static func reducer() -> Reducer<State, Event> {
+        .init { state, event in
+            switch event {
+            case .didLoad(let batch):
+                state.movies += batch.results
+                state.status = .idle
+                state.batch = batch
+            case .didFail(let error):
+                state.status = .failed(error)
+            case .retry:
+                state.status = .loading
+            case .fetchNext:
+                state.status = .loading
+            }
         }
     }
 

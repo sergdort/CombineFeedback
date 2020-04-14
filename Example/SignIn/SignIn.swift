@@ -4,7 +4,7 @@ import CombineFeedbackUI
 import SwiftUI
 
 extension SignIn {
-    final class ViewModel: CombineFeedbackUI.Store<SignIn.State, SignIn.Event> {
+    final class ViewModel: Store<SignIn.State, SignIn.Event> {
         init(initial: State = State()) {
             super.init(
                 initial: initial,
@@ -12,7 +12,7 @@ extension SignIn {
                     ViewModel.whenChangingUserName(api: GithubAPI()),
                     ViewModel.whenSubmitting(api: GithubAPI())
                 ],
-                reducer: SignIn.reducer
+                reducer: SignIn.reducer()
             )
         }
 
@@ -71,7 +71,7 @@ struct SignInView: View {
                 HStack {
                     TextField(
                         "Username",
-                        text: context.binding(for: \.userName, event: Event.didChageUserName)
+                        text: context.binding(for: \.userName, event: Event.didChangeUserName)
                     )
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .textContentType(.username)

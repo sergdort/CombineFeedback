@@ -9,7 +9,7 @@ extension Publishers {
 
         public init(
             initial: Output,
-            reduce: @escaping Reducer<Output, Event>,
+            reduce: Reducer<Output, Event>,
             feedbacks: [Feedback<Output, Event>]
         ) {
             self.initial = initial

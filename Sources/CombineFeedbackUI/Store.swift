@@ -11,12 +11,12 @@ open class Store<State, Event> {
     public init(
         initial: State,
         feedbacks: [Feedback<State, Event>],
-        reducer: @escaping Reducer<State, Event>
+        reducer: Reducer<State, Event>
     ) {
         self.state = initial
         Publishers.Feedbackloop(
             initial: initial,
-            reduce: { state, update in
+            reduce: .init { state, update in
                 switch update {
                 case .event(let event):
                     reducer(&state, event)

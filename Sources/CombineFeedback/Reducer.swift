@@ -1,26 +1,47 @@
 import CasePaths
 
-public typealias Reducer<State, Event> = (inout State, Event) -> Void
+public struct Reducer<State, Event> {
+    public let reduce: (inout State, Event) -> Void
 
-public func combine<State, Event>(
-    _ reducers: Reducer<State, Event>...
-) -> Reducer<State, Event> {
-    return { state, event in
-        for reducer in reducers {
-            reducer(&state, event)
+    public init(reduce: @escaping (inout State, Event) -> Void) {
+        self.reduce = reduce
+    }
+
+    public func callAsFunction(_ state: inout State, _ event: Event) -> Void {
+        self.reduce(&state, event)
+    }
+
+    public static func combine(_ reducers: Reducer...) -> Reducer {
+        return .init { state, event in
+            for reducer in reducers {
+                reducer(&state, event)
+            }
         }
     }
-}
 
-public func pullback<LocalState, GlobalState, LocalEvent, GlobalEvent>(
-    _ reducer: @escaping Reducer<LocalState, LocalEvent>,
-    value: WritableKeyPath<GlobalState, LocalState>,
-    event: CasePath<GlobalEvent, LocalEvent>
-) -> Reducer<GlobalState, GlobalEvent> {
-    return { globalState, globalEvent in
-        guard let localAction = event.extract(from: globalEvent) else {
-            return
+    public func pullback<GlobalState, GlobalEvent>(
+        value: WritableKeyPath<GlobalState, State>,
+        event: CasePath<GlobalEvent, Event>
+    ) -> Reducer<GlobalState, GlobalEvent> {
+        return .init { globalState, globalEvent in
+            guard let localAction = event.extract(from: globalEvent) else {
+                return
+            }
+            self(&globalState[keyPath: value], localAction)
         }
-        reducer(&globalState[keyPath: value], localAction)
+    }
+
+    public func logging(
+        printer: @escaping (String) -> Void = { print($0) }
+    ) -> Reducer {
+        return .init { state, event in
+            self(&state, event)
+            printer("Action: \(event)")
+            printer("Value:")
+            var dumpedNewValue = ""
+            dump(state, to: &dumpedNewValue)
+            printer(dumpedNewValue)
+            printer("---")
+        }
     }
 }

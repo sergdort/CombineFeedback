@@ -4,12 +4,12 @@ import CombineFeedbackUI
 import SwiftUI
 
 extension Counter {
-    final class ViewModel: CombineFeedbackUI.Store<Counter.State, Counter.Event> {
+    final class ViewModel: Store<Counter.State, Counter.Event> {
         init() {
             super.init(
                 initial: State(),
                 feedbacks: [],
-                reducer: Counter.reducer(state:event:)
+                reducer: Counter.reducer()
             )
         }
     }

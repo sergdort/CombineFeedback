@@ -144,13 +144,12 @@ public struct Feedback<State, Event> {
 }
 
 extension Feedback {
-    public static func pullback<LocalState, LocalEvent>(
-        feedback: Feedback<LocalState, LocalEvent>,
-        value: KeyPath<State, LocalState>,
-        event: @escaping (LocalEvent) -> Event
-    ) -> Feedback<State, Event> {
-        return Feedback.custom { (state, consumer) -> Cancellable in
-            return feedback.events(
+    public func pullback<GlobalState, GlobalEvent>(
+        value: KeyPath<GlobalState, State>,
+        event: @escaping (Event) -> GlobalEvent
+    ) -> Feedback<GlobalState, GlobalEvent> {
+        return .custom { (state, consumer) -> Cancellable in
+            return self.events(
                 state.map(value).eraseToAnyPublisher(),
                 consumer.pullback(event)
             )

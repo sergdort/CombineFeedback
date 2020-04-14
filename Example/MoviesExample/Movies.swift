@@ -5,7 +5,7 @@ import Foundation
 import SwiftUI
 
 extension Movies {
-    final class ViewModel: CombineFeedbackUI.Store<Movies.State, Movies.Event> {
+    final class ViewModel: Store<Movies.State, Movies.Event> {
         let initial = Movies.State(
             batch: Results.empty(),
             movies: [],
@@ -21,7 +21,7 @@ extension Movies {
             super.init(
                 initial: initial,
                 feedbacks: [ViewModel.whenLoading()],
-                reducer: Movies.reducer(state:event:)
+                reducer: Movies.reducer()
             )
         }
 

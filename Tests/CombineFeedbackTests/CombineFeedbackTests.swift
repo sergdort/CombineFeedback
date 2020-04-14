@@ -12,7 +12,7 @@ class CombineFeedbackTests: XCTestCase {
         let system = Publishers.system(
             initial: initial,
             feedbacks: [],
-            reduce: { (state, event) in
+            reduce: .init { state, event in
                 state += event
             }
         )
@@ -31,7 +31,7 @@ class CombineFeedbackTests: XCTestCase {
         let system = Publishers.system(
             initial: "initial",
             feedbacks: [feedback],
-            reduce: { (state, event) in
+            reduce: .init { (state, event) in
                 state += event
             }
         )
@@ -62,7 +62,7 @@ class CombineFeedbackTests: XCTestCase {
         let system = Publishers.system(
             initial: "initial",
             feedbacks: [feedback1, feedback2],
-            reduce: { (state, event) in
+            reduce: .init { (state, event) in
                 state += event
             }
         )
@@ -93,7 +93,7 @@ class CombineFeedbackTests: XCTestCase {
                     subject.eraseToAnyPublisher()
                 }),
             ],
-            reduce: { (state, event) in
+            reduce: .init { (state, event) in
                 state += event
             }
         )

@@ -39,14 +39,16 @@ enum TrafficLight {
         case next
     }
 
-    static func reducer(state: inout State, event: Event) {
-        switch state {
-        case .red:
-            state = .yellow
-        case .yellow:
-            state = .green
-        case .green:
-            state = .red
+    static func reducer() -> Reducer<State, Event> {
+        .init { state, event in
+            switch state {
+            case .red:
+                state = .yellow
+            case .yellow:
+                state = .green
+            case .green:
+                state = .red
+            }
         }
     }
 

@@ -60,22 +60,24 @@ enum SignIn {
     enum Event {
         case isAvailable(Bool)
         case didSignIn(Bool)
-        case didChageUserName(String)
+        case didChangeUserName(String)
         case signIn
     }
 
-    static func reducer(state: inout State, event: Event) {
-        switch event {
-        case .didChageUserName(let userName):
-            state.userName = userName
-            state.status = userName.isEmpty ? .idle : .checkingUserName
-        case .isAvailable(let isAvailable):
-            state.isAvailable = isAvailable
-            state.status = .idle
-        case .signIn:
-            state.status = .submitting
-        case .didSignIn:
-            state.status = .idle
+    static func reducer() -> Reducer<State, Event> {
+        return .init { state, event in
+            switch event {
+            case .didChangeUserName(let userName):
+                state.userName = userName
+                state.status = userName.isEmpty ? .idle : .checkingUserName
+            case .isAvailable(let isAvailable):
+                state.isAvailable = isAvailable
+                state.status = .idle
+            case .signIn:
+                state.status = .submitting
+            case .didSignIn:
+                state.status = .idle
+            }
         }
     }
 

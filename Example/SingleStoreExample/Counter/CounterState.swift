@@ -1,3 +1,5 @@
+import CombineFeedback
+
 enum Counter {
     struct State: Equatable {
         var count = 0
@@ -8,15 +10,14 @@ enum Counter {
         case decrement
     }
 
-    static func reducer(
-        state: inout State,
-        event: Event
-    ) {
-        switch event {
-        case .increment:
-            state.count += 1
-        case .decrement:
-            state.count -= 1
+    static func reducer() -> Reducer<State, Event> {
+        .init { state, event in
+            switch event {
+            case .increment:
+                state.count += 1
+            case .decrement:
+                state.count -= 1
+            }
         }
     }
 }
