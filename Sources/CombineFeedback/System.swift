@@ -7,7 +7,7 @@ extension Publishers {
         feedbacks: [Feedback<State, Event>],
         reduce: Reducer<State, Event>
     ) -> AnyPublisher<State, Never> {
-        return Publishers.Feedbackloop(
+        return Publishers.FeedbackLoop(
             initial: initial,
             reduce: reduce,
             feedbacks: feedbacks

@@ -1,11 +1,10 @@
-import SwiftUI
 import Combine
 import CombineFeedback
 import CombineFeedbackUI
+import SwiftUI
 
 extension TrafficLight {
     final class ViewModel: Store<TrafficLight.State, TrafficLight.Event> {
-
         init() {
             super.init(
                 initial: .red,
@@ -19,7 +18,7 @@ extension TrafficLight {
         }
 
         private static func whenRed() -> Feedback<State, Event> {
-            return Feedback(effects: { state -> AnyPublisher<Event, Never> in
+            .middleware { state -> AnyPublisher<Event, Never> in
                 guard case .red = state else {
                     return Empty().eraseToAnyPublisher()
                 }
@@ -27,11 +26,11 @@ extension TrafficLight {
                 return Result.Publisher(Event.next)
                     .delay(for: 1, scheduler: DispatchQueue.main)
                     .eraseToAnyPublisher()
-            })
+            }
         }
 
         private static func whenYellow() -> Feedback<State, Event> {
-            return Feedback(effects: { state -> AnyPublisher<Event, Never> in
+            .middleware { state -> AnyPublisher<Event, Never> in
                 guard case .yellow = state else {
                     return Empty().eraseToAnyPublisher()
                 }
@@ -39,11 +38,11 @@ extension TrafficLight {
                 return Result.Publisher(Event.next)
                     .delay(for: 1, scheduler: DispatchQueue.main)
                     .eraseToAnyPublisher()
-            })
+            }
         }
 
         private static func whenGreen() -> Feedback<State, Event> {
-            return Feedback(effects: { state -> AnyPublisher<Event, Never> in
+            .middleware { state -> AnyPublisher<Event, Never> in
                 guard case .green = state else {
                     return Empty().eraseToAnyPublisher()
                 }
@@ -51,7 +50,7 @@ extension TrafficLight {
                 return Result.Publisher(Event.next)
                     .delay(for: 1, scheduler: DispatchQueue.main)
                     .eraseToAnyPublisher()
-            })
+            }
         }
 
         private static func reduce(state: State, event: Event) -> State {
@@ -66,4 +65,3 @@ extension TrafficLight {
         }
     }
 }
-

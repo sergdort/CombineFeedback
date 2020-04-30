@@ -33,7 +33,7 @@ let moviesReducer: Reducer<State, Event> = Movies.reducer()
 let moviesFeedback: Feedback<State, Event> = Movies.feedback
     .pullback(
         value: \.movies,
-        event: Event.movies
+        event: /Event.movies
     )
 
 let signInReducer: Reducer<State, Event> = SignIn.reducer().pullback(
@@ -44,7 +44,7 @@ let signInReducer: Reducer<State, Event> = SignIn.reducer().pullback(
 let signInFeedback: Feedback<State, Event> = SignIn.feedback
     .pullback(
         value: \.signIn,
-        event: Event.signIn
+        event: /Event.signIn
     )
 
 let traficLightReducer: Reducer<State, Event> = TrafficLight.reducer()
@@ -55,7 +55,7 @@ let traficLightReducer: Reducer<State, Event> = TrafficLight.reducer()
 
 let trafficLightFeedback: Feedback<State, Event> = TrafficLight.feedback.pullback(
     value: \.traficLight,
-    event: Event.trafficLight
+    event: /Event.trafficLight
 )
 
 let appReducer = Reducer.combine(

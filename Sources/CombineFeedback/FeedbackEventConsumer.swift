@@ -13,7 +13,7 @@ public class FeedbackEventConsumer<Event> {
         fatalError("This is an abstract class. You must subclass this and provide your own implementation")
     }
 
-    func unqueueAllEvents(for token: Token) {
+    func dequeueAllEvents(for token: Token) {
         fatalError("This is an abstract class. You must subclass this and provide your own implementation")
     }
 }
@@ -38,7 +38,7 @@ final class PullBackConsumer<LocalEvent, Event>: FeedbackEventConsumer<LocalEven
         self.upstream.process(pull(event), for: token)
     }
 
-    override func unqueueAllEvents(for token: Token) {
-        self.upstream.unqueueAllEvents(for: token)
+    override func dequeueAllEvents(for token: Token) {
+        self.upstream.dequeueAllEvents(for: token)
     }
 }

@@ -1,23 +1,36 @@
 import Foundation
 import Combine
 
-final class Floodgate<State, Event>: FeedbackEventConsumer<Event>, Subscription {
+final class Floodgate<State, Event, S: Subscriber>: FeedbackEventConsumer<Event>, Subscription where S.Input == State, S.Failure == Never {
     struct QueueState {
         var events: [(Event, Token)] = []
         var isOuterLifetimeEnded = false
+        var hasEvents: Bool {
+            events.isEmpty == false && isOuterLifetimeEnded == false
+        }
     }
 
-    let stateDidChange = PassthroughSubject<State, Never>()
+    let stateDidChange = PassthroughSubject<(State, Event?), Never>()
 
     private let reducerLock = NSLock()
     private var state: State
     private var hasStarted = false
+    private var cancelable: Cancellable?
 
     private let queue = Atomic(QueueState())
     private let reducer: Reducer<State, Event>
+    private let feedbacks: [Feedback<State, Event>]
+    private let sink: S
 
-    init(state: State, reducer: Reducer<State, Event>) {
+    init(
+        state: State,
+        feedbacks: [Feedback<State, Event>],
+        sink: S,
+        reducer: Reducer<State, Event>
+    ) {
         self.state = state
+        self.feedbacks = feedbacks
+        self.sink = sink
         self.reducer = reducer
     }
 
@@ -27,38 +40,55 @@ final class Floodgate<State, Event>: FeedbackEventConsumer<Event>, Subscription 
 
         guard !hasStarted else { return }
         hasStarted = true
-
-        stateDidChange.send(state)
+        self.cancelable = feedbacks.map { $0.events(stateDidChange.eraseToAnyPublisher(), self) }
+        _ = self.sink.receive(state)
+        stateDidChange.send((state, nil))
         drainEvents()
     }
 
     func request(_ demand: Subscribers.Demand) {}
 
     func cancel() {
+        stateDidChange.send(completion: .finished)
+        cancelable?.cancel()
         queue.modify {
             $0.isOuterLifetimeEnded = true
         }
     }
 
     override func process(_ event: Event, for token: Token) {
-        if reducerLock.try() {
-            // Fast path: No running effect.
-            defer { reducerLock.unlock() }
+        enqueue(event, for: token)
 
-            consume(event)
-            drainEvents()
-        } else {
-            // Slow path: Enqueue the event for the running effect to drain it on behalf of us.
-            enqueue(event, for: token)
+        if reducerLock.try() {
+            repeat {
+                drainEvents()
+                reducerLock.unlock()
+            } while queue.withValue({ $0.hasEvents }) && reducerLock.try()
+            // ^^^
+            // Restart the event draining after we unlock the reducer lock, iff:
+            //
+            // 1. the queue still has unprocessed events; and
+            // 2. no concurrent actor has taken the reducer lock, which implies no event draining would be started
+            //    unless we take active action.
+            //
+            // This eliminates a race condition in the following sequence of operations:
+            //
+            // |              Thread A              |              Thread B              |
+            // |------------------------------------|------------------------------------|
+            // |     concurrent dequeue: no item    |                                    |
+            // |                                    |         concurrent enqueue         |
+            // |                                    |         trylock lock: BUSY         |
+            // |            unlock lock             |                                    |
+            // |                                    |                                    |
+            // |             <<<  The enqueued event is left unprocessed. >>>            |
+            //
+            // The trylock-unlock duo has a synchronize-with relationship, which ensures that Thread A must see any
+            // concurrent enqueue that *happens before* the trylock.
         }
     }
 
-    override func unqueueAllEvents(for token: Token) {
+    override func dequeueAllEvents(for token: Token) {
         queue.modify { $0.events.removeAll(where: { _, t in t == token }) }
-    }
-
-    func withValue<Result>(_ action: (State, Bool) -> Result) -> Result {
-        reducerLock.perform { action(state, hasStarted) }
     }
 
     private func enqueue(_ event: Event, for token: Token) {
@@ -86,7 +116,8 @@ final class Floodgate<State, Event>: FeedbackEventConsumer<Event>, Subscription 
 
     private func consume(_ event: Event) {
         reducer(&state, event)
-        stateDidChange.send(state)
+        _ = sink.receive(state)
+        stateDidChange.send((state, event))
     }
 }
 
@@ -115,10 +146,10 @@ extension Publishers {
                     self.consumer.process(value, for: token)
                 },
                 receiveCancel: {
-                    self.consumer.unqueueAllEvents(for: token)
+                    self.consumer.dequeueAllEvents(for: token)
                 }
             )
-            .flatMap { (outuput) -> Empty<Never, Never> in
+            .flatMap { _ -> Empty<Never, Never> in
                 return Empty()
             }
             .receive(subscriber: subscriber)

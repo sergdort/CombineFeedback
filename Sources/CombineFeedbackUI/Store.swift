@@ -1,6 +1,7 @@
 import Combine
 import CombineFeedback
 import Foundation
+import CasePaths
 
 open class Store<State, Event> {
     @Published
@@ -14,7 +15,7 @@ open class Store<State, Event> {
         reducer: Reducer<State, Event>
     ) {
         self.state = initial
-        Publishers.Feedbackloop(
+        Publishers.FeedbackLoop(
             initial: initial,
             reduce: .init { state, update in
                 switch update {
@@ -24,10 +25,12 @@ open class Store<State, Event> {
                     mutation.mutate(&state)
                 }
             },
-            feedbacks: feedbacks.map { $0.mapEvent(Update.event) }
-                .appending(self.input.feedback)
+            feedbacks: feedbacks.map {
+                $0.pullback(value: \.self, event: /Update.event)
+            }
+            .appending(self.input.feedback)
         )
-        .assign(to: \.state, on: self)
+        .assign(to: \.state, weakly: self)
         .store(in: &bag)
     }
     
@@ -74,5 +77,15 @@ extension Array {
         copy.append(element)
         
         return copy
+    }
+}
+
+
+extension Publisher where Self.Failure == Never {
+    public func assign<Root: AnyObject>(
+        to keyPath: WritableKeyPath<Root, Self.Output>, weakly object: Root) -> AnyCancellable {
+        return self.sink { [weak object] (output) in
+            object?[keyPath: keyPath] = output
+        }
     }
 }

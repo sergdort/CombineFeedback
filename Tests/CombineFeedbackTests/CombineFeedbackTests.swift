@@ -25,9 +25,9 @@ class CombineFeedbackTests: XCTestCase {
     }
 
     func test_reducer_with_one_feedback_loop() {
-        let feedback = Feedback<String, String>(effects: { _ in
+        let feedback = Feedback<String, String>.middleware { _ in
             Just("_a")
-        })
+        }
         let system = Publishers.system(
             initial: "initial",
             feedbacks: [feedback],
@@ -53,12 +53,12 @@ class CombineFeedbackTests: XCTestCase {
     }
 
     func test_reduce_with_two_immediate_feedback_loops() {
-        let feedback1 = Feedback<String, String>(effects: { _ in
+        let feedback1 = Feedback<String, String>.middleware { _ in
             Just("_a")
-        })
-        let feedback2 = Feedback<String, String>(effects: { _ in
+        }
+        let feedback2 = Feedback<String, String>.middleware { _ in
             Just("_b")
-        })
+        }
         let system = Publishers.system(
             initial: "initial",
             feedbacks: [feedback1, feedback2],
@@ -85,13 +85,11 @@ class CombineFeedbackTests: XCTestCase {
     }
 
     func test_should_observe_signals_immediately() {
-        let subject = PassthroughSubject<String, Never>()
+        let input = Feedback<String, String>.input
         let system = Publishers.system(
             initial: "initial",
             feedbacks: [
-                Feedback(effects: { _ -> AnyPublisher<String, Never> in
-                    subject.eraseToAnyPublisher()
-                }),
+                input.feedback,
             ],
             reduce: .init { (state, event) in
                 state += event
@@ -100,14 +98,41 @@ class CombineFeedbackTests: XCTestCase {
 
         var results: [String] = []
 
-        _ = system.sink(
+        let cancel = system.sink(
             receiveValue: {
                 results.append($0)
             }
         )
 
         XCTAssertEqual(["initial"], results)
-        subject.send("_a")
+        input.observer("_a")
         XCTAssertEqual(["initial", "initial_a"], results)
+    }
+    
+    func test_cancelation() {
+        let input = Feedback<String, String>.input
+        let system = Publishers.system(
+            initial: "initial",
+            feedbacks: [
+                input.feedback,
+            ],
+            reduce: .init { (state, event) in
+                state += event
+            }
+        )
+
+        var results: [String] = []
+        let cancel = system.sink(
+            receiveValue: {
+                results.append($0)
+            }
+        )
+
+        XCTAssertEqual(["initial"], results)
+        input.observer("_a")
+        input.observer("_b")
+        cancel.cancel()
+        input.observer("_c")
+        XCTAssertEqual(["initial", "initial_a", "initial_a_b"], results)
     }
 }

@@ -20,7 +20,7 @@ extension SignIn {
             return Feedback.custom { state, consumer in
                 state
                     .map {
-                        $0.userName
+                        $0.0.userName
                     }
                     .filter { $0.isEmpty == false }
                     .removeDuplicates()
@@ -38,7 +38,7 @@ extension SignIn {
         }
 
         static func whenSubmitting(api: GithubAPI) -> Feedback<State, Event> {
-            return Feedback(effects: { (state) -> AnyPublisher<Event, Never> in
+            return .middleware { (state) -> AnyPublisher<Event, Never> in
                 guard state.status.isSubmitting else {
                     return Empty().eraseToAnyPublisher()
                 }
@@ -47,7 +47,7 @@ extension SignIn {
                     .singIn(username: state.userName, email: state.email, password: state.password)
                     .map(Event.didSignIn)
                     .eraseToAnyPublisher()
-            })
+            }
         }
     }
 }
@@ -58,7 +58,7 @@ struct SignInView: View {
 
     @ObservedObject
     var context: Context<State, Event>
-    
+
     init(context: Context<State, Event>) {
         self.context = context
         logInit(of: self)
@@ -98,7 +98,7 @@ struct SignInView: View {
                 .textContentType(.newPassword)
                 TextField(
                     "Repeat Password",
-                        text: context.binding(for: \.repeatPassword)
+                    text: context.binding(for: \.repeatPassword)
                 )
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .textContentType(.newPassword)
@@ -129,6 +129,12 @@ struct SignInView: View {
                 }
             }
         }
+        .alert(
+            isPresented: context.binding(for: \.showSignedInAlert, event: .dismissAlertTap),
+            content: {
+                Alert(title: Text("Signed In"))
+            }
+        )
     }
 }
 

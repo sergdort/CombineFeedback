@@ -78,6 +78,17 @@ public final class Context<State, Event>: ObservableObject {
         )
     }
     
+    public func binding<U>(for keyPath: KeyPath<State, U>, event: Event) -> Binding<U> {
+        return Binding(
+            get: {
+                self.state[keyPath: keyPath]
+            },
+            set: { _ in
+                self.send(event: event)
+            }
+        )
+    }
+    
     public func binding<U>(for keyPath: WritableKeyPath<State, U>) -> Binding<U> {
         return Binding(
             get: {

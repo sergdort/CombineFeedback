@@ -60,7 +60,7 @@ enum TrafficLight {
     }
 
     private static func whenRed() -> Feedback<State, Event> {
-        return Feedback(effects: { state -> AnyPublisher<Event, Never> in
+        .middleware { state -> AnyPublisher<Event, Never> in
             guard case .red = state else {
                 return Empty().eraseToAnyPublisher()
             }
@@ -68,11 +68,11 @@ enum TrafficLight {
             return Result.Publisher(Event.next)
                 .delay(for: 1, scheduler: DispatchQueue.main)
                 .eraseToAnyPublisher()
-        })
+        }
     }
 
     private static func whenYellow() -> Feedback<State, Event> {
-        return Feedback(effects: { state -> AnyPublisher<Event, Never> in
+        .middleware { state -> AnyPublisher<Event, Never> in
             guard case .yellow = state else {
                 return Empty().eraseToAnyPublisher()
             }
@@ -80,11 +80,11 @@ enum TrafficLight {
             return Result.Publisher(Event.next)
                 .delay(for: 1, scheduler: DispatchQueue.main)
                 .eraseToAnyPublisher()
-        })
+        }
     }
 
     private static func whenGreen() -> Feedback<State, Event> {
-        return Feedback(effects: { state -> AnyPublisher<Event, Never> in
+        .middleware { state -> AnyPublisher<Event, Never> in
             guard case .green = state else {
                 return Empty().eraseToAnyPublisher()
             }
@@ -92,7 +92,7 @@ enum TrafficLight {
             return Result.Publisher(Event.next)
                 .delay(for: 1, scheduler: DispatchQueue.main)
                 .eraseToAnyPublisher()
-        })
+        }
     }
 
 }

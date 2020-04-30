@@ -1,9 +1,10 @@
+import CasePaths
 import Combine
 
 public struct Feedback<State, Event> {
-    let events: (_ state: AnyPublisher<State, Never>, _ output: FeedbackEventConsumer<Event>) -> Cancellable
+    let events: (_ state: AnyPublisher<(State, Event?), Never>, _ output: FeedbackEventConsumer<Event>) -> Cancellable
 
-    internal init(events: @escaping (_ state: AnyPublisher<State, Never>, _ output: FeedbackEventConsumer<Event>) -> Cancellable) {
+    internal init(events: @escaping (_ state: AnyPublisher<(State, Event?), Never>, _ output: FeedbackEventConsumer<Event>) -> Cancellable) {
         self.events = events
     }
 
@@ -18,7 +19,7 @@ public struct Feedback<State, Event> {
     ///             and having them consumed by `output` using the `SignalProducer.enqueue(to:)` operator.
     public static func custom(
         _ setup: @escaping (
-            _ state: AnyPublisher<State, Never>,
+            _ state: AnyPublisher<(State, Event?), Never>,
             _ output: FeedbackEventConsumer<Event>
         ) -> Cancellable
     ) -> Feedback<State, Event> {
@@ -37,17 +38,31 @@ public struct Feedback<State, Event> {
     ///   - effects: The side effect accepting transformed values produced by
     ///              `transform` and yielding events that eventually affect
     ///              the state.
-    public init<U, Effect: Publisher>(
-        compacting transform: @escaping (AnyPublisher<State, Never>) -> AnyPublisher<U, Never>,
+    public static func compacting<U, Effect: Publisher>(
+        state transform: @escaping (AnyPublisher<State, Never>) -> AnyPublisher<U, Never>,
         effects: @escaping (U) -> Effect
-    ) where Effect.Output == Event, Effect.Failure == Never {
-        self.events = { state, output in
+    ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
+        custom { (state, output) -> Cancellable in
             // NOTE: `observe(on:)` should be applied on the inner producers, so
             //       that cancellation due to state changes would be able to
             //       cancel outstanding events that have already been scheduled.
-            transform(state)
+            transform(state.map(\.0).eraseToAnyPublisher())
                 .flatMapLatest { effects($0).enqueue(to: output) }
-                .sink { _ in }
+                .start()
+        }
+    }
+
+    public static func compacting<U, Effect: Publisher>(
+        events transform: @escaping (AnyPublisher<Event, Never>) -> AnyPublisher<U, Never>,
+        effects: @escaping (U) -> Effect
+    ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
+        custom { (state, output) -> Cancellable in
+            // NOTE: `observe(on:)` should be applied on the inner producers, so
+            //       that cancellation due to state changes would be able to
+            //       cancel outstanding events that have already been scheduled.
+            transform(state.map(\.1).compactMap { $0 }.eraseToAnyPublisher())
+                .flatMapLatest { effects($0).enqueue(to: output) }
+                .start()
         }
     }
 
@@ -63,21 +78,18 @@ public struct Feedback<State, Event> {
     ///   - effects: The side effect accepting transformed values produced by
     ///              `transform` and yielding events that eventually affect
     ///              the state.
-    public init<Control: Equatable, Effect: Publisher>(
-        skippingRepeated transform: @escaping (State) -> Control?,
+    public static func skippingRepeated<Control: Equatable, Effect: Publisher>(
+        state transform: @escaping (State) -> Control?,
         effects: @escaping (Control) -> Effect
-    ) where Effect.Output == Event, Effect.Failure == Never {
-        self.init(
-            compacting: {
-                $0.map(transform)
-                    .removeDuplicates()
-                    .eraseToAnyPublisher()
-            },
-            effects: {
-                $0.map(effects)?
-                    .eraseToAnyPublisher() ?? Empty().eraseToAnyPublisher()
-            }
-        )
+    ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
+        compacting(state: {
+            $0.map(transform)
+                .removeDuplicates()
+                .eraseToAnyPublisher()
+        }, effects: {
+            $0.map(effects)?
+                .eraseToAnyPublisher() ?? Empty().eraseToAnyPublisher()
+        })
     }
 
     /// Creates a Feedback which re-evaluates the given effect every time the
@@ -91,18 +103,15 @@ public struct Feedback<State, Event> {
     ///   - effects: The side effect accepting transformed values produced by
     ///              `transform` and yielding events that eventually affect
     ///              the state.
-    public init<Control, Effect: Publisher>(
-        lensing transform: @escaping (State) -> Control?,
+    public static func lensing<Control, Effect: Publisher>(
+        state transform: @escaping (State) -> Control?,
         effects: @escaping (Control) -> Effect
-    ) where Effect.Output == Event, Effect.Failure == Never {
-        self.init(
-            compacting: {
-                $0.map(transform).eraseToAnyPublisher()
-            },
-            effects: {
-                $0.map(effects)?.eraseToAnyPublisher() ?? Empty().eraseToAnyPublisher()
-            }
-        )
+    ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
+        compacting(state: {
+            $0.map(transform).eraseToAnyPublisher()
+        }, effects: {
+            $0.map(effects)?.eraseToAnyPublisher() ?? Empty().eraseToAnyPublisher()
+        })
     }
 
     /// Creates a Feedback which re-evaluates the given effect every time the
@@ -115,16 +124,24 @@ public struct Feedback<State, Event> {
     ///   - predicate: The predicate to apply on the state.
     ///   - effects: The side effect accepting the state and yielding events
     ///              that eventually affect the state.
-    public init<Effect: Publisher>(
+    public static func predicate<Effect: Publisher>(
         predicate: @escaping (State) -> Bool,
         effects: @escaping (State) -> Effect
-    ) where Effect.Output == Event, Effect.Failure == Never {
-        self.init(
-            compacting: { $0 },
-            effects: { state in
-                predicate(state) ? effects(state).eraseToAnyPublisher() : Empty().eraseToAnyPublisher()
-            }
-        )
+    ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
+        compacting(state: { $0 }, effects: { state in
+            predicate(state) ? effects(state).eraseToAnyPublisher() : Empty().eraseToAnyPublisher()
+        })
+    }
+
+    public static func lensing<Payload, Effect: Publisher>(
+        event transform: @escaping (Event) -> Payload?,
+        effects: @escaping (Payload) -> Effect
+    ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
+        compacting(events: {
+            $0.map(transform).eraseToAnyPublisher()
+        }, effects: {
+            $0.map(effects)?.eraseToAnyPublisher() ?? Empty().eraseToAnyPublisher()
+        })
     }
 
     /// Creates a Feedback which re-evaluates the given effect every time the
@@ -136,44 +153,69 @@ public struct Feedback<State, Event> {
     /// - parameters:
     ///   - effects: The side effect accepting the state and yielding events
     ///              that eventually affect the state.
-    public init<Effect: Publisher>(
-        effects: @escaping (State) -> Effect
-    ) where Effect.Output == Event, Effect.Failure == Never {
-        self.init(compacting: { $0 }, effects: effects)
+    public static func middleware<Effect: Publisher>(
+        _ effects: @escaping (State) -> Effect
+    ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
+        compacting(state: { $0 }, effects: effects)
+    }
+    
+    /// Creates a Feedback which re-evaluates the given effect every time the
+    /// state changes.
+    ///
+    /// If the previous effect is still alive when a new one is about to start,
+    /// the previous one would automatically be cancelled.
+    ///
+    /// Important: State value is coming after reducer with an Event that caused the mutation
+    ///
+    /// - parameters:
+    ///   - effects: The side effect accepting the state and yielding events
+    ///              that eventually affect the state.
+    public static func middleware<Effect: Publisher>(
+        _ effects: @escaping (State, Event) -> Effect
+    ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
+        custom { (state, output) -> Cancellable in
+            state.compactMap { s, e -> (State, Event)? in
+                guard let e = e else {
+                    return nil
+                }
+                return (s, e)
+            }
+            .flatMapLatest {
+                effects($0, $1).enqueue(to: output)
+            }
+            .start()
+        }
     }
 }
 
 extension Feedback {
     public func pullback<GlobalState, GlobalEvent>(
         value: KeyPath<GlobalState, State>,
-        event: @escaping (Event) -> GlobalEvent
+        event: CasePath<GlobalEvent, Event>
     ) -> Feedback<GlobalState, GlobalEvent> {
         return .custom { (state, consumer) -> Cancellable in
+            let state = state.map {
+                return ($0[keyPath: value], $1.flatMap(event.extract(from:)))
+            }.eraseToAnyPublisher()
             return self.events(
-                state.map(value).eraseToAnyPublisher(),
-                consumer.pullback(event)
+                state,
+                consumer.pullback(event.embed)
             )
         }
     }
 
     public static func combine(_ feedbacks: Feedback<State, Event>...) -> Feedback<State, Event> {
         return Feedback.custom { (state, consumer) -> Cancellable in
-            return feedbacks.map { (feedback) -> Cancellable in
+            feedbacks.map { (feedback) -> Cancellable in
                 return feedback.events(state, consumer)
             }
         }
     }
 
-    public func mapEvent<U>(_ f: @escaping (Event) -> U) -> Feedback<State, U> {
-        return Feedback<State, U>.custom { (state, consumer) -> Cancellable in
-            self.events(state, consumer.pullback(f))
-        }
-    }
-
     public static var input: (feedback: Feedback, observer: (Event) -> Void) {
         let subject = PassthroughSubject<Event, Never>()
-        let feedback = Feedback.custom { (state, consumer) -> Cancellable in
-            subject.enqueue(to: consumer).sink(receiveValue: { _ in })
+        let feedback = Feedback.custom { (_, consumer) -> Cancellable in
+            subject.enqueue(to: consumer).start()
         }
         return (feedback, subject.send)
     }

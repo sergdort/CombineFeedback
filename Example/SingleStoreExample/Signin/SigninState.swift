@@ -10,6 +10,7 @@ enum SignIn {
         var repeatPassword = ""
         var termsAccepted = false
         var status = Status.idle
+        var showSignedInAlert = false
         fileprivate(set) var isAvailable = false
 
         var canSubmit: Bool {
@@ -62,6 +63,7 @@ enum SignIn {
         case didSignIn(Bool)
         case didChangeUserName(String)
         case signIn
+        case dismissAlertTap
     }
 
     static func reducer() -> Reducer<State, Event> {
@@ -75,8 +77,11 @@ enum SignIn {
                 state.status = .idle
             case .signIn:
                 state.status = .submitting
+                state.showSignedInAlert = true
             case .didSignIn:
                 state.status = .idle
+            case .dismissAlertTap:
+                state.showSignedInAlert = false
             }
         }
     }
@@ -92,7 +97,7 @@ enum SignIn {
         return Feedback.custom { state, consumer in
             state
                 .map {
-                    $0.userName
+                    $0.0.userName
                 }
                 .filter { $0.isEmpty == false }
                 .removeDuplicates()
@@ -110,7 +115,7 @@ enum SignIn {
     }
 
     static func whenSubmitting(api: GithubAPI) -> Feedback<State, Event> {
-        return Feedback(effects: { (state) -> AnyPublisher<Event, Never> in
+        return .middleware { (state) -> AnyPublisher<Event, Never> in
             guard state.status.isSubmitting else {
                 return Empty().eraseToAnyPublisher()
             }
@@ -119,6 +124,6 @@ enum SignIn {
                 .singIn(username: state.userName, email: state.email, password: state.password)
                 .map(Event.didSignIn)
                 .eraseToAnyPublisher()
-        })
+        }
     }
 }

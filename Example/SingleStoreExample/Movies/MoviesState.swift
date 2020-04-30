@@ -59,7 +59,7 @@ enum Movies {
     }
 
     static var feedback: Feedback<State, Event> {
-        return Feedback(lensing: { $0.nextPage }) { page in
+        return .lensing(state: { $0.nextPage }) { page in
             URLSession.shared
                 .fetchMovies(page: page)
                 .map(Event.didLoad)

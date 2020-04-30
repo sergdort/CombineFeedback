@@ -26,7 +26,7 @@ extension Movies {
         }
 
         private static func whenLoading() -> Feedback<State, Event> {
-            return Feedback(lensing: { $0.nextPage }) { page in
+            .lensing(state: { $0.nextPage }) { page in
                 URLSession.shared
                     .fetchMovies(page: page)
                     .map(Event.didLoad)
