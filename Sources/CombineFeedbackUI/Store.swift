@@ -31,7 +31,7 @@ open class Store<State, Event> {
         .store(in: &bag)
     }
     
-    var context: Context<State, Event> {
+    open var context: Context<State, Event> {
         return Context(store: self)
     }
     

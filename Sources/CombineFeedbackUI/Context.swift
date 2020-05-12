@@ -89,6 +89,10 @@ public final class Context<State, Event>: ObservableObject {
         )
     }
     
+    public func subject<U>(for keyPath: KeyPath<State, U>) -> AnyPublisher<U, Never> {
+        CurrentValueSubject<U, Never>(self.state[keyPath: keyPath]).eraseToAnyPublisher()
+    }
+    
     public func action(for event: Event) -> () -> Void {
         return {
             self.send(event: event)
