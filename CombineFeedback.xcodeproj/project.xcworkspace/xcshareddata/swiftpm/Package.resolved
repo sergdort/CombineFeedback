@@ -2,7 +2,7 @@
   "object": {
     "pins": [
       {
-        "package": "CasePaths",
+        "package": "swift-case-paths",
         "repositoryURL": "git@github.com:pointfreeco/swift-case-paths.git",
         "state": {
           "branch": null,
