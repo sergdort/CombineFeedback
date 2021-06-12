@@ -56,11 +56,11 @@ struct SignInView: View {
     typealias State = SignIn.State
     typealias Event = SignIn.Event
 
-    @ObservedObject
-    var context: Context<State, Event>
+    @StateObject
+    var context: ViewContext<State, Event>
 
-    init(context: Context<State, Event>) {
-        self.context = context
+    init(context: ViewContext<State, Event>) {
+        self._context = StateObject(wrappedValue: context)
         logInit(of: self)
     }
 

@@ -11,14 +11,14 @@
 		2510CDE1242BED63004A6422 /* ContextExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2510CDE0242BED63004A6422 /* ContextExtensions.swift */; };
 		251445E724086A400062EE04 /* TrafficLightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 251445E624086A400062EE04 /* TrafficLightView.swift */; };
 		252BF08422BAE05700BC4265 /* SignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252BF08322BAE05700BC4265 /* SignIn.swift */; };
-		253D324122B185FA002F3B7F /* Context.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253D323F22B1858C002F3B7F /* Context.swift */; };
+		253D324122B185FA002F3B7F /* ViewContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253D323F22B1858C002F3B7F /* ViewContext.swift */; };
 		25C57B2C22BC2C33007CB4D6 /* Activity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C57B2B22BC2C33007CB4D6 /* Activity.swift */; };
 		25EBC08C23FD61B100719826 /* Reducer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585CD878239AC7D3004BE9CC /* Reducer.swift */; };
 		25F23C2922CA984E00894863 /* TrafficLight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F23C2822CA984E00894863 /* TrafficLight.swift */; };
 		5800000022A9DDE5005A860B /* CombineFeedbackUI.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5800FFEA22A9DDE5005A860B /* CombineFeedbackUI.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		5800000D22A9DE8F005A860B /* CombineFeedback.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5800FF9022A89BE6005A860B /* CombineFeedback.framework */; };
 		5800000E22A9DE8F005A860B /* CombineFeedback.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5800FF9022A89BE6005A860B /* CombineFeedback.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		5800001522A9DEEA005A860B /* Widget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800001422A9DEEA005A860B /* Widget.swift */; };
+		5800001522A9DEEA005A860B /* WithViewContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800001422A9DEEA005A860B /* WithViewContext.swift */; };
 		5800FF9A22A89BE6005A860B /* CombineFeedback.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5800FF9022A89BE6005A860B /* CombineFeedback.framework */; };
 		5800FF9F22A89BE6005A860B /* CombineFeedbackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FF9E22A89BE6005A860B /* CombineFeedbackTests.swift */; };
 		5800FFAE22A89C09005A860B /* Feedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FFAA22A89C08005A860B /* Feedback.swift */; };
@@ -138,10 +138,10 @@
 		2510CDE0242BED63004A6422 /* ContextExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextExtensions.swift; sourceTree = "<group>"; };
 		251445E624086A400062EE04 /* TrafficLightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrafficLightView.swift; sourceTree = "<group>"; };
 		252BF08322BAE05700BC4265 /* SignIn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignIn.swift; sourceTree = "<group>"; };
-		253D323F22B1858C002F3B7F /* Context.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Context.swift; sourceTree = "<group>"; };
+		253D323F22B1858C002F3B7F /* ViewContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewContext.swift; sourceTree = "<group>"; };
 		25C57B2B22BC2C33007CB4D6 /* Activity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Activity.swift; sourceTree = "<group>"; };
 		25F23C2822CA984E00894863 /* TrafficLight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrafficLight.swift; sourceTree = "<group>"; };
-		5800001422A9DEEA005A860B /* Widget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Widget.swift; sourceTree = "<group>"; };
+		5800001422A9DEEA005A860B /* WithViewContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WithViewContext.swift; sourceTree = "<group>"; };
 		5800FF9022A89BE6005A860B /* CombineFeedback.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = CombineFeedback.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5800FF9422A89BE6005A860B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		5800FF9922A89BE6005A860B /* CombineFeedbackTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CombineFeedbackTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -360,9 +360,9 @@
 			children = (
 				5800FFEC22A9DDE5005A860B /* CombineFeedbackUI.h */,
 				5800FFED22A9DDE5005A860B /* Info.plist */,
-				253D323F22B1858C002F3B7F /* Context.swift */,
+				253D323F22B1858C002F3B7F /* ViewContext.swift */,
 				583971C422ADFA1F00139CC0 /* Store.swift */,
-				5800001422A9DEEA005A860B /* Widget.swift */,
+				5800001422A9DEEA005A860B /* WithViewContext.swift */,
 			);
 			path = CombineFeedbackUI;
 			sourceTree = "<group>";
@@ -783,9 +783,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5800001522A9DEEA005A860B /* Widget.swift in Sources */,
+				5800001522A9DEEA005A860B /* WithViewContext.swift in Sources */,
 				583971C522ADFA1F00139CC0 /* Store.swift in Sources */,
-				253D324122B185FA002F3B7F /* Context.swift in Sources */,
+				253D324122B185FA002F3B7F /* ViewContext.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

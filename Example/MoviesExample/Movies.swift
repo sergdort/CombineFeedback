@@ -57,11 +57,11 @@ extension Movies {
 struct MoviesView: View {
   typealias State = Movies.State
   typealias Event = Movies.Event
-  @ObservedObject
-  var context: Context<State, Event>
+  @StateObject
+  var context: ViewContext<State, Event>
 
-  init(context: Context<State, Event>) {
-    self.context = context
+  init(context: ViewContext<State, Event>) {
+    self._context = StateObject(wrappedValue: context)
     logInit(of: self)
   }
 

@@ -2,11 +2,11 @@ import SwiftUI
 import CombineFeedbackUI
 
 struct TrafficLightView: View {
-    @ObservedObject
-    var context: Context<TrafficLight.State, TrafficLight.Event>
+    @StateObject
+    var context: ViewContext<TrafficLight.State, TrafficLight.Event>
     
-    init(context: Context<TrafficLight.State, TrafficLight.Event>) {
-        self.context = context
+    init(context: ViewContext<TrafficLight.State, TrafficLight.Event>) {
+        self._context = StateObject(wrappedValue: context)
         logInit(of: self)
     }
     

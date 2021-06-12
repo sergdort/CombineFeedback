@@ -2,7 +2,10 @@ import Combine
 import CombineFeedback
 import SwiftUI
 
-public struct Widget<State, Event, Content: View>: View {
+@available(*, deprecated, renamed:"WithViewContext")
+public typealias Widget<State, Event, Content: View> = WithViewContext<State, Event, Content>
+
+public struct WithViewContext<State, Event, Content: View>: View {
     private let store: Store<State, Event>
     private let content: (Context<State, Event>) -> Content
 

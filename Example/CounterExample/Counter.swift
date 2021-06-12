@@ -19,11 +19,11 @@ struct CounterView: View {
   typealias State = Counter.State
   typealias Event = Counter.Event
 
-  @ObservedObject
-  var context: Context<State, Event>
+  @StateObject
+  var context: ViewContext<State, Event>
 
-  init(context: Context<State, Event>) {
-    self.context = context
+  init(context: ViewContext<State, Event>) {
+    self._context = StateObject(wrappedValue: context)
     logInit(of: self)
   }
 

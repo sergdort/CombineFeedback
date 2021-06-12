@@ -1,8 +1,12 @@
 import SwiftUI
 import Combine
 
+
+@available(*, deprecated, renamed:"ViewContext<State, Event>")
+public typealias Context<State, Event> = ViewContext<State, Event>
+
 @dynamicMemberLookup
-public final class Context<State, Event>: ObservableObject {
+public final class ViewContext<State, Event>: ObservableObject {
     @Published
     private var state: State
     private var bag = Set<AnyCancellable>()

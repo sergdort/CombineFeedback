@@ -3,9 +3,9 @@ import CombineFeedbackUI
 import SwiftUI
 
 struct SingleStoreExampleView: View {
-    let context: Context<State, Event>
-    
-    init(context: Context<State, Event>) {
+    let context: ViewContext<State, Event>
+
+    init(context: ViewContext<State, Event>) {
         self.context = context
         logInit(of: self)
     }
