@@ -1,5 +1,6 @@
 import Combine
 import CombineFeedback
+import Foundation
 
 enum TrafficLight {
     enum State: Equatable {

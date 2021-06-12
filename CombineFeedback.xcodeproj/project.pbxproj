@@ -21,7 +21,6 @@
 		5800001522A9DEEA005A860B /* Widget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800001422A9DEEA005A860B /* Widget.swift */; };
 		5800FF9A22A89BE6005A860B /* CombineFeedback.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5800FF9022A89BE6005A860B /* CombineFeedback.framework */; };
 		5800FF9F22A89BE6005A860B /* CombineFeedbackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FF9E22A89BE6005A860B /* CombineFeedbackTests.swift */; };
-		5800FFA122A89BE6005A860B /* CombineFeedback.h in Headers */ = {isa = PBXBuildFile; fileRef = 5800FF9322A89BE6005A860B /* CombineFeedback.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5800FFAE22A89C09005A860B /* Feedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FFAA22A89C08005A860B /* Feedback.swift */; };
 		5800FFAF22A89C09005A860B /* FlatMapLatest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FFAB22A89C08005A860B /* FlatMapLatest.swift */; };
 		5800FFB022A89C09005A860B /* System.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FFAC22A89C08005A860B /* System.swift */; };
@@ -144,7 +143,6 @@
 		25F23C2822CA984E00894863 /* TrafficLight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrafficLight.swift; sourceTree = "<group>"; };
 		5800001422A9DEEA005A860B /* Widget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Widget.swift; sourceTree = "<group>"; };
 		5800FF9022A89BE6005A860B /* CombineFeedback.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = CombineFeedback.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		5800FF9322A89BE6005A860B /* CombineFeedback.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CombineFeedback.h; sourceTree = "<group>"; };
 		5800FF9422A89BE6005A860B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		5800FF9922A89BE6005A860B /* CombineFeedbackTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CombineFeedbackTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5800FF9E22A89BE6005A860B /* CombineFeedbackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CombineFeedbackTests.swift; sourceTree = "<group>"; };
@@ -290,7 +288,6 @@
 		5800FF9222A89BE6005A860B /* CombineFeedback */ = {
 			isa = PBXGroup;
 			children = (
-				5800FF9322A89BE6005A860B /* CombineFeedback.h */,
 				5800FFAA22A89C08005A860B /* Feedback.swift */,
 				58751A9923ECBCA000EEF398 /* FeedbackLoop.swift */,
 				58751A9123EC814500EEF398 /* FeedbackEventConsumer.swift */,
@@ -484,7 +481,6 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5800FFA122A89BE6005A860B /* CombineFeedback.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -624,7 +620,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastSwiftUpdateCheck = 1100;
-				LastUpgradeCheck = 1100;
+				LastUpgradeCheck = 1300;
 				ORGANIZATIONNAME = babylonhealth;
 				TargetAttributes = {
 					5800FF8F22A89BE6005A860B = {
@@ -966,6 +962,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -1029,6 +1026,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;

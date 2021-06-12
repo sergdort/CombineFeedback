@@ -59,13 +59,23 @@ enum Movies {
     }
 
     static var feedback: Feedback<State, Event> {
-        return .lensing(state: { $0.nextPage }) { page in
-            URLSession.shared
-                .fetchMovies(page: page)
-                .map(Event.didLoad)
-                .replaceError(replace: Event.didFail)
-                .receive(on: DispatchQueue.main)
+      if #available(iOS 15.0, *) {
+        return .lensing(state: \.nextPage) { page in
+          do {
+            return Event.didLoad(try await URLSession.shared.movies(page: page))
+          } catch {
+            return Event.didFail(error as NSError)
+          }
         }
+      } else {
+        return .lensing(state: { $0.nextPage }) { page in
+          URLSession.shared
+            .fetchMovies(page: page)
+            .map(Event.didLoad)
+            .replaceError(replace: Event.didFail)
+            .receive(on: DispatchQueue.main)
+        }
+      }
     }
 
 }
