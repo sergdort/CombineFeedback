@@ -1,7 +1,8 @@
 import SwiftUI
 import Combine
+import CombineSchedulers
 
-@available(*, deprecated, renamed:"ViewContext")
+@available(*, deprecated, renamed: "ViewContext")
 public typealias Context<State, Event> = ViewContext<State, Event>
 
 @dynamicMemberLookup
@@ -22,6 +23,7 @@ public final class ViewContext<State, Event>: ObservableObject {
     self.mutate = store.mutate
     store.publisher
       .removeDuplicates(by: isDuplicate)
+      .receive(on: UIScheduler.shared, options: nil)
       .assign(to: \.state, weakly: self)
       .store(in: &bag)
   }

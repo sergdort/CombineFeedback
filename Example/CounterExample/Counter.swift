@@ -9,7 +9,8 @@ extension Counter {
       super.init(
         initial: State(),
         feedbacks: [],
-        reducer: Counter.reducer()
+        reducer: Counter.reducer(),
+        dependency: ()
       )
     }
   }

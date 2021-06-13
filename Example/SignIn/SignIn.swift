@@ -12,12 +12,13 @@ extension SignIn {
           ViewModel.whenChangingUserName(api: GithubAPI()),
           ViewModel.whenSubmitting(api: GithubAPI())
         ],
-        reducer: SignIn.reducer()
+        reducer: SignIn.reducer(),
+        dependency: ()
       )
     }
 
-    static func whenChangingUserName(api: GithubAPI) -> Feedback<State, Event> {
-      return Feedback.custom { state, consumer in
+    static func whenChangingUserName(api: GithubAPI) -> Feedback<State, Event, Void> {
+      return Feedback.custom { state, consumer, _ in
         state
           .map {
             $0.0.userName
@@ -37,14 +38,14 @@ extension SignIn {
       }
     }
 
-    static func whenSubmitting(api: GithubAPI) -> Feedback<State, Event> {
-      return .middleware { (state) -> AnyPublisher<Event, Never> in
+    static func whenSubmitting(api: GithubAPI) -> Feedback<State, Event, Void> {
+      return .middleware { (state, _) -> AnyPublisher<Event, Never> in
         guard state.status.isSubmitting else {
           return Empty().eraseToAnyPublisher()
         }
 
         return api
-          .singIn(username: state.userName, email: state.email, password: state.password)
+          .signIn(username: state.userName, email: state.email, password: state.password)
           .map(Event.didSignIn)
           .eraseToAnyPublisher()
       }
@@ -153,7 +154,7 @@ final class GithubAPI {
       .eraseToAnyPublisher()
   }
 
-  func singIn(username: String, email: String, password: String) -> AnyPublisher<Bool, Never> {
+  func signIn(username: String, email: String, password: String) -> AnyPublisher<Bool, Never> {
     // Fake implementation
     return Result.Publisher(true)
       .delay(for: 0.3, scheduler: DispatchQueue.main)

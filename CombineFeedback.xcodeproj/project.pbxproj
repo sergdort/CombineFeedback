@@ -13,6 +13,7 @@
 		252BF08422BAE05700BC4265 /* SignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252BF08322BAE05700BC4265 /* SignIn.swift */; };
 		253D324122B185FA002F3B7F /* ViewContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253D323F22B1858C002F3B7F /* ViewContext.swift */; };
 		254B4DB726755AE200653BB8 /* StoreBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 254B4DB626755AE200653BB8 /* StoreBox.swift */; };
+		254B4DBA2676650000653BB8 /* CombineSchedulers in Frameworks */ = {isa = PBXBuildFile; productRef = 254B4DB92676650000653BB8 /* CombineSchedulers */; };
 		25C57B2C22BC2C33007CB4D6 /* Activity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C57B2B22BC2C33007CB4D6 /* Activity.swift */; };
 		25EBC08C23FD61B100719826 /* Reducer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585CD878239AC7D3004BE9CC /* Reducer.swift */; };
 		25F23C2922CA984E00894863 /* TrafficLight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F23C2822CA984E00894863 /* TrafficLight.swift */; };
@@ -195,6 +196,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				254B4DBA2676650000653BB8 /* CombineSchedulers in Frameworks */,
 				5822A2302434FEB400270514 /* CasePaths in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -307,8 +309,8 @@
 				5800FFAB22A89C08005A860B /* FlatMapLatest.swift */,
 				58751A9523EC823C00EEF398 /* Atomic.swift */,
 				5800FFAC22A89C08005A860B /* System.swift */,
-				5800FF9422A89BE6005A860B /* Info.plist */,
 				585CD878239AC7D3004BE9CC /* Reducer.swift */,
+				5800FF9422A89BE6005A860B /* Info.plist */,
 			);
 			path = CombineFeedback;
 			sourceTree = "<group>";
@@ -522,6 +524,7 @@
 			name = CombineFeedback;
 			packageProductDependencies = (
 				5822A22F2434FEB400270514 /* CasePaths */,
+				254B4DB92676650000653BB8 /* CombineSchedulers */,
 			);
 			productName = CombineFeedback;
 			productReference = 5800FF9022A89BE6005A860B /* CombineFeedback.framework */;
@@ -669,6 +672,7 @@
 			mainGroup = 5800FF8622A89BE6005A860B;
 			packageReferences = (
 				5822A22E2434FEB400270514 /* XCRemoteSwiftPackageReference "swift-case-paths" */,
+				254B4DB82676650000653BB8 /* XCRemoteSwiftPackageReference "combine-schedulers" */,
 			);
 			productRefGroup = 5800FF9122A89BE6005A860B /* Products */;
 			projectDirPath = "";
@@ -1165,6 +1169,7 @@
 				DEVELOPMENT_TEAM = 3JZ7RUJD4Q;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Example/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1186,6 +1191,7 @@
 				DEVELOPMENT_TEAM = 3JZ7RUJD4Q;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Example/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1306,17 +1312,30 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		254B4DB82676650000653BB8 /* XCRemoteSwiftPackageReference "combine-schedulers" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/combine-schedulers.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.5.0;
+			};
+		};
 		5822A22E2434FEB400270514 /* XCRemoteSwiftPackageReference "swift-case-paths" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "git@github.com:pointfreeco/swift-case-paths.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.1.0;
+				minimumVersion = 0.2.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		254B4DB92676650000653BB8 /* CombineSchedulers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 254B4DB82676650000653BB8 /* XCRemoteSwiftPackageReference "combine-schedulers" */;
+			productName = CombineSchedulers;
+		};
 		5822A22F2434FEB400270514 /* CasePaths */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 5822A22E2434FEB400270514 /* XCRemoteSwiftPackageReference "swift-case-paths" */;

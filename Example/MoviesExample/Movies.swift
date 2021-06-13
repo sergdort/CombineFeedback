@@ -11,7 +11,7 @@ extension Movies {
       movies: [],
       status: .loading
     )
-    var feedbacks: [Feedback<State, Event>] {
+    var feedbacks: [Feedback<State, Event, Void>] {
       if #available(iOS 15.0, *) {
         return [
           ViewModel.whenLoadingIOS15()
@@ -27,12 +27,13 @@ extension Movies {
       super.init(
         initial: initial,
         feedbacks: [ViewModel.whenLoading()],
-        reducer: Movies.reducer()
+        reducer: Movies.reducer(),
+        dependency: ()
       )
     }
 
-    private static func whenLoading() -> Feedback<State, Event> {
-      .lensing(state: { $0.nextPage }) { page in
+    private static func whenLoading() -> Feedback<State, Event, Void> {
+      .lensing(state: { $0.nextPage }) { page, _ in
         URLSession.shared
           .fetchMovies(page: page)
           .map(Event.didLoad)
@@ -42,8 +43,8 @@ extension Movies {
     }
 
     @available(iOS 15.0, *)
-    private static func whenLoadingIOS15() -> Feedback<State, Event> {
-      .lensing(state: \.nextPage) { page in
+    private static func whenLoadingIOS15() -> Feedback<State, Event, Void> {
+      .lensing(state: \.nextPage) { page, _ in
         do {
           return Event.didLoad(try await URLSession.shared.movies(page: page))
         } catch {

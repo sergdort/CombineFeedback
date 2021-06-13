@@ -26,8 +26,8 @@ public struct WithViewContext<State, Event, Content: View>: View {
   }
 }
 
-extension WithViewContext where State: Equatable {
-  public init(
+public extension WithViewContext where State: Equatable {
+  init(
     store: Store<State, Event>,
     @ViewBuilder content: @escaping (ViewContext<State, Event>) -> Content
   ) {

@@ -25,7 +25,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             signInFeedback,
             trafficLightFeedback
           ],
-          reducer: appReducer
+          reducer: appReducer,
+          dependency: AppDependency()
         )
       )
     )

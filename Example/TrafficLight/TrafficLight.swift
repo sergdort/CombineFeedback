@@ -13,12 +13,13 @@ extension TrafficLight {
                     ViewModel.whenYellow(),
                     ViewModel.whenGreen()
                 ],
-                reducer: TrafficLight.reducer()
+                reducer: TrafficLight.reducer(),
+                dependency: ()
             )
         }
 
-        private static func whenRed() -> Feedback<State, Event> {
-            .middleware { state -> AnyPublisher<Event, Never> in
+        private static func whenRed() -> Feedback<State, Event, Void> {
+            .middleware { state, _ -> AnyPublisher<Event, Never> in
                 guard case .red = state else {
                     return Empty().eraseToAnyPublisher()
                 }
@@ -29,8 +30,8 @@ extension TrafficLight {
             }
         }
 
-        private static func whenYellow() -> Feedback<State, Event> {
-            .middleware { state -> AnyPublisher<Event, Never> in
+        private static func whenYellow() -> Feedback<State, Event, Void> {
+            .middleware { state, _ -> AnyPublisher<Event, Never> in
                 guard case .yellow = state else {
                     return Empty().eraseToAnyPublisher()
                 }
@@ -41,8 +42,8 @@ extension TrafficLight {
             }
         }
 
-        private static func whenGreen() -> Feedback<State, Event> {
-            .middleware { state -> AnyPublisher<Event, Never> in
+        private static func whenGreen() -> Feedback<State, Event, Void> {
+            .middleware { state, _ -> AnyPublisher<Event, Never> in
                 guard case .green = state else {
                     return Empty().eraseToAnyPublisher()
                 }

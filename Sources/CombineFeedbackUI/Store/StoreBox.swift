@@ -1,11 +1,12 @@
 import Combine
 import CombineFeedback
 import CasePaths
+import SwiftUI
 
 internal class RootStoreBox<State, Event>: StoreBoxBase<State, Event> {
   private let subject: CurrentValueSubject<State, Never>
 
-  private let input = Feedback<State, Update>.input
+  private let inputObserver: (Update) -> Void
   private var bag = Set<AnyCancellable>()
 
   override var _current: State {
@@ -16,12 +17,15 @@ internal class RootStoreBox<State, Event>: StoreBoxBase<State, Event> {
     subject.eraseToAnyPublisher()
   }
 
-  public init(
+  public init<Dependency>(
     initial: State,
-    feedbacks: [Feedback<State, Event>],
-    reducer: Reducer<State, Event>
+    feedbacks: [Feedback<State, Event, Dependency>],
+    reducer: Reducer<State, Event>,
+    dependency: Dependency
   ) {
+    let input = Feedback<State, Update, Dependency>.input
     self.subject = CurrentValueSubject(initial)
+    self.inputObserver = input.observer
     Publishers.FeedbackLoop(
       initial: initial,
       reduce: .init { state, update in
@@ -33,9 +37,10 @@ internal class RootStoreBox<State, Event>: StoreBoxBase<State, Event> {
         }
       },
       feedbacks: feedbacks.map {
-        $0.pullback(value: \.self, event: /Update.event)
+        $0.pullback(value: \.self, event: /Update.event, dependency: { _ in dependency })
       }
-      .appending(self.input.feedback)
+      .appending(input.feedback),
+      dependency: dependency
     )
     .sink(receiveValue: { [subject] state in
       subject.send(state)
@@ -44,15 +49,15 @@ internal class RootStoreBox<State, Event>: StoreBoxBase<State, Event> {
   }
 
   override func send(event: Event) {
-    self.input.observer(.event(event))
+    self.inputObserver(.event(event))
   }
 
   override func mutate<V>(keyPath: WritableKeyPath<State, V>, value: V) {
-    self.input.observer(.mutation(Mutation(keyPath: keyPath, value: value)))
+    self.inputObserver(.mutation(Mutation(keyPath: keyPath, value: value)))
   }
 
   override func mutate(with mutation: Mutation<State>) {
-    self.input.observer(.mutation(mutation))
+    self.inputObserver(.mutation(mutation))
   }
 
   override func scoped<S, E>(to scope: WritableKeyPath<State, S>, event: @escaping (E) -> Event) -> StoreBoxBase<S, E> {

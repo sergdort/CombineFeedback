@@ -1,10 +1,18 @@
 import CasePaths
 import Combine
 
-public struct Feedback<State, Event> {
-  let events: (_ state: AnyPublisher<(State, Event?), Never>, _ output: FeedbackEventConsumer<Event>) -> Cancellable
+public struct Feedback<State, Event, Dependency> {
+  let events: (
+    _ state: AnyPublisher<(State, Event?), Never>,
+    _ output: FeedbackEventConsumer<Event>,
+    _ dependency: Dependency
+  ) -> Cancellable
 
-  internal init(events: @escaping (_ state: AnyPublisher<(State, Event?), Never>, _ output: FeedbackEventConsumer<Event>) -> Cancellable) {
+  internal init(events: @escaping (
+    _ state: AnyPublisher<(State, Event?), Never>,
+    _ output: FeedbackEventConsumer<Event>,
+    _ dependency: Dependency
+  ) -> Cancellable) {
     self.events = events
   }
 
@@ -20,9 +28,10 @@ public struct Feedback<State, Event> {
   public static func custom(
     _ setup: @escaping (
       _ state: AnyPublisher<(State, Event?), Never>,
-      _ output: FeedbackEventConsumer<Event>
+      _ output: FeedbackEventConsumer<Event>,
+      _ dependency: Dependency
     ) -> Cancellable
-  ) -> Feedback<State, Event> {
+  ) -> Feedback {
     return Feedback(events: setup)
   }
 
@@ -40,28 +49,28 @@ public struct Feedback<State, Event> {
   ///              the state.
   public static func compacting<U, Effect: Publisher>(
     state transform: @escaping (AnyPublisher<State, Never>) -> AnyPublisher<U, Never>,
-    effects: @escaping (U) -> Effect
+    effects: @escaping (U, Dependency) -> Effect
   ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
-    custom { (state, output) -> Cancellable in
+    custom { (state, output, dependency) -> Cancellable in
       // NOTE: `observe(on:)` should be applied on the inner producers, so
       //       that cancellation due to state changes would be able to
       //       cancel outstanding events that have already been scheduled.
       transform(state.map(\.0).eraseToAnyPublisher())
-        .flatMapLatest { effects($0).enqueue(to: output) }
+        .flatMapLatest { effects($0, dependency).enqueue(to: output) }
         .start()
     }
   }
 
   public static func compacting<U, Effect: Publisher>(
     events transform: @escaping (AnyPublisher<Event, Never>) -> AnyPublisher<U, Never>,
-    effects: @escaping (U) -> Effect
+    effects: @escaping (U, Dependency) -> Effect
   ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
-    custom { (state, output) -> Cancellable in
+    custom { (state, output, dependency) -> Cancellable in
       // NOTE: `observe(on:)` should be applied on the inner producers, so
       //       that cancellation due to state changes would be able to
       //       cancel outstanding events that have already been scheduled.
       transform(state.map(\.1).compactMap { $0 }.eraseToAnyPublisher())
-        .flatMapLatest { effects($0).enqueue(to: output) }
+        .flatMapLatest { effects($0, dependency).enqueue(to: output) }
         .start()
     }
   }
@@ -80,14 +89,15 @@ public struct Feedback<State, Event> {
   ///              the state.
   public static func skippingRepeated<Control: Equatable, Effect: Publisher>(
     state transform: @escaping (State) -> Control?,
-    effects: @escaping (Control) -> Effect
+    effects: @escaping (Control, Dependency) -> Effect
   ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
     compacting(state: {
       $0.map(transform)
         .removeDuplicates()
         .eraseToAnyPublisher()
-    }, effects: {
-      $0.map(effects)?
+    }, effects: { control, dependency in
+      control
+        .map { effects($0, dependency) }?
         .eraseToAnyPublisher() ?? Empty().eraseToAnyPublisher()
     })
   }
@@ -95,16 +105,16 @@ public struct Feedback<State, Event> {
   @available(iOS 15.0, *)
   public static func skippingRepeated<Control: Equatable>(
     state transform: @escaping (State) -> Control?,
-    effect: @escaping (Control) async -> Event
+    effect: @escaping (Control, Dependency) async -> Event
   ) -> Feedback {
     compacting(state: {
       $0.map(transform)
         .removeDuplicates()
         .eraseToAnyPublisher()
-    }, effects: { control -> AnyPublisher<Event, Never> in
+    }, effects: { control, dependency -> AnyPublisher<Event, Never> in
       if let control = control {
         return TaskPublisher {
-          await effect(control)
+          await effect(control, dependency)
         }.eraseToAnyPublisher()
       } else {
         return Empty().eraseToAnyPublisher()
@@ -125,26 +135,27 @@ public struct Feedback<State, Event> {
   ///              the state.
   public static func lensing<Control, Effect: Publisher>(
     state transform: @escaping (State) -> Control?,
-    effects: @escaping (Control) -> Effect
+    effects: @escaping (Control, Dependency) -> Effect
   ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
     compacting(state: {
       $0.map(transform).eraseToAnyPublisher()
-    }, effects: {
-      $0.map(effects)?.eraseToAnyPublisher() ?? Empty().eraseToAnyPublisher()
+    }, effects: { control, dependency in
+      control.map { effects($0, dependency) }?
+        .eraseToAnyPublisher() ?? Empty().eraseToAnyPublisher()
     })
   }
 
   @available(iOS 15.0, *)
   public static func lensing<Control>(
     state transform: @escaping (State) -> Control?,
-    effects: @escaping (Control) async -> Event
+    effects: @escaping (Control, Dependency) async -> Event
   ) -> Feedback {
     compacting(state: {
       $0.map(transform).eraseToAnyPublisher()
-    }, effects: { control -> AnyPublisher<Event, Never> in
+    }, effects: { control, dependency -> AnyPublisher<Event, Never> in
       if let control = control {
         return TaskPublisher {
-          await effects(control)
+          await effects(control, dependency)
         }
         .eraseToAnyPublisher()
       } else {
@@ -165,22 +176,22 @@ public struct Feedback<State, Event> {
   ///              that eventually affect the state.
   public static func predicate<Effect: Publisher>(
     predicate: @escaping (State) -> Bool,
-    effects: @escaping (State) -> Effect
+    effects: @escaping (State, Dependency) -> Effect
   ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
-    compacting(state: { $0 }, effects: { state in
-      predicate(state) ? effects(state).eraseToAnyPublisher() : Empty().eraseToAnyPublisher()
+    compacting(state: { $0 }, effects: { state, dependency in
+      predicate(state) ? effects(state, dependency).eraseToAnyPublisher() : Empty().eraseToAnyPublisher()
     })
   }
 
   @available(iOS 15.0, *)
   public static func predicate(
     predicate: @escaping (State) -> Bool,
-    effect: @escaping (State) async -> Event
+    effect: @escaping (State, Dependency) async -> Event
   ) -> Feedback {
-    compacting(state: { $0 }, effects: { state -> AnyPublisher<Event, Never> in
+    compacting(state: { $0 }, effects: { state, dependency -> AnyPublisher<Event, Never> in
       if predicate(state) {
         return TaskPublisher {
-          await effect(state)
+          await effect(state, dependency)
         }
         .eraseToAnyPublisher()
       } else {
@@ -191,26 +202,27 @@ public struct Feedback<State, Event> {
 
   public static func lensing<Payload, Effect: Publisher>(
     event transform: @escaping (Event) -> Payload?,
-    effects: @escaping (Payload) -> Effect
+    effects: @escaping (Payload, Dependency) -> Effect
   ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
     compacting(events: {
       $0.map(transform).eraseToAnyPublisher()
-    }, effects: {
-      $0.map(effects)?.eraseToAnyPublisher() ?? Empty().eraseToAnyPublisher()
+    }, effects: { payload, dependency in
+      payload.map { effects($0, dependency) }?
+        .eraseToAnyPublisher() ?? Empty().eraseToAnyPublisher()
     })
   }
 
   @available(iOS 15.0, *)
   public static func lensing<Payload>(
     event transform: @escaping (Event) -> Payload?,
-    effect: @escaping (Payload) async -> Event
+    effect: @escaping (Payload, Dependency) async -> Event
   ) -> Feedback {
     compacting(events: {
       $0.map(transform).eraseToAnyPublisher()
-    }, effects: { payload -> AnyPublisher<Event, Never> in
+    }, effects: { payload, dependency -> AnyPublisher<Event, Never> in
       if let payload = payload {
         return TaskPublisher {
-          await effect(payload)
+          await effect(payload, dependency)
         }
         .eraseToAnyPublisher()
       } else {
@@ -229,18 +241,18 @@ public struct Feedback<State, Event> {
   ///   - effects: The side effect accepting the state and yielding events
   ///              that eventually affect the state.
   public static func middleware<Effect: Publisher>(
-    _ effects: @escaping (State) -> Effect
+    _ effects: @escaping (State, Dependency) -> Effect
   ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
     compacting(state: { $0 }, effects: effects)
   }
 
   @available(iOS 15.0, *)
   public static func middleware(
-    _ effect: @escaping (State) async -> Event
+    _ effect: @escaping (State, Dependency) async -> Event
   ) -> Feedback {
-    compacting(state: { $0 }, effects: { state in
+    compacting(state: { $0 }, effects: { state, dependency in
       TaskPublisher {
-        await effect(state)
+        await effect(state, dependency)
       }
     })
   }
@@ -257,9 +269,9 @@ public struct Feedback<State, Event> {
   ///   - effects: The side effect accepting the state and yielding events
   ///              that eventually affect the state.
   public static func middleware<Effect: Publisher>(
-    _ effects: @escaping (State, Event) -> Effect
+    _ effects: @escaping (State, Event, Dependency) -> Effect
   ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
-    custom { (state, output) -> Cancellable in
+    custom { (state, output, dependency) -> Cancellable in
       state.compactMap { s, e -> (State, Event)? in
         guard let e = e else {
           return nil
@@ -267,7 +279,7 @@ public struct Feedback<State, Event> {
         return (s, e)
       }
       .flatMapLatest {
-        effects($0, $1).enqueue(to: output)
+        effects($0, $1, dependency).enqueue(to: output)
       }
       .start()
     }
@@ -275,9 +287,9 @@ public struct Feedback<State, Event> {
 
   @available(iOS 15.0, *)
   public static func middleware(
-    _ effects: @escaping (State, Event) async -> Event
+    _ effects: @escaping (State, Event, Dependency) async -> Event
   ) -> Feedback {
-    custom { (state, output) -> Cancellable in
+    custom { (state, output, dependency) -> Cancellable in
       state.compactMap { s, e -> (State, Event)? in
         guard let e = e else {
           return nil
@@ -286,7 +298,7 @@ public struct Feedback<State, Event> {
       }
       .flatMapLatest { state, event in
         TaskPublisher {
-          await effects(state, event)
+          await effects(state, event, dependency)
         }
         .enqueue(to: output)
       }
@@ -296,10 +308,10 @@ public struct Feedback<State, Event> {
 
   @available(iOS 15.0, *)
   public static func middleware(
-    _ effect: @escaping (Event) async -> Event
+    _ effect: @escaping (Event, Dependency) async -> Event
   ) -> Feedback {
-    custom { (state, output) -> Cancellable in
-      state.compactMap { s, e -> Event? in
+    custom { (state, output, dependency) -> Cancellable in
+      state.compactMap { _, e -> Event? in
         guard let e = e else {
           return nil
         }
@@ -307,7 +319,7 @@ public struct Feedback<State, Event> {
       }
       .flatMapLatest { event in
         TaskPublisher {
-          await effect(event)
+          await effect(event, dependency)
         }
         .enqueue(to: output)
       }
@@ -317,32 +329,36 @@ public struct Feedback<State, Event> {
 }
 
 public extension Feedback {
-  func pullback<GlobalState, GlobalEvent>(
+  func pullback<GlobalState, GlobalEvent, GlobalDependency>(
     value: KeyPath<GlobalState, State>,
-    event: CasePath<GlobalEvent, Event>
-  ) -> Feedback<GlobalState, GlobalEvent> {
-    return .custom { (state, consumer) -> Cancellable in
+    event: CasePath<GlobalEvent, Event>,
+    dependency toLocal: @escaping (GlobalDependency) -> Dependency
+  ) -> Feedback<GlobalState, GlobalEvent, GlobalDependency> {
+    return .custom { (state, consumer, dependency) -> Cancellable in
       let state = state.map {
         ($0[keyPath: value], $1.flatMap(event.extract(from:)))
       }.eraseToAnyPublisher()
       return self.events(
         state,
-        consumer.pullback(event.embed)
+        consumer.pullback(event.embed),
+        toLocal(dependency)
       )
     }
   }
 
-  static func combine(_ feedbacks: Feedback<State, Event>...) -> Feedback<State, Event> {
-    return Feedback.custom { (state, consumer) -> Cancellable in
+  static func combine(
+    _ feedbacks: Feedback...) -> Feedback
+  {
+    return Feedback.custom { (state, consumer, dependency) -> Cancellable in
       feedbacks.map { (feedback) -> Cancellable in
-        feedback.events(state, consumer)
+        feedback.events(state, consumer, dependency)
       }
     }
   }
 
   static var input: (feedback: Feedback, observer: (Event) -> Void) {
     let subject = PassthroughSubject<Event, Never>()
-    let feedback = Feedback.custom { (_, consumer) -> Cancellable in
+    let feedback = Feedback.custom { (_, consumer, _) -> Cancellable in
       subject.enqueue(to: consumer).start()
     }
     return (feedback, subject.send)
@@ -358,7 +374,7 @@ extension Array: Cancellable where Element == Cancellable {
 }
 
 @available(iOS 15.0, *)
-struct TaskPublisher<Output>: Publisher{
+struct TaskPublisher<Output>: Publisher {
   typealias Failure = Never
 
   let work: () async -> Output
@@ -367,7 +383,7 @@ struct TaskPublisher<Output>: Publisher{
     self.work = work
   }
 
-  func receive<S>(subscriber: S) where S : Subscriber, Self.Failure == S.Failure, Self.Output == S.Input {
+  func receive<S>(subscriber: S) where S: Subscriber, Self.Failure == S.Failure, Self.Output == S.Input {
     let subscription = TaskSubscription(work: work, subscriber: subscriber)
     subscriber.receive(subscription: subscription)
     subscription.start()
@@ -377,7 +393,6 @@ struct TaskPublisher<Output>: Publisher{
     private var handle: Task.Handle<Output, Never>?
     private let work: () async -> Output
     private let subscriber: Downstream
-
 
     init(work: @escaping () async -> Output, subscriber: Downstream) {
       self.work = work
