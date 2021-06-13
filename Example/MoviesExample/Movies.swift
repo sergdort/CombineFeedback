@@ -43,13 +43,13 @@ extension Movies {
 
     @available(iOS 15.0, *)
     private static func whenLoadingIOS15() -> Feedback<State, Event> {
-        .lensing(state: \.nextPage) { page in
-          do {
-            return Event.didLoad(try await URLSession.shared.movies(page: page))
-          } catch {
-            return Event.didFail(error as NSError)
-          }
+      .lensing(state: \.nextPage) { page in
+        do {
+          return Event.didLoad(try await URLSession.shared.movies(page: page))
+        } catch {
+          return Event.didFail(error as NSError)
         }
+      }
     }
   }
 }
@@ -57,22 +57,21 @@ extension Movies {
 struct MoviesView: View {
   typealias State = Movies.State
   typealias Event = Movies.Event
-  @StateObject
-  var context: ViewContext<State, Event>
+  let store: Store<State, Event>
 
-  init(context: ViewContext<State, Event>) {
-    self._context = StateObject(wrappedValue: context)
+  init(store: Store<State, Event>) {
+    self.store = store
     logInit(of: self)
   }
 
   var body: some View {
     logBody(of: self)
-    return List {
-      ForEach(context.movies) { movie in
-        NavigationLink(destination: MoviesView(context: self.context)) {
+    return WithViewContext(store: store) { context in
+      List {
+        ForEach(context.movies) { movie in
           MovieCell(movie: movie).onAppear {
-            if self.context.movies.last == movie {
-              self.context.send(event: .fetchNext)
+            if context.movies.last == movie {
+              context.send(event: .fetchNext)
             }
           }
         }

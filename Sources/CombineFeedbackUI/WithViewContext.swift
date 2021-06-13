@@ -2,22 +2,35 @@ import Combine
 import CombineFeedback
 import SwiftUI
 
-@available(*, deprecated, renamed:"WithViewContext")
+@available(*, deprecated, renamed: "WithViewContext")
 public typealias Widget<State, Event, Content: View> = WithViewContext<State, Event, Content>
 
 public struct WithViewContext<State, Event, Content: View>: View {
-    private let store: Store<State, Event>
-    private let content: (Context<State, Event>) -> Content
+  @ObservedObject
+  private var context: ViewContext<State, Event>
+  private let store: Store<State, Event>
+  private let content: (ViewContext<State, Event>) -> Content
 
-    public init(
-        store: Store<State, Event>,
-        @ViewBuilder content: @escaping (Context<State, Event>) -> Content
-    ) {
-        self.store = store
-        self.content = content
-    }
+  public init(
+    store: Store<State, Event>,
+    removeDuplicates isDuplicate: @escaping (State, State) -> Bool,
+    @ViewBuilder content: @escaping (ViewContext<State, Event>) -> Content
+  ) {
+    self.store = store
+    self.content = content
+    self.context = store.context(removeDuplicates: isDuplicate)
+  }
 
-    public var body: some View {
-        return content(store.context)
-    }
+  public var body: some View {
+    return content(context)
+  }
+}
+
+extension WithViewContext where State: Equatable {
+  public init(
+    store: Store<State, Event>,
+    @ViewBuilder content: @escaping (ViewContext<State, Event>) -> Content
+  ) {
+    self.init(store: store, removeDuplicates: ==, content: content)
+  }
 }

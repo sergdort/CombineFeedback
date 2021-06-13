@@ -19,30 +19,31 @@ struct CounterView: View {
   typealias State = Counter.State
   typealias Event = Counter.Event
 
-  @StateObject
-  var context: ViewContext<State, Event>
+  let store: Store<State, Event>
 
-  init(context: ViewContext<State, Event>) {
-    self._context = StateObject(wrappedValue: context)
+  init(store: Store<State, Event>) {
+    self.store = store
     logInit(of: self)
   }
 
   var body: some View {
     logBody(of: self)
-    return Form {
-      Button(action: {
-        self.context.send(event: .decrement)
-      }) {
-        Text("-").font(.largeTitle)
-      }
-      Button(action: {
-        self.context.send(event: .increment)
-      }) {
-        Text("+").font(.largeTitle)
-      }
-      if context.count >= 0 {
-        ForEach((0 ..< context.count).reversed(), id: \.self) { item in
-          Text("\(item)")
+    return WithViewContext(store: store) { context in
+      Form {
+        Button(action: {
+          context.send(event: .decrement)
+        }) {
+          Text("-").font(.largeTitle)
+        }
+        Button(action: {
+          context.send(event: .increment)
+        }) {
+          Text("+").font(.largeTitle)
+        }
+        if context.count >= 0 {
+          ForEach((0 ..< context.count).reversed(), id: \.self) { item in
+            Text("\(item)")
+          }
         }
       }
     }

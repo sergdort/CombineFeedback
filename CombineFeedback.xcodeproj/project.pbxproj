@@ -8,10 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		2510CDDF242BD9FF004A6422 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2510CDDE242BD9FF004A6422 /* Log.swift */; };
-		2510CDE1242BED63004A6422 /* ContextExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2510CDE0242BED63004A6422 /* ContextExtensions.swift */; };
+		2510CDE1242BED63004A6422 /* StoreExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2510CDE0242BED63004A6422 /* StoreExtensions.swift */; };
 		251445E724086A400062EE04 /* TrafficLightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 251445E624086A400062EE04 /* TrafficLightView.swift */; };
 		252BF08422BAE05700BC4265 /* SignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252BF08322BAE05700BC4265 /* SignIn.swift */; };
 		253D324122B185FA002F3B7F /* ViewContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253D323F22B1858C002F3B7F /* ViewContext.swift */; };
+		254B4DB726755AE200653BB8 /* StoreBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 254B4DB626755AE200653BB8 /* StoreBox.swift */; };
 		25C57B2C22BC2C33007CB4D6 /* Activity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C57B2B22BC2C33007CB4D6 /* Activity.swift */; };
 		25EBC08C23FD61B100719826 /* Reducer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585CD878239AC7D3004BE9CC /* Reducer.swift */; };
 		25F23C2922CA984E00894863 /* TrafficLight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F23C2822CA984E00894863 /* TrafficLight.swift */; };
@@ -135,10 +136,11 @@
 
 /* Begin PBXFileReference section */
 		2510CDDE242BD9FF004A6422 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
-		2510CDE0242BED63004A6422 /* ContextExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextExtensions.swift; sourceTree = "<group>"; };
+		2510CDE0242BED63004A6422 /* StoreExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreExtensions.swift; sourceTree = "<group>"; };
 		251445E624086A400062EE04 /* TrafficLightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrafficLightView.swift; sourceTree = "<group>"; };
 		252BF08322BAE05700BC4265 /* SignIn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignIn.swift; sourceTree = "<group>"; };
 		253D323F22B1858C002F3B7F /* ViewContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewContext.swift; sourceTree = "<group>"; };
+		254B4DB626755AE200653BB8 /* StoreBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreBox.swift; sourceTree = "<group>"; };
 		25C57B2B22BC2C33007CB4D6 /* Activity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Activity.swift; sourceTree = "<group>"; };
 		25F23C2822CA984E00894863 /* TrafficLight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrafficLight.swift; sourceTree = "<group>"; };
 		5800001422A9DEEA005A860B /* WithViewContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WithViewContext.swift; sourceTree = "<group>"; };
@@ -246,6 +248,15 @@
 				252BF08322BAE05700BC4265 /* SignIn.swift */,
 			);
 			path = SignIn;
+			sourceTree = "<group>";
+		};
+		254B4DB526755AD300653BB8 /* Store */ = {
+			isa = PBXGroup;
+			children = (
+				583971C422ADFA1F00139CC0 /* Store.swift */,
+				254B4DB626755AE200653BB8 /* StoreBox.swift */,
+			);
+			path = Store;
 			sourceTree = "<group>";
 		};
 		25F23C2722CA982400894863 /* TrafficLight */ = {
@@ -358,10 +369,10 @@
 		5800FFEB22A9DDE5005A860B /* CombineFeedbackUI */ = {
 			isa = PBXGroup;
 			children = (
+				254B4DB526755AD300653BB8 /* Store */,
 				5800FFEC22A9DDE5005A860B /* CombineFeedbackUI.h */,
 				5800FFED22A9DDE5005A860B /* Info.plist */,
 				253D323F22B1858C002F3B7F /* ViewContext.swift */,
-				583971C422ADFA1F00139CC0 /* Store.swift */,
 				5800001422A9DEEA005A860B /* WithViewContext.swift */,
 			);
 			path = CombineFeedbackUI;
@@ -451,7 +462,7 @@
 			children = (
 				58C6E5E622AB14DB005A9685 /* AsyncImage.swift */,
 				25C57B2B22BC2C33007CB4D6 /* Activity.swift */,
-				2510CDE0242BED63004A6422 /* ContextExtensions.swift */,
+				2510CDE0242BED63004A6422 /* StoreExtensions.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -763,7 +774,7 @@
 				5800FFB922A8CDA5005A860B /* AppDelegate.swift in Sources */,
 				5800FFBB22A8CDA5005A860B /* SceneDelegate.swift in Sources */,
 				583971C322ADBA9900139CC0 /* PublisherExtensions.swift in Sources */,
-				2510CDE1242BED63004A6422 /* ContextExtensions.swift in Sources */,
+				2510CDE1242BED63004A6422 /* StoreExtensions.swift in Sources */,
 				58C6E5E722AB14DB005A9685 /* AsyncImage.swift in Sources */,
 				5800FFBD22A8CDA5005A860B /* Counter.swift in Sources */,
 				25F23C2922CA984E00894863 /* TrafficLight.swift in Sources */,
@@ -786,6 +797,7 @@
 				5800001522A9DEEA005A860B /* WithViewContext.swift in Sources */,
 				583971C522ADFA1F00139CC0 /* Store.swift in Sources */,
 				253D324122B185FA002F3B7F /* ViewContext.swift in Sources */,
+				254B4DB726755AE200653BB8 /* StoreBox.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
