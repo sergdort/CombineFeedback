@@ -1,5 +1,5 @@
 import SwiftUI
-import CombineFeedbackUI
+import CombineFeedback
 
 struct TrafficLightView: View {
   let store: Store<TrafficLight.State, TrafficLight.Event>

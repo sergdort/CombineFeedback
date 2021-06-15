@@ -11,7 +11,6 @@ let package = Package(
     ],
     products: [
         .library(name: "CombineFeedback", targets: ["CombineFeedback"]),
-        .library(name: "CombineFeedbackUI", targets: ["CombineFeedbackUI"]),
     ],
     dependencies: [
         .package(
@@ -24,10 +23,8 @@ let package = Package(
         )
     ],
     targets: [
-        .target(name: "CombineFeedback", dependencies: ["CasePaths"]),
-        .target(name: "CombineFeedbackUI", dependencies: ["CombineFeedback"]),
-        .testTarget(name: "CombineFeedbackTests", dependencies: ["CombineFeedback"]),
-        .testTarget(name: "CombineFeedbackUITests", dependencies: ["CombineFeedback", "CombineFeedbackUI"]),
+        .target(name: "CombineFeedback", dependencies: ["CasePaths", "CombineSchedulers"]),
+        .testTarget(name: "CombineFeedbackTests", dependencies: ["CombineFeedback"])
     ],
     swiftLanguageVersions: [.v5]
 )

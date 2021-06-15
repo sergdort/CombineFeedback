@@ -1,5 +1,4 @@
 import CombineFeedback
-import CombineFeedbackUI
 import SwiftUI
 
 struct SingleStoreExampleView: View {
