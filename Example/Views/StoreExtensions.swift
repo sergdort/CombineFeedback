@@ -1,4 +1,3 @@
-import CombineFeedbackUI
 import CombineFeedback
 
 extension Store {

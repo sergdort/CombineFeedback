@@ -1,6 +1,6 @@
-import CombineFeedbackUI
 import SwiftUI
 import UIKit
+import CombineFeedback
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
   var window: UIWindow?
