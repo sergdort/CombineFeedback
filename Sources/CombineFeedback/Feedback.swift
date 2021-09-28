@@ -231,6 +231,55 @@ public struct Feedback<State, Event, Dependency> {
     })
   }
 
+  public static func firstValueAfterNil<Value, Effect: Publisher>(
+    _ transform: @escaping (State) -> Value?,
+    effects: @escaping (Value, Dependency) -> Effect
+  ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
+    return .compacting(
+      state: { state -> AnyPublisher<NilEdgeTransition<Value>, Never> in
+        return state.scan((lastWasNil: true, output: NilEdgeTransition<Value>?.none)) { acum, state in
+          var temp = acum
+          let result = transform(state)
+          temp.output = nil
+          
+          switch (temp.lastWasNil, result) {
+          case (true, .none), (false, .some):
+            return temp
+          case let (true, .some(value)):
+            temp.lastWasNil = false
+            temp.output = .populated(value)
+          case (false, .none):
+            temp.lastWasNil = true
+            temp.output = .cleared
+          }
+          return temp
+        }
+        .compactMap(\.output)
+        .eraseToAnyPublisher()
+      },
+      effects: { transition, dependency -> AnyPublisher<Effect.Output, Effect.Failure> in
+        switch transition {
+        case let .populated(value):
+          return effects(value, dependency).eraseToAnyPublisher()
+        case .cleared:
+          return Empty().eraseToAnyPublisher()
+        }
+      }
+    )
+  }
+
+  @available(iOS 15.0, *)
+  public static func firstValueAfterNil<Value>(
+    _ transform: @escaping (State) -> Value?,
+    effect: @escaping (Value, Dependency) async -> Event
+  ) -> Feedback  {
+      .firstValueAfterNil(transform) { value, dependency in
+        TaskPublisher {
+          await effect(value, dependency)
+        }
+      }
+  }
+
   /// Creates a Feedback which re-evaluates the given effect every time the
   /// state changes.
   ///
@@ -390,7 +439,7 @@ struct TaskPublisher<Output>: Publisher {
   }
 
   final class TaskSubscription<Output, Downstream: Subscriber>: Combine.Subscription where Downstream.Input == Output, Downstream.Failure == Never {
-    private var handle: Task.Handle<Output, Never>?
+    private var handle: Task<Output, Never>?
     private let work: () async -> Output
     private let subscriber: Downstream
 
@@ -400,7 +449,7 @@ struct TaskPublisher<Output>: Publisher {
     }
 
     func start() {
-      self.handle = async { [subscriber, work] in
+      self.handle = Task.init { [subscriber, work] in
         let result = await work()
         _ = subscriber.receive(result)
         subscriber.receive(completion: .finished)
@@ -414,4 +463,9 @@ struct TaskPublisher<Output>: Publisher {
       handle?.cancel()
     }
   }
+}
+
+private enum NilEdgeTransition<Value> {
+  case populated(Value)
+  case cleared
 }
