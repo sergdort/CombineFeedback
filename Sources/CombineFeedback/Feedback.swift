@@ -178,9 +178,9 @@ public struct Feedback<State, Event, Dependency> {
     predicate: @escaping (State) -> Bool,
     effects: @escaping (State, Dependency) -> Effect
   ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
-    compacting(state: { $0 }, effects: { state, dependency in
-      predicate(state) ? effects(state, dependency).eraseToAnyPublisher() : Empty().eraseToAnyPublisher()
-    })
+    return firstValueAfterNil({ state -> State? in
+      predicate(state) ? state : nil
+    }, effects: effects)
   }
 
   @available(iOS 15.0, *)
@@ -188,16 +188,11 @@ public struct Feedback<State, Event, Dependency> {
     predicate: @escaping (State) -> Bool,
     effect: @escaping (State, Dependency) async -> Event
   ) -> Feedback {
-    compacting(state: { $0 }, effects: { state, dependency -> AnyPublisher<Event, Never> in
-      if predicate(state) {
-        return TaskPublisher {
-          await effect(state, dependency)
-        }
-        .eraseToAnyPublisher()
-      } else {
-        return Empty().eraseToAnyPublisher()
-      }
-    })
+    return firstValueAfterNil { state -> State? in
+      predicate(state) ? state : nil
+    } effect: { state, dependency in
+      await effect(state, dependency)
+    }
   }
 
   public static func lensing<Payload, Effect: Publisher>(
