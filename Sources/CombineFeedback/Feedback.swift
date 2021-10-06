@@ -232,11 +232,11 @@ public struct Feedback<State, Event, Dependency> {
   ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
     return .compacting(
       state: { state -> AnyPublisher<NilEdgeTransition<Value>, Never> in
-        return state.scan((lastWasNil: true, output: NilEdgeTransition<Value>?.none)) { acum, state in
+        state.scan((lastWasNil: true, output: NilEdgeTransition<Value>?.none)) { acum, state in
           var temp = acum
           let result = transform(state)
           temp.output = nil
-          
+
           switch (temp.lastWasNil, result) {
           case (true, .none), (false, .some):
             return temp
@@ -267,12 +267,12 @@ public struct Feedback<State, Event, Dependency> {
   public static func firstValueAfterNil<Value>(
     _ transform: @escaping (State) -> Value?,
     effect: @escaping (Value, Dependency) async -> Event
-  ) -> Feedback  {
-      .firstValueAfterNil(transform) { value, dependency in
-        TaskPublisher {
-          await effect(value, dependency)
-        }
+  ) -> Feedback {
+    .firstValueAfterNil(transform) { value, dependency in
+      TaskPublisher {
+        await effect(value, dependency)
       }
+    }
   }
 
   /// Creates a Feedback which re-evaluates the given effect every time the
@@ -323,7 +323,8 @@ public struct Feedback<State, Event, Dependency> {
         return (s, e)
       }
       .flatMapLatest {
-        effects($0, $1, dependency).enqueue(to: output)
+        effects($0, $1, dependency)
+          .enqueue(to: output)
       }
       .start()
     }
@@ -406,6 +407,22 @@ public extension Feedback {
       subject.enqueue(to: consumer).start()
     }
     return (feedback, subject.send)
+  }
+}
+
+public extension Feedback {
+  func optional() -> Feedback<State?, Event, Dependency> {
+    return .custom { state, output, dependency in
+      self.events(
+        state.filter { stateAndEvent -> Bool in
+          stateAndEvent.0 != nil
+        }
+        .map { ($0!, $1) }
+        .eraseToAnyPublisher(),
+        output,
+        dependency
+      )
+    }
   }
 }
 

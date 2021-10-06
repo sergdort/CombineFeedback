@@ -6,7 +6,6 @@ import CombineSchedulers
 public typealias Context<State, Event> = ViewContext<State, Event>
 
 @dynamicMemberLookup
-@MainActor
 public final class ViewContext<State, Event>: ObservableObject {
   @Published
   private var state: State

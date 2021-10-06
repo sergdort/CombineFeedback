@@ -49,6 +49,15 @@ open class Store<State, Event> {
     box.mutate(with: mutation)
   }
 
+  public func scope<S>(
+    getValue: @escaping (State) -> S,
+    setValue: @escaping (inout State, S) -> Void
+  ) -> Store<S, Event> {
+    Store<S, Event>(
+      box: box.scoped(getValue: getValue, setValue: setValue, event: { $0 })
+    )
+  }
+
   public func scoped<S, E>(
     to scope: WritableKeyPath<State, S>,
     event: @escaping (E) -> Event

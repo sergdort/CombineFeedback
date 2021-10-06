@@ -31,6 +31,15 @@ public struct Reducer<State, Event> {
     }
   }
 
+  public func optional() -> Reducer<State?, Event> {
+    return .init { state, event in
+      if state == nil {
+        return
+      }
+      self.reduce(&state!, event)
+    }
+  }
+
   public func logging(
     printer: @escaping (String) -> Void = { print($0) }
   ) -> Reducer {

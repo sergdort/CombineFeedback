@@ -59,8 +59,13 @@ internal class RootStoreBox<State, Event>: StoreBoxBase<State, Event> {
     self.inputObserver(.mutation(mutation))
   }
 
-  override func scoped<S, E>(to scope: WritableKeyPath<State, S>, event: @escaping (E) -> Event) -> StoreBoxBase<S, E> {
-    ScopedStoreBox(parent: self, value: scope, event: event)
+  override func scoped<S, E>(getValue: @escaping (State) -> S, setValue: @escaping (inout State, S) -> Void, event: @escaping (E) -> Event) -> StoreBoxBase<S, E> {
+    ScopedStoreBox<State, Event, S, E>(
+      parent: self,
+      getValue: getValue,
+      setValue: setValue,
+      event: event
+    )
   }
 
   private enum Update {
@@ -71,24 +76,27 @@ internal class RootStoreBox<State, Event>: StoreBoxBase<State, Event> {
 
 internal class ScopedStoreBox<RootState, RootEvent, ScopedState, ScopedEvent>: StoreBoxBase<ScopedState, ScopedEvent> {
   private let parent: StoreBoxBase<RootState, RootEvent>
-  private let value: WritableKeyPath<RootState, ScopedState>
+  private let getValue: (RootState) -> ScopedState
+  private let setValue: (inout RootState, ScopedState) -> Void
   private let eventTransform: (ScopedEvent) -> RootEvent
 
   override var _current: ScopedState {
-    parent._current[keyPath: value]
+    getValue(parent._current)
   }
 
   override var publisher: AnyPublisher<ScopedState, Never> {
-    parent.publisher.map(value).eraseToAnyPublisher()
+    parent.publisher.map(getValue).eraseToAnyPublisher()
   }
 
   init(
     parent: StoreBoxBase<RootState, RootEvent>,
-    value: WritableKeyPath<RootState, ScopedState>,
+    getValue: @escaping (RootState) -> ScopedState,
+    setValue: @escaping (inout RootState, ScopedState) -> Void,
     event: @escaping (ScopedEvent) -> RootEvent
   ) {
     self.parent = parent
-    self.value = value
+    self.getValue = getValue
+    self.setValue = setValue
     self.eventTransform = event
   }
 
@@ -97,10 +105,10 @@ internal class ScopedStoreBox<RootState, RootEvent, ScopedState, ScopedEvent>: S
   }
 
   override func mutate(with mutation: Mutation<ScopedState>) {
-    parent.mutate(with: Mutation<RootState>(mutate: { [value] rootState in
-      var scopedState = rootState[keyPath: value]
+    parent.mutate(with: Mutation<RootState>(mutate: { [getValue, setValue] rootState in
+      var scopedState = getValue(rootState)
       mutation.mutate(&scopedState)
-      rootState[keyPath: value] = scopedState
+      setValue(&rootState, scopedState)
     }))
   }
 
@@ -108,12 +116,29 @@ internal class ScopedStoreBox<RootState, RootEvent, ScopedState, ScopedEvent>: S
     mutate(with: Mutation(keyPath: keyPath, value: value))
   }
 
-  override func scoped<S, E>(to scope: WritableKeyPath<ScopedState, S>, event: @escaping (E) -> ScopedEvent) -> StoreBoxBase<S, E> {
+  override func scoped<S, E>(
+    getValue: @escaping (ScopedState) -> S,
+    setValue: @escaping (inout ScopedState, S) -> Void,
+    event: @escaping (E) -> ScopedEvent
+  ) -> StoreBoxBase<S, E> {
     ScopedStoreBox<RootState, RootEvent, S, E>(
-      parent: self.parent,
-      value: value.appending(path: scope),
-      event: { [eventTransform] in eventTransform(event($0)) }
-    )
+      parent: self.parent) { rootState in
+        getValue(self.getValue(rootState))
+      } setValue: { rootState, s in
+        /*
+         struct RootState {
+          var scopedState: ScopedState
+         }
+         struct ScopedState {
+          var scopedState: S
+         }
+         */
+        var scopedState = self.getValue(rootState)
+        setValue(&scopedState, s)
+        self.setValue(&rootState, scopedState)
+      } event: { e in
+        self.eventTransform(event(e))
+      }
   }
 }
 
@@ -135,8 +160,24 @@ internal class StoreBoxBase<State, Event> {
     subclassMustImplement()
   }
 
-  func scoped<S, E>(
+  final func scoped<S, E>(
     to scope: WritableKeyPath<State, S>,
+    event: @escaping (E) -> Event
+  ) -> StoreBoxBase<S, E> {
+    self.scoped(
+      getValue: { state in
+        return state[keyPath: scope]
+      },
+      setValue: { state, scopedState in
+        state[keyPath: scope] = scopedState
+      },
+      event: event
+    )
+  }
+
+  func scoped<S, E>(
+    getValue: @escaping (State) -> S,
+    setValue: @escaping (inout State, S) -> Void,
     event: @escaping (E) -> Event
   ) -> StoreBoxBase<S, E> {
     subclassMustImplement()
