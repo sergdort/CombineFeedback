@@ -2,7 +2,7 @@ import CasePaths
 import Combine
 
 public struct Feedback<State, Event, Dependency> {
-  let events: (
+  public let events: (
     _ state: AnyPublisher<(State, Event?), Never>,
     _ output: FeedbackEventConsumer<Event>,
     _ dependency: Dependency
@@ -19,20 +19,22 @@ public struct Feedback<State, Event, Dependency> {
   /// Creates a custom Feedback, with the complete liberty of defining the data flow.
   ///
   /// - important: While you may respond to state changes in whatever ways you prefer, you **must** enqueue produced
-  ///              events using the `SignalProducer.enqueue(to:)` operator to the `FeedbackEventConsumer` provided
+  ///              events using the `Publisher.enqueue(to:)` operator to the `FeedbackEventConsumer` provided
   ///              to you. Otherwise, the feedback loop will not be able to pick up and process your events.
   ///
   /// - parameters:
   ///   - setup: The setup closure to construct a data flow producing events in respond to changes from `state`,
   ///             and having them consumed by `output` using the `SignalProducer.enqueue(to:)` operator.
-  public static func custom(
+  public static func custom<P: Publisher>(
     _ setup: @escaping (
       _ state: AnyPublisher<(State, Event?), Never>,
       _ output: FeedbackEventConsumer<Event>,
       _ dependency: Dependency
-    ) -> Cancellable
-  ) -> Feedback {
-    return Feedback(events: setup)
+    ) -> P
+  ) -> Feedback where P.Failure == Never, P.Output == Never {
+    return Feedback { state, output, dependency -> Cancellable in
+      return setup(state, output, dependency).start()
+    }
   }
 
   /// Creates a Feedback which re-evaluates the given effect every time the
@@ -51,13 +53,12 @@ public struct Feedback<State, Event, Dependency> {
     state transform: @escaping (AnyPublisher<State, Never>) -> AnyPublisher<U, Never>,
     effects: @escaping (U, Dependency) -> Effect
   ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
-    custom { (state, output, dependency) -> Cancellable in
+    custom { (state, output, dependency) in
       // NOTE: `observe(on:)` should be applied on the inner producers, so
       //       that cancellation due to state changes would be able to
       //       cancel outstanding events that have already been scheduled.
       transform(state.map(\.0).eraseToAnyPublisher())
         .flatMapLatest { effects($0, dependency).enqueue(to: output) }
-        .start()
     }
   }
 
@@ -65,13 +66,12 @@ public struct Feedback<State, Event, Dependency> {
     events transform: @escaping (AnyPublisher<Event, Never>) -> AnyPublisher<U, Never>,
     effects: @escaping (U, Dependency) -> Effect
   ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
-    custom { (state, output, dependency) -> Cancellable in
+    custom { (state, output, dependency) in
       // NOTE: `observe(on:)` should be applied on the inner producers, so
       //       that cancellation due to state changes would be able to
       //       cancel outstanding events that have already been scheduled.
       transform(state.map(\.1).compactMap { $0 }.eraseToAnyPublisher())
         .flatMapLatest { effects($0, dependency).enqueue(to: output) }
-        .start()
     }
   }
 
@@ -315,7 +315,7 @@ public struct Feedback<State, Event, Dependency> {
   public static func middleware<Effect: Publisher>(
     _ effects: @escaping (State, Event, Dependency) -> Effect
   ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
-    custom { (state, output, dependency) -> Cancellable in
+    custom { (state, output, dependency) in
       state.compactMap { s, e -> (State, Event)? in
         guard let e = e else {
           return nil
@@ -326,7 +326,6 @@ public struct Feedback<State, Event, Dependency> {
         effects($0, $1, dependency)
           .enqueue(to: output)
       }
-      .start()
     }
   }
 
@@ -334,7 +333,7 @@ public struct Feedback<State, Event, Dependency> {
   public static func middleware(
     _ effects: @escaping (State, Event, Dependency) async -> Event
   ) -> Feedback {
-    custom { (state, output, dependency) -> Cancellable in
+    custom { (state, output, dependency) in
       state.compactMap { s, e -> (State, Event)? in
         guard let e = e else {
           return nil
@@ -347,7 +346,6 @@ public struct Feedback<State, Event, Dependency> {
         }
         .enqueue(to: output)
       }
-      .start()
     }
   }
 
@@ -355,7 +353,7 @@ public struct Feedback<State, Event, Dependency> {
   public static func middleware(
     _ effect: @escaping (Event, Dependency) async -> Event
   ) -> Feedback {
-    custom { (state, output, dependency) -> Cancellable in
+    custom { (state, output, dependency) in
       state.compactMap { _, e -> Event? in
         guard let e = e else {
           return nil
@@ -368,7 +366,6 @@ public struct Feedback<State, Event, Dependency> {
         }
         .enqueue(to: output)
       }
-      .start()
     }
   }
 }
@@ -379,7 +376,7 @@ public extension Feedback {
     event: CasePath<GlobalEvent, Event>,
     dependency toLocal: @escaping (GlobalDependency) -> Dependency
   ) -> Feedback<GlobalState, GlobalEvent, GlobalDependency> {
-    return .custom { (state, consumer, dependency) -> Cancellable in
+    return Feedback<GlobalState, GlobalEvent, GlobalDependency>(events: { (state, consumer, dependency) in
       let state = state.map {
         ($0[keyPath: value], $1.flatMap(event.extract(from:)))
       }.eraseToAnyPublisher()
@@ -388,13 +385,13 @@ public extension Feedback {
         consumer.pullback(event.embed),
         toLocal(dependency)
       )
-    }
+    })
   }
 
   static func combine(
     _ feedbacks: Feedback...) -> Feedback
   {
-    return Feedback.custom { (state, consumer, dependency) -> Cancellable in
+    return Feedback { (state, consumer, dependency) -> Cancellable in
       feedbacks.map { (feedback) -> Cancellable in
         feedback.events(state, consumer, dependency)
       }
@@ -403,8 +400,8 @@ public extension Feedback {
 
   static var input: (feedback: Feedback, observer: (Event) -> Void) {
     let subject = PassthroughSubject<Event, Never>()
-    let feedback = Feedback.custom { (_, consumer, _) -> Cancellable in
-      subject.enqueue(to: consumer).start()
+    let feedback = Feedback.custom { (_, consumer, _) in
+      subject.enqueue(to: consumer)
     }
     return (feedback, subject.send)
   }
@@ -412,7 +409,7 @@ public extension Feedback {
 
 public extension Feedback {
   func optional() -> Feedback<State?, Event, Dependency> {
-    return .custom { state, output, dependency in
+    return Feedback<State?, Event, Dependency> { state, output, dependency in
       self.events(
         state.filter { stateAndEvent -> Bool in
           stateAndEvent.0 != nil
