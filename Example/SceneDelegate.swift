@@ -23,7 +23,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
           feedbacks: [
             moviesFeedback,
             signInFeedback,
-            trafficLightFeedback
+            trafficLightFeedback,
+            switchStoreFeedback
           ],
           reducer: appReducer,
           dependency: AppDependency()

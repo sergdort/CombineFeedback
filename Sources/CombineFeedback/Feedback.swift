@@ -33,7 +33,7 @@ public struct Feedback<State, Event, Dependency> {
     ) -> P
   ) -> Feedback where P.Failure == Never, P.Output == Never {
     return Feedback { state, output, dependency -> Cancellable in
-      return setup(state, output, dependency).start()
+      setup(state, output, dependency).start()
     }
   }
 
@@ -53,7 +53,7 @@ public struct Feedback<State, Event, Dependency> {
     state transform: @escaping (AnyPublisher<State, Never>) -> AnyPublisher<U, Never>,
     effects: @escaping (U, Dependency) -> Effect
   ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
-    custom { (state, output, dependency) in
+    custom { state, output, dependency in
       // NOTE: `observe(on:)` should be applied on the inner producers, so
       //       that cancellation due to state changes would be able to
       //       cancel outstanding events that have already been scheduled.
@@ -66,7 +66,7 @@ public struct Feedback<State, Event, Dependency> {
     events transform: @escaping (AnyPublisher<Event, Never>) -> AnyPublisher<U, Never>,
     effects: @escaping (U, Dependency) -> Effect
   ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
-    custom { (state, output, dependency) in
+    custom { state, output, dependency in
       // NOTE: `observe(on:)` should be applied on the inner producers, so
       //       that cancellation due to state changes would be able to
       //       cancel outstanding events that have already been scheduled.
@@ -183,6 +183,15 @@ public struct Feedback<State, Event, Dependency> {
     }, effects: effects)
   }
 
+  /// Creates a Feedback which re-evaluates the given effect every time the
+  /// given predicate passes.
+  ///
+  /// If the previous effect is still alive when a new one is about to start,
+  /// the previous one would automatically be cancelled.
+  ///
+  /// - Parameters:
+  ///   - predicate: The predicate to apply on the state.
+  ///   - effect: The side effect accepting the state and yielding events that eventually affect the state.
   @available(iOS 15.0, *)
   public static func predicate(
     predicate: @escaping (State) -> Bool,
@@ -195,6 +204,17 @@ public struct Feedback<State, Event, Dependency> {
     }
   }
 
+  /// Creates a Feedback which re-evaluates the given effect every time the
+  /// state changes.
+  ///
+  /// If the previous effect is still alive when a new one is about to start,
+  /// the previous one would automatically be cancelled.
+  ///
+  /// - parameters:
+  ///   - transform: The transform to apply on the state.
+  ///   - effects: The side effect accepting transformed values produced by
+  ///              `transform` and yielding events that eventually affect
+  ///              the state.
   public static func lensing<Payload, Effect: Publisher>(
     event transform: @escaping (Event) -> Payload?,
     effects: @escaping (Payload, Dependency) -> Effect
@@ -207,6 +227,17 @@ public struct Feedback<State, Event, Dependency> {
     })
   }
 
+  /// Creates a Feedback which re-evaluates the given effect every time the
+  /// state changes.
+  ///
+  /// If the previous effect is still alive when a new one is about to start,
+  /// the previous one would automatically be cancelled.
+  ///
+  /// - parameters:
+  ///   - transform: The transform to apply on the state.
+  ///   - effects: The side effect accepting transformed values produced by
+  ///              `transform` and yielding events that eventually affect
+  ///              the state.
   @available(iOS 15.0, *)
   public static func lensing<Payload>(
     event transform: @escaping (Event) -> Payload?,
@@ -275,8 +306,7 @@ public struct Feedback<State, Event, Dependency> {
     }
   }
 
-  /// Creates a Feedback which re-evaluates the given effect every time the
-  /// state changes.
+  /// Redux like Middleware signature Feedback factory method that lets you perform side effects when state changes
   ///
   /// If the previous effect is still alive when a new one is about to start,
   /// the previous one would automatically be cancelled.
@@ -290,6 +320,14 @@ public struct Feedback<State, Event, Dependency> {
     compacting(state: { $0 }, effects: effects)
   }
 
+  /// Redux like Middleware signature Feedback factory method that lets you perform side effects when state changes
+  ///
+  /// If the previous effect is still alive when a new one is about to start,
+  /// the previous one would automatically be cancelled.
+  ///
+  /// - parameters:
+  ///   - effects: The side effect accepting the state and yielding events
+  ///              that eventually affect the state.
   @available(iOS 15.0, *)
   public static func middleware(
     _ effect: @escaping (State, Dependency) async -> Event
@@ -301,8 +339,7 @@ public struct Feedback<State, Event, Dependency> {
     })
   }
 
-  /// Creates a Feedback which re-evaluates the given effect every time the
-  /// state changes.
+  /// Redux like Middleware signature Feedback factory method that lets you perform side effects when state changes, also knowing which event cased it
   ///
   /// If the previous effect is still alive when a new one is about to start,
   /// the previous one would automatically be cancelled.
@@ -315,7 +352,7 @@ public struct Feedback<State, Event, Dependency> {
   public static func middleware<Effect: Publisher>(
     _ effects: @escaping (State, Event, Dependency) -> Effect
   ) -> Feedback where Effect.Output == Event, Effect.Failure == Never {
-    custom { (state, output, dependency) in
+    custom { state, output, dependency in
       state.compactMap { s, e -> (State, Event)? in
         guard let e = e else {
           return nil
@@ -329,11 +366,21 @@ public struct Feedback<State, Event, Dependency> {
     }
   }
 
+  /// Redux like Middleware signature Feedback factory method that lets you perform side effects when state changes, also knowing which event cased it
+  ///
+  /// If the previous effect is still alive when a new one is about to start,
+  /// the previous one would automatically be cancelled.
+  ///
+  /// Important: State value is coming after reducer with an Event that caused the mutation
+  ///
+  /// - parameters:
+  ///   - effects: The side effect accepting the state and yielding events
+  ///              that eventually affect the state.
   @available(iOS 15.0, *)
   public static func middleware(
     _ effects: @escaping (State, Event, Dependency) async -> Event
   ) -> Feedback {
-    custom { (state, output, dependency) in
+    custom { state, output, dependency in
       state.compactMap { s, e -> (State, Event)? in
         guard let e = e else {
           return nil
@@ -349,11 +396,21 @@ public struct Feedback<State, Event, Dependency> {
     }
   }
 
+  /// Redux like Middleware signature Feedback factory method that lets you perform side effects when state changes, also knowing which event cased it
+  ///
+  /// If the previous effect is still alive when a new one is about to start,
+  /// the previous one would automatically be cancelled.
+  ///
+  /// Important: State value is coming after reducer with an Event that caused the mutation
+  ///
+  /// - parameters:
+  ///   - effects: The side effect accepting the state and yielding events
+  ///              that eventually affect the state.
   @available(iOS 15.0, *)
   public static func middleware(
     _ effect: @escaping (Event, Dependency) async -> Event
   ) -> Feedback {
-    custom { (state, output, dependency) in
+    custom { state, output, dependency in
       state.compactMap { _, e -> Event? in
         guard let e = e else {
           return nil
@@ -371,14 +428,58 @@ public struct Feedback<State, Event, Dependency> {
 }
 
 public extension Feedback {
+  /// Transforms a Feedback that works on local state, event, and dependency into one that works on
+  /// global state, action and dependency. It accomplishes this by providing 3 transformations to
+  /// the method:
+  ///
+  ///   * A key path that can get a piece of local state from the global state.
+  ///   * A case path that can extract/embed a local event into a global event.
+  ///   * A function that can transform the global dependency into a local dependency.
   func pullback<GlobalState, GlobalEvent, GlobalDependency>(
     value: KeyPath<GlobalState, State>,
     event: CasePath<GlobalEvent, Event>,
     dependency toLocal: @escaping (GlobalDependency) -> Dependency
   ) -> Feedback<GlobalState, GlobalEvent, GlobalDependency> {
-    return Feedback<GlobalState, GlobalEvent, GlobalDependency>(events: { (state, consumer, dependency) in
+    return Feedback<GlobalState, GlobalEvent, GlobalDependency>(events: { state, consumer, dependency in
       let state = state.map {
         ($0[keyPath: value], $1.flatMap(event.extract(from:)))
+      }.eraseToAnyPublisher()
+      return self.events(
+        state,
+        consumer.pullback(event.embed),
+        toLocal(dependency)
+      )
+    })
+  }
+
+  /// Transforms a Feedback that works on local state, event, and dependency into one that works on
+  /// global state, action and dependency. It accomplishes this by providing 3 transformations to
+  /// the method:
+  ///
+  /// An application may model parts of its state with enums. For example, app state may differ if a
+  /// user is logged-in or not:
+  ///
+  /// ```swift
+  /// enum AppState {
+  ///   case loggedIn(LoggedInState)
+  ///   case loggedOut(LoggedOutState)
+  /// }
+  /// ```
+  ///
+  ///   * A case path that can extract/embed a local state into a global state.
+  ///   * A case path that can extract/embed a local event into a global event.
+  ///   * A function that can transform the global dependency into a local dependency.
+  func pullback<GlobalState, GlobalEvent, GlobalDependency>(
+    value: CasePath<GlobalState, State>,
+    event: CasePath<GlobalEvent, Event>,
+    dependency toLocal: @escaping (GlobalDependency) -> Dependency
+  ) -> Feedback<GlobalState, GlobalEvent, GlobalDependency> {
+    return Feedback<GlobalState, GlobalEvent, GlobalDependency>(events: { state, consumer, dependency in
+      let state: AnyPublisher<(State, Event?), Never> = state.compactMap { (stateAndEvent: (GlobalState, GlobalEvent?)) -> (State, Event?)? in
+        guard let localState = value.extract(from: stateAndEvent.0) else {
+          return nil
+        }
+        return (localState, stateAndEvent.1.flatMap(event.extract(from:)))
       }.eraseToAnyPublisher()
       return self.events(
         state,
@@ -400,7 +501,7 @@ public extension Feedback {
 
   static var input: (feedback: Feedback, observer: (Event) -> Void) {
     let subject = PassthroughSubject<Event, Never>()
-    let feedback = Feedback.custom { (_, consumer, _) in
+    let feedback = Feedback.custom { _, consumer, _ in
       subject.enqueue(to: consumer)
     }
     return (feedback, subject.send)

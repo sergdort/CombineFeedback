@@ -16,9 +16,7 @@ public struct IfLetStoreView<State, Event, Content: View>: View {
           first: ifContent(
             store.scope(
               getValue: {
-                $0 ?? state
-              }, setValue: { state, s in
-                state = s
+                return $0 ?? state
               }
             )
           )
@@ -37,7 +35,7 @@ public struct IfLetStoreView<State, Event, Content: View>: View {
   }
 
   public var body: some View {
-    WithViewContext(
+    WithContextView(
       store: self.store,
       removeDuplicates: { ($0 != nil) == ($1 != nil) },
       content: content

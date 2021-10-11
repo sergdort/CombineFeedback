@@ -12,14 +12,23 @@ struct SingleStoreExampleView: View {
   var body: some View {
     logBody(of: self)
     return TabView {
+//      NavigationView {
+//        CounterView(
+//          store: store.scoped(to: \.counter, event: Event.counter)
+//        )
+//        .navigationBarTitle(Text("Counter"))
+//      }
+//      .tabItem {
+//        Image(systemName: "eye")
+//      }
       NavigationView {
-        CounterView(
-          store: store.scoped(to: \.counter, event: Event.counter)
+        SwitchStoreExample.RootView(
+          store: store.scoped(to: \.switchExample, event: Event.switchExample)
         )
-        .navigationBarTitle(Text("Counter"))
+          .navigationBarTitle(Text("Switch Store"))
       }
       .tabItem {
-        Image(systemName: "eye")
+        Image(systemName: "switch.2")
       }
       NavigationView {
         MoviesView(store: store.scoped(to: \.movies, event: Event.movies))

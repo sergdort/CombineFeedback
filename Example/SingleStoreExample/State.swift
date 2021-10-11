@@ -5,12 +5,14 @@ import Foundation
 
 struct State {
   var counter = Counter.State()
+  var switchExample = SwitchStoreExample.State.signIn(SignIn.State())
   var movies = Movies.State(batch: .empty(), movies: [], status: .loading)
   var signIn = SignIn.State()
   var traficLight = TrafficLight.State.red
 }
 
 enum Event {
+  case switchExample(SwitchStoreExample.Event)
   case counter(Counter.Event)
   case movies(Movies.Event)
   case signIn(SignIn.Event)
@@ -22,6 +24,19 @@ let countReducer: Reducer<State, Event> = Counter.reducer()
     value: \.counter,
     event: /Event.counter
   )
+
+let switchStoreReducer: Reducer<State, Event> = SwitchStoreExample.reducer
+  .pullback(
+    value: \.switchExample,
+    event: /Event.switchExample
+  )
+
+let switchStoreFeedback: Feedback<State, Event, AppDependency> = SwitchStoreExample.feedbacks
+  .pullback(
+    value: \.switchExample,
+    event: /Event.switchExample) {
+      SwitchStoreExample.Dependencies(signIn: $0.signIn)
+    }
 
 let moviesReducer: Reducer<State, Event> = Movies.reducer()
   .pullback(
@@ -62,6 +77,7 @@ let trafficLightFeedback: Feedback<State, Event, AppDependency> = TrafficLight.f
 
 let appReducer = Reducer.combine(
   countReducer,
+  switchStoreReducer,
   moviesReducer,
   signInReducer,
   traficLightReducer

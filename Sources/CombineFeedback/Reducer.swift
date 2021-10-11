@@ -31,6 +31,29 @@ public struct Reducer<State, Event> {
     }
   }
 
+  /*
+   enum AppState {
+    case authenticated(AuthenticatedState)
+    case nonAuth(NonOutState)
+   }
+
+   enum AppEvent {
+    case authenticated(AuthenticatedEvent)
+    case nonAuth(NonOutEvent)
+   }
+   */
+  public func pullback<GlobalState, GlobalEvent>(
+    value: CasePath<GlobalState, State>,
+    event: CasePath<GlobalEvent, Event>
+  ) -> Reducer<GlobalState, GlobalEvent> {
+    .init { globalState, globalEvent in
+      guard let localEvent = event.extract(from: globalEvent) else { return }
+      guard var localState = value.extract(from: globalState) else { return }
+      self.reduce(&localState, localEvent)
+      globalState = value.embed(localState)
+    }
+  }
+
   public func optional() -> Reducer<State?, Event> {
     return .init { state, event in
       if state == nil {

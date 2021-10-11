@@ -41,20 +41,20 @@ open class Store<State, Event> {
     box.send(event: event)
   }
 
-  open func mutate<V>(keyPath: WritableKeyPath<State, V>, value: V) {
-    box.mutate(keyPath: keyPath, value: value)
-  }
-
-  open func mutate(with mutation: Mutation<State>) {
-    box.mutate(with: mutation)
-  }
-
   public func scope<S>(
-    getValue: @escaping (State) -> S,
-    setValue: @escaping (inout State, S) -> Void
+    getValue: @escaping (State) -> S
   ) -> Store<S, Event> {
     Store<S, Event>(
-      box: box.scoped(getValue: getValue, setValue: setValue, event: { $0 })
+      box: box.scoped(getValue: getValue, event: { $0 })
+    )
+  }
+
+  public func scope<S, E>(
+    getValue: @escaping (State) -> S,
+    event: @escaping (E) -> Event
+  ) -> Store<S, E> {
+    Store<S, E>(
+      box: box.scoped(getValue: getValue, event: event)
     )
   }
 
@@ -64,19 +64,9 @@ open class Store<State, Event> {
   ) -> Store<S, E> {
     return Store<S, E>(box: box.scoped(to: scope, event: event))
   }
-}
 
-public struct Mutation<State> {
-  let mutate: (inout State) -> Void
-
-  init<V>(keyPath: WritableKeyPath<State, V>, value: V) {
-    self.mutate = { state in
-      state[keyPath: keyPath] = value
-    }
-  }
-
-  init(mutate: @escaping (inout State) -> Void) {
-    self.mutate = mutate
+  deinit {
+    print("Store Died 💀", type(of: self))
   }
 }
 

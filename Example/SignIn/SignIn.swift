@@ -33,7 +33,6 @@ extension SignIn {
               .map(Event.isAvailable)
               .enqueue(to: consumer)
           }
-          .start()
       }
     }
 
@@ -65,7 +64,7 @@ struct SignInView: View {
 
   var body: some View {
     logBody(of: self)
-    return WithViewContext(store: store) { context in
+    return WithContextView(store: store) { context in
       Form {
         Section {
           HStack {
@@ -75,36 +74,33 @@ struct SignInView: View {
             )
             .textFieldStyle(RoundedBorderTextFieldStyle())
             .textContentType(.username)
-            Group {
-              if context.status.isCheckingUserName {
-                Activity(style: .medium)
-              } else {
-                Image(systemName: context.isAvailable ? "hand.thumbsup.fill" : "xmark.seal.fill")
-              }
+            if context.status.isCheckingUserName {
+              Activity(style: .medium)
+            } else {
+              Image(systemName: context.isAvailable ? "hand.thumbsup.fill" : "xmark.seal.fill")
             }
           }
-          Text(context.userName)
           TextField(
             "Email",
-            text: context.binding(for: \.email)
+            text: context.binding(for: \.email, event: Event.emailDidChange)
           )
           .textFieldStyle(RoundedBorderTextFieldStyle())
           .textContentType(.emailAddress)
           TextField(
             "Password",
-            text: context.binding(for: \.password)
+            text: context.binding(for: \.password, event: Event.passwordDidChange)
           )
           .textFieldStyle(RoundedBorderTextFieldStyle())
           .textContentType(.newPassword)
           TextField(
             "Repeat Password",
-            text: context.binding(for: \.repeatPassword)
+            text: context.binding(for: \.repeatPassword, event: Event.repeatPasswordDidChange)
           )
           .textFieldStyle(RoundedBorderTextFieldStyle())
           .textContentType(.newPassword)
         }
         Section {
-          Toggle(isOn: context.binding(for: \.termsAccepted)) {
+          Toggle(isOn: context.binding(for: \.termsAccepted, event: Event.termsDidChange)) {
             Text("Accept Terms and Conditions")
           }
         }

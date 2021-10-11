@@ -1,10 +1,12 @@
 import Combine
 import SwiftUI
 
-@available(*, deprecated, renamed: "WithViewContext")
-public typealias Widget<State, Event, Content: View> = WithViewContext<State, Event, Content>
+@available(*, deprecated, renamed: "WithContextView")
+public typealias Widget<State, Event, Content: View> = WithContextView<State, Event, Content>
 
-public struct WithViewContext<State, Event, Content: View>: View {
+/// A helper view that bridges Store into SwiftUI world by using @ObservedObject ViewContext
+/// to listed to the state changes of the Store and render the UI
+public struct WithContextView<State, Event, Content: View>: View {
   @ObservedObject
   private var context: ViewContext<State, Event>
   private let store: Store<State, Event>
@@ -25,7 +27,7 @@ public struct WithViewContext<State, Event, Content: View>: View {
   }
 }
 
-public extension WithViewContext where State: Equatable {
+public extension WithContextView where State: Equatable {
   init(
     store: Store<State, Event>,
     @ViewBuilder content: @escaping (ViewContext<State, Event>) -> Content

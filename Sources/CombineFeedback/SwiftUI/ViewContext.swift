@@ -11,7 +11,6 @@ public final class ViewContext<State, Event>: ObservableObject {
   private var state: State
   private var bag = Set<AnyCancellable>()
   private let send: (Event) -> Void
-  private let mutate: (Mutation<State>) -> Void
 
   init(
     store: StoreBoxBase<State, Event>,
@@ -19,7 +18,6 @@ public final class ViewContext<State, Event>: ObservableObject {
   ) {
     self.state = store._current
     self.send = store.send
-    self.mutate = store.mutate
     store.publisher
       .removeDuplicates(by: isDuplicate)
       .receive(on: UIScheduler.shared, options: nil)
@@ -53,17 +51,6 @@ public final class ViewContext<State, Event>: ObservableObject {
       },
       set: { _ in
         self.send(event: event)
-      }
-    )
-  }
-
-  public func binding<U>(for keyPath: WritableKeyPath<State, U>) -> Binding<U> {
-    return Binding(
-      get: {
-        self.state[keyPath: keyPath]
-      },
-      set: {
-        self.mutate(Mutation(keyPath: keyPath, value: $0))
       }
     )
   }

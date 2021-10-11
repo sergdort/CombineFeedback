@@ -73,7 +73,11 @@ enum SignIn {
   enum Event {
     case isAvailable(Bool)
     case didSignIn(Bool)
+    case emailDidChange(String)
+    case passwordDidChange(String)
     case didChangeUserName(String)
+    case repeatPasswordDidChange(String)
+    case termsDidChange(Bool)
     case signIn
     case dismissAlertTap
   }
@@ -84,6 +88,14 @@ enum SignIn {
       case .didChangeUserName(let userName):
         state.userName = userName
         state.status = userName.isEmpty ? .idle : .checkingUserName
+      case .emailDidChange(let email):
+        state.email = email
+      case .passwordDidChange(let password):
+        state.password = password
+      case .repeatPasswordDidChange(let repeatPassword):
+        state.repeatPassword = repeatPassword
+      case .termsDidChange(let termsAccepted):
+        state.termsAccepted = termsAccepted
       case .isAvailable(let isAvailable):
         state.isAvailable = isAvailable
         state.status = .idle
@@ -120,9 +132,8 @@ enum SignIn {
         .flatMapLatest { userName in
           dependency.usernameAvailable(userName)
             .map(Event.isAvailable)
-            .enqueue(to: consumer)
         }
-        .start()
+        .enqueue(to: consumer)
     }
   }
 

@@ -66,7 +66,7 @@ struct MoviesView: View {
 
   var body: some View {
     logBody(of: self)
-    return WithViewContext(store: store) { context in
+    return WithContextView(store: store) { context in
       List {
         ForEach(context.movies) { movie in
           MovieCell(movie: movie).onAppear {

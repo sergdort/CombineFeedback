@@ -11,20 +11,17 @@ struct TrafficLightView: View {
 
   var body: some View {
     logBody(of: self)
-    return WithViewContext(store: store) { context in
+    return WithContextView(store: store) { context in
       VStack {
         Circle()
+          .fill(Color.red.opacity(context.isRed ? 1 : 0.5))
           .frame(width: 150, height: 150)
-          .animation(.default)
-          .foregroundColor(Color.red.opacity(context.isRed ? 1 : 0.5))
         Circle()
+          .fill(Color.yellow.opacity(context.isYellow ? 1 : 0.5))
           .frame(width: 150, height: 150)
-          .animation(.default)
-          .foregroundColor(Color.yellow.opacity(context.isYellow ? 1 : 0.5))
         Circle()
+          .fill(Color.green.opacity(context.isGreen ? 1 : 0.5))
           .frame(width: 150, height: 150)
-          .animation(.default)
-          .foregroundColor(Color.green.opacity(context.isGreen ? 1 : 0.5))
       }
       .padding()
       .background(Color.black)
