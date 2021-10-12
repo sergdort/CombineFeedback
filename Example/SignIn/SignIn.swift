@@ -63,8 +63,7 @@ struct SignInView: View {
   }
 
   var body: some View {
-    logBody(of: self)
-    return WithContextView(store: store) { context in
+    WithContextView(store: store) { context in
       Form {
         Section {
           HStack {
@@ -75,7 +74,7 @@ struct SignInView: View {
             .textFieldStyle(RoundedBorderTextFieldStyle())
             .textContentType(.username)
             if context.status.isCheckingUserName {
-              Activity(style: .medium)
+              Spinner(style: .medium)
             } else {
               Image(systemName: context.isAvailable ? "hand.thumbsup.fill" : "xmark.seal.fill")
             }
@@ -117,7 +116,7 @@ struct SignInView: View {
             }
             Group {
               if context.status.isSubmitting {
-                Activity(style: .medium)
+                Spinner(style: .medium)
               } else {
                 EmptyView()
               }

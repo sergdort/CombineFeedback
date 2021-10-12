@@ -10,8 +10,7 @@ struct TrafficLightView: View {
   }
 
   var body: some View {
-    logBody(of: self)
-    return WithContextView(store: store) { context in
+    WithContextView(store: store) { context in
       VStack {
         Circle()
           .fill(Color.red.opacity(context.isRed ? 1 : 0.5))

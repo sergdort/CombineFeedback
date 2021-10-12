@@ -27,8 +27,7 @@ struct CounterView: View {
   }
 
   var body: some View {
-    logBody(of: self)
-    return WithContextView(store: store) { context in
+    WithContextView(store: store) { context in
       Form {
         Button(action: {
           context.send(event: .decrement)

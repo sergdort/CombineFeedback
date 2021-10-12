@@ -65,8 +65,7 @@ struct MoviesView: View {
   }
 
   var body: some View {
-    logBody(of: self)
-    return WithContextView(store: store) { context in
+    WithContextView(store: store) { context in
       List {
         ForEach(context.movies) { movie in
           MovieCell(movie: movie).onAppear {
@@ -74,6 +73,9 @@ struct MoviesView: View {
               context.send(event: .fetchNext)
             }
           }
+        }
+        if context.status == .loading {
+          Spinner(style: .medium)
         }
       }
     }
