@@ -64,10 +64,6 @@ open class Store<State, Event> {
   ) -> Store<S, E> {
     return Store<S, E>(box: box.scoped(to: scope, event: event))
   }
-
-  deinit {
-    print("Store Died 💀", type(of: self))
-  }
 }
 
 extension Array {
