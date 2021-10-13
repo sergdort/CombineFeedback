@@ -32,17 +32,16 @@ While `State` represents where the system is at a given time, `Event` represents
 
 To some extent it's like reactive [Middleware](https://redux.js.org/advanced/middleware) in [Redux](https://redux.js.org)
 
+### Dependency
 
-### CombineFeedbackUI
-
-CombineFeedbackUI provides several convenience API to deal with state management and SwiftUI.
+Dependency is the type that holds all services that feature needs, such as API clients, analytics clients, etc.
 
 #### Store
 
 Store - is a base class responsible for initializing a UI state machine. It provides two ways to interact with it. 
 
-- We can start a state machine by observing `var state: AnyPublisher<S, Never>`. 
-- We can send input events into it via `public final func send(event: E)`. 
+- We can start a state machine by observing `var state: AnyPublisher<State, Never>`. 
+- We can send input events into it via `public final func send(event: Event)`. 
 
 This is useful if we want to mutate our state in response to user input. Let's consider a `Counter` example
 
@@ -135,31 +134,15 @@ When we send `.fetchNext` event, it goes to the `reducer` where we put our syste
     }
 ```
 
-Sometimes tho we are only interested in the particular value of `State ` property to be changed. E.g if we are building a signup form and we just want to change `email` property on the state. We can do something like this
+#### Composition
 
-```swift
-struct State  {
-    var email = ""
-    var password = ""
-}
+Taking inspiration from [TCA](https://github.com/pointfreeco/swift-composable-architecture) `CombineFeedback` is build with a composition in mind.
 
-store.mutate(keyPath: \.email, "example@example.com")
-```
+Meaning that you compose smaller states into bigger states. For more details please see Example App.
 
-#### Widget
+#### ViewContext
 
-`Widget<State, Event>` - is a convenience `View` that takes a `Store` and  `render` closure which renders new content every time the `State` changes.
-
-
-```swift
-Widget(viewModel: SignInStore()) { context in
-    SignInView(context: context)
-}
-```
-
-#### Context
-
-`Context<State, Event>` - is a rendering context that we can use to interact with UI and render information. Via  `@dynamicMemberLookup` it has all of the properties of the `State` and several conveniences methods for more seamless integration with SwiftUI. (Credits to [@andersio](https://github.com/andersio))
+`ViewContext<State, Event>` - is a rendering context that we can use to interact with UI and render information. Via  `@dynamicMemberLookup` it has all of the properties of the `State` and several conveniences methods for more seamless integration with SwiftUI. (Credits to [@andersio](https://github.com/andersio))
 
 ```swift
 struct State  {
@@ -170,22 +153,24 @@ enum Event {
 	case signIn
 }
 struct SignInView: View {
-    private let context: Context<State, Event>
+    private let store: Store<State, Event>
     
-    init(context: Context<State, Event>) {
-        self.context = context
+    init(store: Store<State, Event>) {
+        self.store = store
     }
     
     var body: some View {
-        return Form {
+      WithContextView(store: store) { context in
+        Form {
             Section {
-                TextField(context.binding(for: \.email))
-                TextField(context.binding(for: \.password))
+                TextField(context.binding(for: \.email, event: Event.emailDidChange))
+                TextField(context.binding(for: \.password, event: Event.passwordDidCange))
                 Button(action: context.action(for: .signIn)) {
                     Text("Sign In")
                 }
             }
         }
+      }
     }
 }
 ```
