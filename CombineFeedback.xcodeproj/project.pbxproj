@@ -11,6 +11,7 @@
 		2510CDE1242BED63004A6422 /* StoreExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2510CDE0242BED63004A6422 /* StoreExtensions.swift */; };
 		251445E724086A400062EE04 /* TrafficLightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 251445E624086A400062EE04 /* TrafficLightView.swift */; };
 		252BF08422BAE05700BC4265 /* SignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252BF08322BAE05700BC4265 /* SignIn.swift */; };
+		2541EA422716F459004F0CD5 /* FavouriteMovies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2541EA412716F459004F0CD5 /* FavouriteMovies.swift */; };
 		254B4DBA2676650000653BB8 /* CombineSchedulers in Frameworks */ = {isa = PBXBuildFile; productRef = 254B4DB92676650000653BB8 /* CombineSchedulers */; };
 		25AE0783271056C600FF03EC /* StoreBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25AE0781271056C600FF03EC /* StoreBox.swift */; };
 		25AE0784271056C600FF03EC /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25AE0782271056C600FF03EC /* Store.swift */; };
@@ -96,6 +97,7 @@
 		2510CDE0242BED63004A6422 /* StoreExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreExtensions.swift; sourceTree = "<group>"; };
 		251445E624086A400062EE04 /* TrafficLightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrafficLightView.swift; sourceTree = "<group>"; };
 		252BF08322BAE05700BC4265 /* SignIn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignIn.swift; sourceTree = "<group>"; };
+		2541EA412716F459004F0CD5 /* FavouriteMovies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavouriteMovies.swift; sourceTree = "<group>"; };
 		25AE0781271056C600FF03EC /* StoreBox.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreBox.swift; sourceTree = "<group>"; };
 		25AE0782271056C600FF03EC /* Store.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
 		25AE0786271056D600FF03EC /* ViewContext.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewContext.swift; sourceTree = "<group>"; };
@@ -366,6 +368,7 @@
 			isa = PBXGroup;
 			children = (
 				585CD86E239A9E57004BE9CC /* MoviesState.swift */,
+				2541EA412716F459004F0CD5 /* FavouriteMovies.swift */,
 			);
 			path = Movies;
 			sourceTree = "<group>";
@@ -648,6 +651,7 @@
 				58C6E5E022A9F027005A9685 /* Movies.swift in Sources */,
 				585CD875239AA1E0004BE9CC /* TrafficLightState.swift in Sources */,
 				585CD86C239A9E34004BE9CC /* CounterState.swift in Sources */,
+				2541EA422716F459004F0CD5 /* FavouriteMovies.swift in Sources */,
 				252BF08422BAE05700BC4265 /* SignIn.swift in Sources */,
 				585CD869239A9D31004BE9CC /* State.swift in Sources */,
 				5800FFB922A8CDA5005A860B /* AppDelegate.swift in Sources */,

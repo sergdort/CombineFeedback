@@ -66,18 +66,22 @@ struct MoviesView: View {
 
   var body: some View {
     WithContextView(store: store) { context in
-      List {
-        ForEach(context.movies) { movie in
-          MovieCell(movie: movie).onAppear {
-            if context.movies.last == movie {
-              context.send(event: .fetchNext)
-            }
+      ScrollView {
+        LazyVStack {
+          ForEach(Array(context.movies.enumerated()), id: \.element) { element in
+            MovieCell(movie: element.element)
+              .contentShape(Rectangle())
+              .onTapGesture {
+                context.send(event: Event.didLike(element.element, index: element.offset))
+              }
+          }
+          if context.status == .loading {
+            Spinner(style: .medium)
           }
         }
-        if context.status == .loading {
-          Spinner(style: .medium)
-        }
+        .padding(.horizontal)
       }
+      .navigationBarTitle("Pagination Example", displayMode: .inline)
     }
   }
 }
@@ -93,13 +97,17 @@ struct MovieCell: View {
 
   var body: some View {
     return HStack {
-      AsyncImage(
-        source: poster,
-        placeholder: UIImage(systemName: "film")!
-      )
-      .frame(width: 77, height: 130)
-      .clipped()
+      AsyncImage(source: poster, placeholder: UIImage(systemName: "film")!) { image in
+        Image(uiImage: image)
+          .resizable()
+          .frame(width: 100)
+          .aspectRatio(0.7, contentMode: .fill)
+      }
       Text(movie.title).font(.title)
+      Spacer()
+      Button(action: {}) {
+        Image(systemName: movie.isFavourite ? "star.fill" : "star")
+      }
     }
   }
 }
@@ -122,11 +130,12 @@ struct Results: Codable, Equatable {
   }
 }
 
-struct Movie: Codable, Equatable, Identifiable {
+struct Movie: Codable, Hashable, Identifiable {
   let id: Int
   let overview: String
   let title: String
   let posterPath: String?
+  var isFavourite = false
 
   var posterURL: URL? {
     return posterPath

@@ -28,12 +28,12 @@ enum SwitchStoreExample {
     Reducer.combine(
       SignIn.reducer()
         .pullback(
-          value: /State.signIn,
+          state: /State.signIn,
           event: /Event.signIn
         ),
       Counter.reducer()
         .pullback(
-          value: /State.counter,
+          state: /State.counter,
           event: /Event.counter
         ),
       Reducer(reduce: Self.innerReducer(state:event:))
@@ -43,7 +43,7 @@ enum SwitchStoreExample {
   static var feedbacks: Feedback<State, Event, Dependencies> {
     .combine(
       SignIn.feedback.pullback(
-        value: /State.signIn,
+        state: /State.signIn,
         event: /Event.signIn,
         dependency: \.signIn
       )

@@ -30,8 +30,10 @@ struct SingleStoreExampleView: View {
         Image(systemName: "switch.2")
       }
       NavigationView {
-        MoviesView(store: store.scoped(to: \.movies, event: Event.movies))
-          .navigationBarTitle(Text("Pagination Example"))
+        FavouriteMovies.RootView(
+          store: store.scoped(to: \.favouriteMovies, event: Event.favouriteMovies)
+        )
+        .navigationBarTitle(Text("Parent Child State"))
       }
       .tabItem {
         Image(systemName: "film")

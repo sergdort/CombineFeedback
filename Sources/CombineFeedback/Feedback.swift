@@ -436,17 +436,17 @@ public extension Feedback {
   ///   * A case path that can extract/embed a local event into a global event.
   ///   * A function that can transform the global dependency into a local dependency.
   func pullback<GlobalState, GlobalEvent, GlobalDependency>(
-    value: KeyPath<GlobalState, State>,
-    event: CasePath<GlobalEvent, Event>,
+    state stateKeyPath: KeyPath<GlobalState, State>,
+    event eventCasePath: CasePath<GlobalEvent, Event>,
     dependency toLocal: @escaping (GlobalDependency) -> Dependency
   ) -> Feedback<GlobalState, GlobalEvent, GlobalDependency> {
     return Feedback<GlobalState, GlobalEvent, GlobalDependency>(events: { state, consumer, dependency in
       let state = state.map {
-        ($0[keyPath: value], $1.flatMap(event.extract(from:)))
+        ($0[keyPath: stateKeyPath], $1.flatMap(eventCasePath.extract(from:)))
       }.eraseToAnyPublisher()
       return self.events(
         state,
-        consumer.pullback(event.embed),
+        consumer.pullback(eventCasePath.embed),
         toLocal(dependency)
       )
     })
@@ -470,20 +470,20 @@ public extension Feedback {
   ///   * A case path that can extract/embed a local event into a global event.
   ///   * A function that can transform the global dependency into a local dependency.
   func pullback<GlobalState, GlobalEvent, GlobalDependency>(
-    value: CasePath<GlobalState, State>,
-    event: CasePath<GlobalEvent, Event>,
+    state stateCasePath: CasePath<GlobalState, State>,
+    event eventCasePath: CasePath<GlobalEvent, Event>,
     dependency toLocal: @escaping (GlobalDependency) -> Dependency
   ) -> Feedback<GlobalState, GlobalEvent, GlobalDependency> {
     return Feedback<GlobalState, GlobalEvent, GlobalDependency>(events: { state, consumer, dependency in
       let state: AnyPublisher<(State, Event?), Never> = state.compactMap { (stateAndEvent: (GlobalState, GlobalEvent?)) -> (State, Event?)? in
-        guard let localState = value.extract(from: stateAndEvent.0) else {
+        guard let localState = stateCasePath.extract(from: stateAndEvent.0) else {
           return nil
         }
-        return (localState, stateAndEvent.1.flatMap(event.extract(from:)))
+        return (localState, stateAndEvent.1.flatMap(eventCasePath.extract(from:)))
       }.eraseToAnyPublisher()
       return self.events(
         state,
-        consumer.pullback(event.embed),
+        consumer.pullback(eventCasePath.embed),
         toLocal(dependency)
       )
     })

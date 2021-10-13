@@ -6,7 +6,7 @@ import Foundation
 struct State {
   var counter = Counter.State()
   var switchExample = SwitchStoreExample.State.signIn(SignIn.State())
-  var movies = Movies.State(batch: .empty(), movies: [], status: .loading)
+  var favouriteMovies = FavouriteMovies.State()
   var signIn = SignIn.State()
   var traficLight = TrafficLight.State.red
 }
@@ -14,63 +14,70 @@ struct State {
 enum Event {
   case switchExample(SwitchStoreExample.Event)
   case counter(Counter.Event)
-  case movies(Movies.Event)
+  case favouriteMovies(FavouriteMovies.Event)
   case signIn(SignIn.Event)
   case trafficLight(TrafficLight.Event)
 }
 
 let countReducer: Reducer<State, Event> = Counter.reducer()
   .pullback(
-    value: \.counter,
+    state: \.counter,
     event: /Event.counter
   )
 
 let switchStoreReducer: Reducer<State, Event> = SwitchStoreExample.reducer
   .pullback(
-    value: \.switchExample,
+    state: \.switchExample,
     event: /Event.switchExample
   )
 
 let switchStoreFeedback: Feedback<State, Event, AppDependency> = SwitchStoreExample.feedbacks
   .pullback(
-    value: \.switchExample,
+    state: \.switchExample,
     event: /Event.switchExample) {
       SwitchStoreExample.Dependencies(signIn: $0.signIn)
     }
 
-let moviesReducer: Reducer<State, Event> = Movies.reducer()
+let favouriteMoviesReducer: Reducer<State, Event> = FavouriteMovies.reducer
   .pullback(
-    value: \.movies,
-    event: /Event.movies
+    state: \State.favouriteMovies,
+    event: /Event.favouriteMovies
   )
 
-let moviesFeedback: Feedback<State, Event, AppDependency> = Movies.feedback
+let moviesFeedback = Movies.feedback
   .pullback(
-    value: \.movies,
-    event: /Event.movies,
-    dependency: \.movies
+    state: \FavouriteMovies.State.moviesState,
+    event: /FavouriteMovies.Event.movies,
+    dependency: { (globalDependency: AppDependency) -> Movies.Dependencies in
+      globalDependency.movies
+    }
+  )
+  .pullback(
+    state: \State.favouriteMovies,
+    event: /Event.favouriteMovies,
+    dependency: { $0 }
   )
 
 let signInReducer: Reducer<State, Event> = SignIn.reducer().pullback(
-  value: \.signIn,
+  state: \.signIn,
   event: /Event.signIn
 )
 
 let signInFeedback: Feedback<State, Event, AppDependency> = SignIn.feedback
   .pullback(
-    value: \.signIn,
+    state: \.signIn,
     event: /Event.signIn,
     dependency: \.signIn
   )
 
 let traficLightReducer: Reducer<State, Event> = TrafficLight.reducer()
   .pullback(
-    value: \.traficLight,
+    state: \.traficLight,
     event: /Event.trafficLight
   )
 
 let trafficLightFeedback: Feedback<State, Event, AppDependency> = TrafficLight.feedback.pullback(
-  value: \.traficLight,
+  state: \.traficLight,
   event: /Event.trafficLight,
   dependency: { _ in }
 )
@@ -78,7 +85,7 @@ let trafficLightFeedback: Feedback<State, Event, AppDependency> = TrafficLight.f
 let appReducer = Reducer.combine(
   countReducer,
   switchStoreReducer,
-  moviesReducer,
+  favouriteMoviesReducer,
   signInReducer,
   traficLightReducer
 )

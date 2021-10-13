@@ -45,6 +45,7 @@ enum Movies {
     case didFail(NSError)
     case retry
     case fetchNext
+    case didLike(Movie, index: Int)
   }
 
   static func reducer() -> Reducer<State, Event> {
@@ -60,6 +61,8 @@ enum Movies {
         state.status = .loading
       case .fetchNext:
         state.status = .loading
+      case .didLike(_, let index):
+        state.movies[index].isFavourite = !state.movies[index].isFavourite
       }
     }
   }

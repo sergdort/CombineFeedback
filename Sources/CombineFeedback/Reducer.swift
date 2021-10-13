@@ -20,14 +20,14 @@ public struct Reducer<State, Event> {
   }
 
   public func pullback<GlobalState, GlobalEvent>(
-    value: WritableKeyPath<GlobalState, State>,
-    event: CasePath<GlobalEvent, Event>
+    state stateKeyPath: WritableKeyPath<GlobalState, State>,
+    event eventCasePath: CasePath<GlobalEvent, Event>
   ) -> Reducer<GlobalState, GlobalEvent> {
     return .init { globalState, globalEvent in
-      guard let localAction = event.extract(from: globalEvent) else {
+      guard let localAction = eventCasePath.extract(from: globalEvent) else {
         return
       }
-      self(&globalState[keyPath: value], localAction)
+      self(&globalState[keyPath: stateKeyPath], localAction)
     }
   }
 
@@ -43,14 +43,14 @@ public struct Reducer<State, Event> {
    }
    */
   public func pullback<GlobalState, GlobalEvent>(
-    value: CasePath<GlobalState, State>,
-    event: CasePath<GlobalEvent, Event>
+    state stateCasePath: CasePath<GlobalState, State>,
+    event eventCasePath: CasePath<GlobalEvent, Event>
   ) -> Reducer<GlobalState, GlobalEvent> {
     .init { globalState, globalEvent in
-      guard let localEvent = event.extract(from: globalEvent) else { return }
-      guard var localState = value.extract(from: globalState) else { return }
+      guard let localEvent = eventCasePath.extract(from: globalEvent) else { return }
+      guard var localState = stateCasePath.extract(from: globalState) else { return }
       self.reduce(&localState, localEvent)
-      globalState = value.embed(localState)
+      globalState = stateCasePath.embed(localState)
     }
   }
 
