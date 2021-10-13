@@ -138,7 +138,7 @@ When we send `.fetchNext` event, it goes to the `reducer` where we put our syste
 
 Taking inspiration from [TCA](https://github.com/pointfreeco/swift-composable-architecture) `CombineFeedback` is build with a composition in mind.
 
-Meaning that you compose smaller states into bigger states. For more details please see Example App.
+Meaning that we can compose smaller states into bigger states. For more details please see Example App.
 
 #### ViewContext
 
@@ -181,3 +181,10 @@ struct SignInView: View {
 | --- | --- | --- | --- |
 |<img src="diagrams/counter.gif" width="250"/> | <img src="diagrams/movies.gif" width="250"/> | <img src="diagrams/signin.png" width="250"/> | <img src="diagrams/traffic_light.gif" width="250"/> 
 
+
+### References
+
+[Automata theory](https://en.wikipedia.org/wiki/Automata_theory)
+[TCA](https://github.com/pointfreeco/swift-composable-architecture)
+[Finite-state machine](https://en.wikipedia.org/wiki/Finite-state_machine)
+[Mealy machine](https://en.wikipedia.org/wiki/Mealy_machine)
