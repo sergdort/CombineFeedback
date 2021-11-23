@@ -9,7 +9,7 @@ open class Store<State, Event> {
     box._current
   }
 
-  var publisher: AnyPublisher<State, Never> {
+  public var publisher: AnyPublisher<State, Never> {
     box.publisher
   }
 
