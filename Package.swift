@@ -1,4 +1,4 @@
-// swift-tools-version:5.1
+// swift-tools-version:6.1
 import PackageDescription
 
 let package = Package(
@@ -23,8 +23,19 @@ let package = Package(
         )
     ],
     targets: [
-        .target(name: "CombineFeedback", dependencies: ["CasePaths", "CombineSchedulers"]),
-        .testTarget(name: "CombineFeedbackTests", dependencies: ["CombineFeedback"])
+        .target(
+            name: "CombineFeedback",
+            dependencies: [
+                .product(name: "CasePaths", package: "swift-case-paths"),
+                .product(name: "CombineSchedulers", package: "combine-schedulers")
+            ],
+            exclude: ["Info.plist"]
+        ),
+        .testTarget(
+            name: "CombineFeedbackTests",
+            dependencies: ["CombineFeedback"],
+            exclude: ["Info.plist"]
+        )
     ],
-    swiftLanguageVersions: [.v5]
+    swiftLanguageModes: [.v6]
 )

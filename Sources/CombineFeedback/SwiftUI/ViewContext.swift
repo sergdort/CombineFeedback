@@ -6,6 +6,7 @@ import CombineSchedulers
 public typealias Context<State, Event> = ViewContext<State, Event>
 
 @dynamicMemberLookup
+@MainActor
 public final class ViewContext<State, Event>: ObservableObject {
   @Published
   private var state: State
@@ -14,7 +15,7 @@ public final class ViewContext<State, Event>: ObservableObject {
 
   init(
     store: StoreBoxBase<State, Event>,
-    removeDuplicates isDuplicate: @escaping (State, State) -> Bool
+    removeDuplicates isDuplicate: @escaping @Sendable (State, State) -> Bool
   ) {
     self.state = store._current
     self.send = store.send

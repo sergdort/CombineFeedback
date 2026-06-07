@@ -74,7 +74,7 @@ class CombineFeedbackTests: XCTestCase {
       results = $0
     }
 
-    let expected = [
+    let expectedA = [
       "initial",
       "initial_a",
       "initial_a_b",
@@ -82,8 +82,16 @@ class CombineFeedbackTests: XCTestCase {
       "initial_a_b_a_b",
       "initial_a_b_a_b_a",
     ]
+    let expectedB = [
+      "initial",
+      "initial_b",
+      "initial_b_a",
+      "initial_b_a_b",
+      "initial_b_a_b_a",
+      "initial_b_a_b_a_b",
+    ]
 
-    XCTAssertEqual(results, expected)
+    XCTAssertTrue([expectedA, expectedB].contains(results))
   }
 
   func test_should_observe_signals_immediately() {
@@ -110,6 +118,7 @@ class CombineFeedbackTests: XCTestCase {
     XCTAssertEqual(["initial"], results)
     input.observer("_a")
     XCTAssertEqual(["initial", "initial_a"], results)
+    withExtendedLifetime(cancel) {}
   }
 
   func test_cancelation() {

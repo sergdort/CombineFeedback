@@ -37,7 +37,7 @@ public struct IfLetStoreView<State, Event, Content: View>: View {
   public var body: some View {
     WithContextView(
       store: self.store,
-      removeDuplicates: { ($0 != nil) == ($1 != nil) },
+      removeDuplicates: { @Sendable in ($0 != nil) == ($1 != nil) },
       content: content
     )
   }

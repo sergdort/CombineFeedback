@@ -1,16 +1,42 @@
 {
-  "object": {
-    "pins": [
-      {
-        "package": "CasePaths",
-        "repositoryURL": "https://github.com/pointfreeco/swift-case-paths.git",
-        "state": {
-          "branch": null,
-          "revision": "a9c1e05518b6d95cf5844d823020376f2b6ff842",
-          "version": "0.1.0"
-        }
+  "originHash" : "2835160b02d0ffe97fcaaff8ed4a5549a8d4289b30c62084e427f904ccbf6549",
+  "pins" : [
+    {
+      "identity" : "combine-schedulers",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/combine-schedulers.git",
+      "state" : {
+        "revision" : "ec62f32d21584214a4b27c8cee2b2ad70ab2c38a",
+        "version" : "0.11.0"
       }
-    ]
-  },
-  "version": 1
+    },
+    {
+      "identity" : "swift-case-paths",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-case-paths.git",
+      "state" : {
+        "revision" : "fc45e7b2cfece9dd80b5a45e6469ffe67fe67984",
+        "version" : "0.14.1"
+      }
+    },
+    {
+      "identity" : "swift-concurrency-extras",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-concurrency-extras",
+      "state" : {
+        "revision" : "a46265bb4f75808b0e15d971eebc408f557870a3",
+        "version" : "0.1.2"
+      }
+    },
+    {
+      "identity" : "xctest-dynamic-overlay",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/xctest-dynamic-overlay",
+      "state" : {
+        "revision" : "50843cbb8551db836adec2290bb4bc6bac5c1865",
+        "version" : "0.9.0"
+      }
+    }
+  ],
+  "version" : 3
 }

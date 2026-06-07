@@ -524,7 +524,7 @@ public extension Feedback {
   }
 }
 
-extension Array: Cancellable where Element == Cancellable {
+extension Array: @retroactive Cancellable where Element == Cancellable {
   public func cancel() {
     for element in self {
       element.cancel()
@@ -543,27 +543,26 @@ struct TaskPublisher<Output>: Publisher {
   }
 
   func receive<S>(subscriber: S) where S: Subscriber, Self.Failure == S.Failure, Self.Output == S.Input {
-    let subscription = TaskSubscription(work: work, subscriber: subscriber)
+    let subscription = TaskSubscription(work: work, subscriber: AnySubscriber(subscriber))
     subscriber.receive(subscription: subscription)
     subscription.start()
   }
 
-  final class TaskSubscription<Output, Downstream: Subscriber>: Combine.Subscription where Downstream.Input == Output, Downstream.Failure == Never {
-    private var handle: Task<Output, Never>?
+  final class TaskSubscription: Combine.Subscription, @unchecked Sendable {
+    private var handle: Task<Void, Never>?
     private let work: () async -> Output
-    private let subscriber: Downstream
+    private let subscriber: AnySubscriber<Output, Never>
 
-    init(work: @escaping () async -> Output, subscriber: Downstream) {
+    init(work: @escaping () async -> Output, subscriber: AnySubscriber<Output, Never>) {
       self.work = work
       self.subscriber = subscriber
     }
 
     func start() {
-      self.handle = Task.init { [subscriber, work] in
+      self.handle = Task { [self] in
         let result = await work()
         _ = subscriber.receive(result)
         subscriber.receive(completion: .finished)
-        return result
       }
     }
 

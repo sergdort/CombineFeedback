@@ -14,7 +14,7 @@ public struct WithContextView<State, Event, Content: View>: View {
 
   public init(
     store: Store<State, Event>,
-    removeDuplicates isDuplicate: @escaping (State, State) -> Bool,
+    removeDuplicates isDuplicate: @escaping @Sendable (State, State) -> Bool,
     @ViewBuilder content: @escaping (ViewContext<State, Event>) -> Content
   ) {
     self.store = store
@@ -27,11 +27,11 @@ public struct WithContextView<State, Event, Content: View>: View {
   }
 }
 
-public extension WithContextView where State: Equatable {
+public extension WithContextView where State: Equatable & Sendable {
   init(
     store: Store<State, Event>,
     @ViewBuilder content: @escaping (ViewContext<State, Event>) -> Content
   ) {
-    self.init(store: store, removeDuplicates: ==, content: content)
+    self.init(store: store, removeDuplicates: { $0 == $1 }, content: content)
   }
 }

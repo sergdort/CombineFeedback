@@ -29,11 +29,11 @@ import CasePaths
 public struct SwitchStoreView<State, Event, Content>: View where Content: View {
   private let store: Store<State, Event>
   private let content: (State) -> Content
-  private let removeDuplicates: (State, State) -> Bool
+  private let removeDuplicates: @Sendable (State, State) -> Bool
 
   public init(
     store: Store<State, Event>,
-    removeDuplicates: @escaping (State, State) -> Bool,
+    removeDuplicates: @escaping @Sendable (State, State) -> Bool,
     @ViewBuilder content: @escaping (State) -> Content
   ) {
     self.store = store
@@ -49,12 +49,12 @@ public struct SwitchStoreView<State, Event, Content>: View where Content: View {
   }
 }
 
-extension SwitchStoreView where State: Equatable {
+extension SwitchStoreView where State: Equatable & Sendable {
   public init(
     store: Store<State, Event>,
     @ViewBuilder content: @escaping (State) -> Content
   ) {
-    self.init(store: store, removeDuplicates: ==, content: content)
+    self.init(store: store, removeDuplicates: { $0 == $1 }, content: content)
   }
 }
 
