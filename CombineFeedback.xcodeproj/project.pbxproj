@@ -13,6 +13,7 @@
 		252BF08422BAE05700BC4265 /* SignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252BF08322BAE05700BC4265 /* SignIn.swift */; };
 		2541EA422716F459004F0CD5 /* FavouriteMovies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2541EA412716F459004F0CD5 /* FavouriteMovies.swift */; };
 		254B4DBA2676650000653BB8 /* CombineSchedulers in Frameworks */ = {isa = PBXBuildFile; productRef = 254B4DB92676650000653BB8 /* CombineSchedulers */; };
+		257F01012D0F3B4500CFB001 /* CombineFeedback in Frameworks */ = {isa = PBXBuildFile; productRef = 257F01002D0F3B4500CFB001 /* CombineFeedback */; };
 		25AE0783271056C600FF03EC /* StoreBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25AE0781271056C600FF03EC /* StoreBox.swift */; };
 		25AE0784271056C600FF03EC /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25AE0782271056C600FF03EC /* Store.swift */; };
 		25AE078A271056D600FF03EC /* ViewContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25AE0786271056D600FF03EC /* ViewContext.swift */; };
@@ -28,6 +29,7 @@
 		5800FFAE22A89C09005A860B /* Feedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FFAA22A89C08005A860B /* Feedback.swift */; };
 		5800FFAF22A89C09005A860B /* FlatMapLatest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FFAB22A89C08005A860B /* FlatMapLatest.swift */; };
 		5800FFB022A89C09005A860B /* System.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FFAC22A89C08005A860B /* System.swift */; };
+		5800FFB122A89C09005A860B /* StateMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FFAD22A89C08005A860B /* StateMachine.swift */; };
 		5800FFB922A8CDA5005A860B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FFB822A8CDA5005A860B /* AppDelegate.swift */; };
 		5800FFBB22A8CDA5005A860B /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FFBA22A8CDA5005A860B /* SceneDelegate.swift */; };
 		5800FFBD22A8CDA5005A860B /* Counter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5800FFBC22A8CDA5005A860B /* Counter.swift */; };
@@ -85,7 +87,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				5800FFDC22A8ED0F005A860B /* CombineFeedback.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -115,6 +116,7 @@
 		5800FFAA22A89C08005A860B /* Feedback.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Feedback.swift; sourceTree = "<group>"; };
 		5800FFAB22A89C08005A860B /* FlatMapLatest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FlatMapLatest.swift; sourceTree = "<group>"; };
 		5800FFAC22A89C08005A860B /* System.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = System.swift; sourceTree = "<group>"; };
+		5800FFAD22A89C08005A860B /* StateMachine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StateMachine.swift; sourceTree = "<group>"; };
 		5800FFB622A8CDA5005A860B /* Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Example.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5800FFB822A8CDA5005A860B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		5800FFBA22A8CDA5005A860B /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -168,7 +170,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5800FFDB22A8ED0F005A860B /* CombineFeedback.framework in Frameworks */,
+				257F01012D0F3B4500CFB001 /* CombineFeedback in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -256,8 +258,6 @@
 		5800FF9122A89BE6005A860B /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				5800FF9022A89BE6005A860B /* CombineFeedback.framework */,
-				5800FF9922A89BE6005A860B /* CombineFeedbackTests.xctest */,
 				5800FFB622A8CDA5005A860B /* Example.app */,
 				5800FFCB22A8CDA7005A860B /* ExampleTests.xctest */,
 			);
@@ -273,6 +273,7 @@
 				5800FFAA22A89C08005A860B /* Feedback.swift */,
 				58751A9923ECBCA000EEF398 /* FeedbackLoop.swift */,
 				5800FFAB22A89C08005A860B /* FlatMapLatest.swift */,
+				5800FFAD22A89C08005A860B /* StateMachine.swift */,
 				5800FFAC22A89C08005A860B /* System.swift */,
 				585CD878239AC7D3004BE9CC /* Reducer.swift */,
 				5800FF9422A89BE6005A860B /* Info.plist */,
@@ -498,9 +499,11 @@
 			buildRules = (
 			);
 			dependencies = (
-				5800FFDE22A8ED0F005A860B /* PBXTargetDependency */,
 			);
 			name = Example;
+			packageProductDependencies = (
+				257F01002D0F3B4500CFB001 /* CombineFeedback */,
+			);
 			productName = Example;
 			productReference = 5800FFB622A8CDA5005A860B /* Example.app */;
 			productType = "com.apple.product-type.application";
@@ -559,6 +562,7 @@
 			);
 			mainGroup = 5800FF8622A89BE6005A860B;
 			packageReferences = (
+				257F00FF2D0F3B4500CFB001 /* XCLocalSwiftPackageReference "" */,
 				5822A22E2434FEB400270514 /* XCRemoteSwiftPackageReference "swift-case-paths" */,
 				254B4DB82676650000653BB8 /* XCRemoteSwiftPackageReference "combine-schedulers" */,
 			);
@@ -566,8 +570,6 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				5800FF8F22A89BE6005A860B /* CombineFeedback */,
-				5800FF9822A89BE6005A860B /* CombineFeedbackTests */,
 				5800FFB522A8CDA5005A860B /* Example */,
 				5800FFCA22A8CDA7005A860B /* ExampleTests */,
 			);
@@ -622,6 +624,7 @@
 				25AE078A271056D600FF03EC /* ViewContext.swift in Sources */,
 				58751A9A23ECBCA000EEF398 /* FeedbackLoop.swift in Sources */,
 				25EBC08C23FD61B100719826 /* Reducer.swift in Sources */,
+				5800FFB122A89C09005A860B /* StateMachine.swift in Sources */,
 				25AE0784271056C600FF03EC /* Store.swift in Sources */,
 				58751A9623EC823C00EEF398 /* Atomic.swift in Sources */,
 				5800FFAE22A89C09005A860B /* Feedback.swift in Sources */,
@@ -687,12 +690,14 @@
 			target = 5800FFB522A8CDA5005A860B /* Example */;
 			targetProxy = 5800FFCC22A8CDA7005A860B /* PBXContainerItemProxy */;
 		};
-		5800FFDE22A8ED0F005A860B /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 5800FF8F22A89BE6005A860B /* CombineFeedback */;
-			targetProxy = 5800FFDD22A8ED0F005A860B /* PBXContainerItemProxy */;
-		};
 /* End PBXTargetDependency section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		257F00FF2D0F3B4500CFB001 /* XCLocalSwiftPackageReference "" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "";
+		};
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin PBXVariantGroup section */
 		5800FFC322A8CDA7005A860B /* LaunchScreen.storyboard */ = {
@@ -1073,6 +1078,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 254B4DB82676650000653BB8 /* XCRemoteSwiftPackageReference "combine-schedulers" */;
 			productName = CombineSchedulers;
+		};
+		257F01002D0F3B4500CFB001 /* CombineFeedback */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 257F00FF2D0F3B4500CFB001 /* XCLocalSwiftPackageReference "" */;
+			productName = CombineFeedback;
 		};
 		5822A22F2434FEB400270514 /* CasePaths */ = {
 			isa = XCSwiftPackageProductDependency;

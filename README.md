@@ -32,9 +32,36 @@ While `State` represents where the system is at a given time, `Event` represents
 
 To some extent it's like reactive [Middleware](https://redux.js.org/advanced/middleware) in [Redux](https://redux.js.org)
 
-### Dependency
+### StateMachine
 
-Dependency is the type that holds all services that feature needs, such as API clients, analytics clients, etc.
+A `StateMachine` is the complete behavior of a feature or subsystem. It composes pure transitions and feedback pieces in one ordered body so reducers and effects cannot be accidentally half-wired.
+
+```swift
+struct Counter: StateMachine {
+    struct State {
+        var count = 0
+    }
+
+    enum Event {
+        case increment
+        case decrement
+    }
+
+    @StateMachineBuilder<State, Event>
+    var body: some StateMachine<State, Event> {
+        Reduce { state, event in
+            switch event {
+            case .increment:
+                state.count += 1
+            case .decrement:
+                state.count -= 1
+            }
+        }
+    }
+}
+```
+
+Dependencies are plain Swift values captured by the machine, feedback closures, or service objects. CombineFeedback does not require a specific dependency-injection framework.
 
 #### Store
 
@@ -43,17 +70,10 @@ Store - is a base class responsible for initializing a UI state machine. It prov
 - We can start a state machine by observing `var state: AnyPublisher<State, Never>`. 
 - We can send input events into it via `public final func send(event: Event)`. 
 
-This is useful if we want to mutate our state in response to user input. Let's consider a `Counter` example
+This is useful if we want to mutate our state in response to user input. A store is initialized with complete machine behavior:
 
 ```swift
-struct State {
-    var count = 0
-}
-
-enum Event {
-    case increment
-    case decrement
-}
+let store = Store(initial: Counter.State(), machine: Counter())
 ```
 When we press **+** button we want the `State` of the system to be incremented by `1`. To do that somewhere in our UI we can do:
 
@@ -105,40 +125,92 @@ struct MoviesView: View {
     }
 }
 ```
-When we send `.fetchNext` event, it goes to the `reducer` where we put our system into `.loading`  state, which in response triggers effect in the `whenLoading` feedback, which is reacting to particular state changes
+When we send `.fetchNext` event, it goes to `Reduce`, where we put our system into `.loading` state. That state can derive a request, and `OnChange` observes that request, including the initial state, skips repeated values, and cancels in-flight work when the request changes or becomes `nil`.
 
 ```swift
-    static func reducer(state: inout State, event: Event) {
-        switch event {
-        case .didLoad(let batch):
-            state.movies += batch.results
-            state.status = .idle
-            state.batch = batch
-        case .didFail(let error):
-            state.status = .failed(error)
-        case .retry:
-            state.status = .loading
-        case .fetchNext:
-            state.status = .loading
+struct Movies: StateMachine {
+    struct State {
+        var batch: Results
+        var movies: [Movie]
+        var status: Status
+
+        var nextPage: Int? {
+            status == .loading ? batch.nextPage : nil
         }
     }
 
-    static var feedback: Feedback<State, Event> {
-        return Feedback(lensing: { $0.nextPage }) { page in
-            URLSession.shared
-                .fetchMovies(page: page)
+    enum Event {
+        case didLoad(Results)
+        case didFail(Error)
+        case fetchNext
+        case retry
+    }
+
+    let fetchMovies: (Int) -> AnyPublisher<Results, Error>
+
+    @StateMachineBuilder<State, Event>
+    var body: some StateMachine<State, Event> {
+        Reduce { state, event in
+            switch event {
+            case let .didLoad(batch):
+                state.movies += batch.results
+                state.status = .idle
+                state.batch = batch
+            case let .didFail(error):
+                state.status = .failed(error)
+            case .retry, .fetchNext:
+                state.status = .loading
+            }
+        }
+
+        OnChange(of: \.nextPage) { page in
+            fetchMovies(page)
                 .map(Event.didLoad)
-                .replaceError(replace: Event.didFail)
-                .receive(on: DispatchQueue.main)
+                .catch { Just(Event.didFail($0)) }
         }
     }
+}
 ```
 
 #### Composition
 
-Taking inspiration from [TCA](https://github.com/pointfreeco/swift-composable-architecture) `CombineFeedback` is build with a composition in mind.
+Taking inspiration from [TCA](https://github.com/pointfreeco/swift-composable-architecture), `CombineFeedback` is built with composition in mind while keeping reducers pure and effects in feedbacks.
 
-Meaning that we can compose smaller states into bigger states. For more details please see Example App.
+Use machine-level `Scope` and `IfLet` to compose child behavior:
+
+```swift
+struct Parent: StateMachine {
+    @StateMachineBuilder<State, Event>
+    var body: some StateMachine<State, Event> {
+        Reduce { state, event in
+            // Parent transitions
+        }
+
+        Scope(state: \State.child, event: /Event.child) {
+            Child()
+        }
+
+        IfLet(state: \State.details, event: /Event.details) {
+            Details()
+        }
+    }
+}
+```
+
+`Scope` in a machine composes child reducers and feedbacks together. `Store.scope` projects an already-running parent store for views.
+
+Advanced custom feedback can control cancellation policy by choosing where events are enqueued:
+
+```swift
+Feedback.custom { input, output in
+    input.events
+        .flatMap { event in
+            worker(event).enqueue(to: output)
+        }
+}
+```
+
+Put `enqueue(to:)` at the lifecycle whose cancellation should clean up queued events.
 
 #### ViewContext
 

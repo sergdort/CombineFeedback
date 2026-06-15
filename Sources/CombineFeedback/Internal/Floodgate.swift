@@ -1,7 +1,7 @@
 import Foundation
 import Combine
 
-final class Floodgate<State, Event, S: Subscriber, Dependency>: FeedbackEventConsumer<Event>, Subscription where S.Input == State, S.Failure == Never {
+final class Floodgate<State, Event, S: Subscriber>: Subscription where S.Input == State, S.Failure == Never {
   struct QueueState {
     var events: [(Event, Token)] = []
     var isOuterLifetimeEnded = false
@@ -19,22 +19,23 @@ final class Floodgate<State, Event, S: Subscriber, Dependency>: FeedbackEventCon
 
   private let queue = Atomic(QueueState())
   private let reducer: Reducer<State, Event>
-  private let feedbacks: [Feedback<State, Event, Dependency>]
+  private let feedbacks: [Feedback<State, Event>]
   private let sink: S
-  private let dependency: Dependency
+  private lazy var eventConsumer = FeedbackEventConsumer<Event>(
+    process: { [weak self] event, token in self?.process(event, for: token) },
+    dequeueAllEvents: { [weak self] token in self?.dequeueAllEvents(for: token) }
+  )
 
   init(
     state: State,
-    feedbacks: [Feedback<State, Event, Dependency>],
+    feedbacks: [Feedback<State, Event>],
     sink: S,
-    reducer: Reducer<State, Event>,
-    dependency: Dependency
+    reducer: Reducer<State, Event>
   ) {
     self.state = state
     self.feedbacks = feedbacks
     self.sink = sink
     self.reducer = reducer
-    self.dependency = dependency
   }
 
   func bootstrap() {
@@ -44,7 +45,10 @@ final class Floodgate<State, Event, S: Subscriber, Dependency>: FeedbackEventCon
     guard !hasStarted else { return }
     hasStarted = true
     self.cancelable = feedbacks.map {
-      $0.events(stateDidChange.eraseToAnyPublisher(), self, dependency)
+      $0.run(
+        FeedbackInput(updates: stateDidChange.eraseToAnyPublisher()),
+        FeedbackOutput(consumer: eventConsumer)
+      )
     }
     _ = self.sink.receive(state)
     stateDidChange.send((state, nil))
@@ -61,7 +65,7 @@ final class Floodgate<State, Event, S: Subscriber, Dependency>: FeedbackEventCon
     }
   }
 
-  override func process(_ event: Event, for token: Token) {
+  private func process(_ event: Event, for token: Token) {
     enqueue(event, for: token)
 
     if reducerLock.try() {
@@ -92,7 +96,7 @@ final class Floodgate<State, Event, S: Subscriber, Dependency>: FeedbackEventCon
     }
   }
 
-  override func dequeueAllEvents(for token: Token) {
+  private func dequeueAllEvents(for token: Token) {
     queue.modify { $0.events.removeAll(where: { _, t in t == token }) }
   }
 
@@ -127,8 +131,8 @@ final class Floodgate<State, Event, S: Subscriber, Dependency>: FeedbackEventCon
 }
 
 public extension Publisher where Failure == Never {
-  func enqueue(to consumer: FeedbackEventConsumer<Output>) -> Publishers.Enqueue<Self> {
-    return Publishers.Enqueue(upstream: self, consumer: consumer)
+  func enqueue(to output: FeedbackOutput<Output>) -> Publishers.Enqueue<Self> {
+    return Publishers.Enqueue(upstream: self, output: output)
   }
 }
 
@@ -137,21 +141,21 @@ public extension Publishers {
     public typealias Output = Never
     public typealias Failure = Never
     private let upstream: Upstream
-    private let consumer: FeedbackEventConsumer<Upstream.Output>
+    private let output: FeedbackOutput<Upstream.Output>
 
-    init(upstream: Upstream, consumer: FeedbackEventConsumer<Upstream.Output>) {
+    init(upstream: Upstream, output: FeedbackOutput<Upstream.Output>) {
       self.upstream = upstream
-      self.consumer = consumer
+      self.output = output
     }
 
     public func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
       let token = Token()
       self.upstream.handleEvents(
         receiveOutput: { value in
-          self.consumer.process(value, for: token)
+          self.output.consumer.process(value, for: token)
         },
         receiveCancel: {
-          self.consumer.dequeueAllEvents(for: token)
+          self.output.consumer.dequeueAllEvents(for: token)
         }
       )
       .flatMap { _ -> Empty<Never, Never> in

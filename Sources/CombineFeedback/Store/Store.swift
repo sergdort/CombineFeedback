@@ -17,17 +17,13 @@ open class Store<State, Event> {
     self.box = box
   }
 
-  public init<Dependency>(
+  public init<M: StateMachine>(
     initial: State,
-    feedbacks: [Feedback<State, Event, Dependency>],
-    reducer: Reducer<State, Event>,
-    dependency: Dependency
-  ) {
+    machine: M
+  ) where M.State == State, M.Event == Event {
     self.box = RootStoreBox(
       initial: initial,
-      feedbacks: feedbacks,
-      reducer: reducer,
-      dependency: dependency
+      machine: machine
     )
   }
 

@@ -12,6 +12,10 @@ public struct Reducer<State, Event> {
   }
 
   public static func combine(_ reducers: Reducer...) -> Reducer {
+    combine(reducers)
+  }
+
+  public static func combine(_ reducers: [Reducer]) -> Reducer {
     return .init { state, event in
       for reducer in reducers {
         reducer(&state, event)
@@ -77,3 +81,13 @@ public struct Reducer<State, Event> {
     }
   }
 }
+
+extension Reducer: StateMachine {
+  public typealias Body = Never
+
+  public func _resolve() -> ResolvedMachine<State, Event> {
+    ResolvedMachine(reducer: self, feedbacks: [])
+  }
+}
+
+public typealias Reduce<State, Event> = Reducer<State, Event>

@@ -8,37 +8,32 @@ struct Token: Equatable {
   }
 }
 
-public class FeedbackEventConsumer<Event> {
+final class FeedbackEventConsumer<Event> {
+  private let processEvent: (Event, Token) -> Void
+  private let dequeueEvents: (Token) -> Void
+
+  init(
+    process: @escaping (Event, Token) -> Void,
+    dequeueAllEvents: @escaping (Token) -> Void
+  ) {
+    self.processEvent = process
+    self.dequeueEvents = dequeueAllEvents
+  }
+
   func process(_ event: Event, for token: Token) {
-    fatalError("This is an abstract class. You must subclass this and provide your own implementation")
+    processEvent(event, token)
   }
 
   func dequeueAllEvents(for token: Token) {
-    fatalError("This is an abstract class. You must subclass this and provide your own implementation")
+    dequeueEvents(token)
   }
 }
 
 extension FeedbackEventConsumer {
   func pullback<LocalEvent>(_ f: @escaping (LocalEvent) -> Event) -> FeedbackEventConsumer<LocalEvent> {
-    return PullBackConsumer(upstream: self, pull: f)
-  }
-}
-
-final class PullBackConsumer<LocalEvent, Event>: FeedbackEventConsumer<LocalEvent> {
-  private let upstream: FeedbackEventConsumer<Event>
-  private let pull: (LocalEvent) -> Event
-
-  init(upstream: FeedbackEventConsumer<Event>, pull: @escaping (LocalEvent) -> Event) {
-    self.pull = pull
-    self.upstream = upstream
-    super.init()
-  }
-
-  override func process(_ event: LocalEvent, for token: Token) {
-    self.upstream.process(pull(event), for: token)
-  }
-
-  override func dequeueAllEvents(for token: Token) {
-    self.upstream.dequeueAllEvents(for: token)
+    FeedbackEventConsumer<LocalEvent>(
+      process: { event, token in self.process(f(event), for: token) },
+      dequeueAllEvents: { token in self.dequeueAllEvents(for: token) }
+    )
   }
 }
