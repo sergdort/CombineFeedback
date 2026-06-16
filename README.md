@@ -30,7 +30,7 @@ A Reducer is a pure function with a signature of `( inout State, Event) -> Void`
 
 While `State` represents where the system is at a given time, `Event` represents a state change, and a `Reducer` is the pure function that enacts the event causing the state to change, there is not as of yet any type to decide which event should take place given a particular current state. That's the job of the `Feedback`. It's essentially a "processing engine", listening to changes in the current `State` and emitting the corresponding next events to take place. Feedbacks don't directly mutate states. Instead, they only emit events which then cause states to change in reducers.
 
-To some extent it's like reactive [Middleware](https://redux.js.org/advanced/middleware) in [Redux](https://redux.js.org)
+Feedbacks are the effect side of the state machine. Most apps use `OnChange`, `OnEvent`, and `SideEffect`; `Feedback.custom` is available for advanced stream composition.
 
 ### StateMachine
 
@@ -49,7 +49,7 @@ struct Counter: StateMachine {
 
     @StateMachineBuilder<State, Event>
     var body: some StateMachine<State, Event> {
-        Reduce { state, event in
+        Reducer { state, event in
             switch event {
             case .increment:
                 state.count += 1
@@ -125,7 +125,7 @@ struct MoviesView: View {
     }
 }
 ```
-When we send `.fetchNext` event, it goes to `Reduce`, where we put our system into `.loading` state. That state can derive a request, and `OnChange` observes that request, including the initial state, skips repeated values, and cancels in-flight work when the request changes or becomes `nil`.
+When we send `.fetchNext` event, it goes to `Reducer`, where we put our system into `.loading` state. That state can derive a request, and `OnChange` observes that request, including the initial state, skips repeated values, and cancels in-flight work when the request changes or becomes `nil`.
 
 ```swift
 struct Movies: StateMachine {
@@ -150,7 +150,7 @@ struct Movies: StateMachine {
 
     @StateMachineBuilder<State, Event>
     var body: some StateMachine<State, Event> {
-        Reduce { state, event in
+        Reducer { state, event in
             switch event {
             case let .didLoad(batch):
                 state.movies += batch.results
@@ -168,9 +168,15 @@ struct Movies: StateMachine {
                 .map(Event.didLoad)
                 .catch { Just(Event.didFail($0)) }
         }
+
+        SideEffect { state, event in
+            await analytics.track(event, state: state)
+        }
     }
 }
 ```
+
+`SideEffect` runs after the reducer for real events only. It cannot emit events; use it for fire-and-forget async work such as analytics. Later events do not cancel earlier side effects, but cancelling the system or store cancels active side-effect tasks.
 
 #### Composition
 
@@ -182,7 +188,7 @@ Use machine-level `Scope` and `IfLet` to compose child behavior:
 struct Parent: StateMachine {
     @StateMachineBuilder<State, Event>
     var body: some StateMachine<State, Event> {
-        Reduce { state, event in
+        Reducer { state, event in
             // Parent transitions
         }
 

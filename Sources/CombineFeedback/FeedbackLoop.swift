@@ -1,13 +1,13 @@
 import Combine
 
-public extension Publishers {
+extension Publishers {
   struct FeedbackLoop<Output, Event>: Publisher {
-    public typealias Failure = Never
+    typealias Failure = Never
     let initial: Output
     let reduce: Reducer<Output, Event>
     let feedbacks: [Feedback<Output, Event>]
 
-    public init(
+    init(
       initial: Output,
       reduce: Reducer<Output, Event>,
       feedbacks: [Feedback<Output, Event>]
@@ -17,7 +17,7 @@ public extension Publishers {
       self.feedbacks = feedbacks
     }
 
-    public func receive<S>(subscriber: S) where S: Combine.Subscriber, Failure == S.Failure, Output == S.Input {
+    func receive<S>(subscriber: S) where S: Combine.Subscriber, Failure == S.Failure, Output == S.Input {
       let floodgate = Floodgate<Output, Event, S>(
         state: initial,
         feedbacks: feedbacks,

@@ -89,5 +89,3 @@ extension Reducer: StateMachine {
     ResolvedMachine(reducer: self, feedbacks: [])
   }
 }
-
-public typealias Reduce<State, Event> = Reducer<State, Event>

@@ -190,27 +190,6 @@ public struct OnChange<State, Event, Value>: StateMachine {
   }
 }
 
-public struct OnState<State, Event, Value>: StateMachine {
-  public typealias Body = Never
-
-  private let feedback: Feedback<State, Event>
-
-  public init<Effect: Publisher>(
-    _ projection: @escaping (State) -> Value,
-    _ effect: @escaping (Value) -> Effect
-  ) where Effect.Output == Event, Effect.Failure == Never {
-    self.feedback = Feedback.custom { input, output in
-      input.states
-        .map(projection)
-        .flatMapLatest { effect($0).enqueue(to: output) }
-    }
-  }
-
-  public func _resolve() -> ResolvedMachine<State, Event> {
-    feedback._resolve()
-  }
-}
-
 public struct OnEvent<State, Event, Payload>: StateMachine {
   public typealias Body = Never
 
@@ -269,33 +248,12 @@ public struct OnEvent<State, Event, Payload>: StateMachine {
   }
 }
 
-public struct Middleware<State, Event>: StateMachine {
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+public struct SideEffect<State, Event>: StateMachine {
   public typealias Body = Never
 
   private let feedback: Feedback<State, Event>
 
-  public init<Effect: Publisher>(
-    _ effect: @escaping (State, Event) -> Effect
-  ) where Effect.Output == Event, Effect.Failure == Never {
-    self.feedback = Feedback.custom { input, output in
-      input.updates
-        .compactMap { update -> (State, Event)? in
-          update.event.map { (update.state, $0) }
-        }
-        .flatMapLatest { effect($0, $1).enqueue(to: output) }
-    }
-  }
-
-  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
-  public init(
-    _ effect: @escaping (State, Event) async -> Event
-  ) {
-    self.init { state, event in
-      TaskPublisher { await effect(state, event) }
-    }
-  }
-
-  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
   public init(
     _ effect: @escaping (State, Event) async -> Void
   ) {
@@ -304,7 +262,7 @@ public struct Middleware<State, Event>: StateMachine {
         .compactMap { update -> (State, Event)? in
           update.event.map { (update.state, $0) }
         }
-        .flatMapLatest { state, event in
+        .flatMap { state, event in
           VoidTaskPublisher { await effect(state, event) }
         }
     }

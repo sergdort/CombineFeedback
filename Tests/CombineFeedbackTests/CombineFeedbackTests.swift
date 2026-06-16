@@ -20,7 +20,7 @@ final class CombineFeedbackTests: XCTestCase {
     let system = Publishers.system(
       initial: "initial",
       machine: Machine<String, String> {
-        Reduce { (state: inout String, event: String) in
+        Reducer { (state: inout String, event: String) in
           state = state + event
         }
       }
@@ -39,7 +39,7 @@ final class CombineFeedbackTests: XCTestCase {
     let system = Publishers.system(
       initial: State(request: "a", values: []),
       machine: Machine<State, Event> {
-        Reduce { (state: inout State, event: Event) in
+        Reducer { (state: inout State, event: Event) in
           switch event {
           case let .response(value):
             state.values.append(value)
@@ -70,7 +70,7 @@ final class CombineFeedbackTests: XCTestCase {
     let system = Publishers.system(
       initial: State(request: "a", values: []),
       machine: Machine<State, Event> {
-        Reduce { (state: inout State, event: Event) in
+        Reducer { (state: inout State, event: Event) in
           switch event {
           case let .response(value): state.values.append(value)
           case let .setRequest(request): state.request = request
@@ -104,7 +104,7 @@ final class CombineFeedbackTests: XCTestCase {
     let system = Publishers.system(
       initial: State(request: "a", values: []),
       machine: Machine<State, Event> {
-        Reduce { (state: inout State, event: Event) in
+        Reducer { (state: inout State, event: Event) in
           switch event {
           case let .setRequest(request): state.request = request
           case let .response(value): state.values.append(value)
@@ -133,7 +133,7 @@ final class CombineFeedbackTests: XCTestCase {
     let system = Publishers.system(
       initial: State(request: nil, values: []),
       machine: Machine<State, Event> {
-        Reduce { (state: inout State, event: Event) in
+        Reducer { (state: inout State, event: Event) in
           switch event {
           case let .response(value): state.values.append(value)
           case let .setRequest(request): state.request = request
@@ -160,7 +160,7 @@ final class CombineFeedbackTests: XCTestCase {
     let system = Publishers.system(
       initial: State(request: "a", values: []),
       machine: Machine<State, Event> {
-        Reduce { (state: inout State, event: Event) in
+        Reducer { (state: inout State, event: Event) in
           switch event {
           case let .setRequest(request): state.request = request
           case let .response(value): state.values.append(value)
@@ -188,7 +188,7 @@ final class CombineFeedbackTests: XCTestCase {
     let system = Publishers.system(
       initial: State(request: nil, values: []),
       machine: Machine<State, Event> {
-        Reduce { (state: inout State, event: Event) in
+        Reducer { (state: inout State, event: Event) in
           if case let .response(value) = event {
             state.values.append(value)
           }
@@ -221,7 +221,7 @@ final class CombineFeedbackTests: XCTestCase {
     let system = Publishers.system(
       initial: State(request: nil, values: []),
       machine: Machine<State, Event> {
-        Reduce { (state: inout State, event: Event) in
+        Reducer { (state: inout State, event: Event) in
           if case let .response(value) = event {
             state.values.append(value)
           }
@@ -245,44 +245,97 @@ final class CombineFeedbackTests: XCTestCase {
     XCTAssertEqual(result, ["retried"])
   }
 
-  func test_onState_runs_for_initial_and_every_state_emission() {
+  func test_onEvent_non_matching_events_do_not_cancel_in_flight_work() {
     let input = PassthroughSubject<Event, Never>()
-    var observed: [String?] = []
+    let effect = ManualPublisher<Event>()
 
     let system = Publishers.system(
       initial: State(request: nil, values: []),
       machine: Machine<State, Event> {
-        Reduce { (state: inout State, event: Event) in
-          if case let .setRequest(request) = event {
-            state.request = request
-          }
-        }
-
         Feedback<State, Event>.custom { _, output in
           input.enqueue(to: output)
         }
 
-        OnState<State, Event, String?>(\.request) { request in
-          observed.append(request)
-          return Empty<Event, Never>()
+        OnEvent<State, Event, String?>(/Event.setRequest) { _ in
+          effect
         }
       }
     )
 
     cancellable = system.sink { _ in }
     input.send(.setRequest("a"))
+    input.send(.noop)
 
-    XCTAssertEqual(observed, [nil, "a"])
+    XCTAssertEqual(effect.cancelCount, 0)
+
+    input.send(.setRequest("b"))
+
+    XCTAssertEqual(effect.cancelCount, 1)
   }
 
-  func test_middleware_runs_after_reducer_for_real_events_only() {
+  func test_onEvent_latest_wins_is_scoped_to_each_lane() {
     let input = PassthroughSubject<Event, Never>()
-    var observed: [(String?, Event)] = []
+    let firstLane = ManualPublisher<Event>()
+    let secondLane = ManualPublisher<Event>()
 
     let system = Publishers.system(
       initial: State(request: nil, values: []),
       machine: Machine<State, Event> {
-        Reduce { (state: inout State, event: Event) in
+        Feedback<State, Event>.custom { _, output in
+          input.enqueue(to: output)
+        }
+
+        OnEvent<State, Event, String?>(/Event.setRequest) { _ in
+          firstLane
+        }
+
+        OnEvent<State, Event, String?>(/Event.setRequest) { _ in
+          secondLane
+        }
+      }
+    )
+
+    cancellable = system.sink { _ in }
+    input.send(.setRequest("a"))
+
+    XCTAssertEqual(firstLane.cancelCount, 0)
+    XCTAssertEqual(secondLane.cancelCount, 0)
+
+    input.send(.setRequest("b"))
+
+    XCTAssertEqual(firstLane.cancelCount, 1)
+    XCTAssertEqual(secondLane.cancelCount, 1)
+  }
+
+  func test_every_accepted_event_emits_state_even_when_unchanged() {
+    let input = PassthroughSubject<Event, Never>()
+    var observed: [State] = []
+
+    let system = Publishers.system(
+      initial: State(request: nil, values: []),
+      machine: Machine<State, Event> {
+        Feedback<State, Event>.custom { _, output in
+          input.enqueue(to: output)
+        }
+      }
+    )
+
+    cancellable = system.sink { observed.append($0) }
+    input.send(.noop)
+
+    XCTAssertEqual(observed, [State(request: nil, values: []), State(request: nil, values: [])])
+  }
+
+  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+  func test_sideEffect_runs_after_reducer_for_real_events_only() {
+    let input = PassthroughSubject<Event, Never>()
+    let expectation = expectation(description: "side effect observes event")
+    let observed = LockedArray<(String?, Event)>()
+
+    let system = Publishers.system(
+      initial: State(request: nil, values: []),
+      machine: Machine<State, Event> {
+        Reducer { (state: inout State, event: Event) in
           if case let .setRequest(request) = event {
             state.request = request
           }
@@ -292,27 +345,59 @@ final class CombineFeedbackTests: XCTestCase {
           input.enqueue(to: output)
         }
 
-        Middleware<State, Event> { state, event in
+        SideEffect<State, Event> { state, event in
           observed.append((state.request, event))
-          return Empty<Event, Never>()
+          expectation.fulfill()
         }
       }
     )
 
     cancellable = system.sink { _ in }
-    XCTAssertEqual(observed.count, 0)
-
     input.send(.setRequest("a"))
 
-    XCTAssertEqual(observed.count, 1)
-    XCTAssertEqual(observed.first?.0, "a")
+    wait(for: [expectation], timeout: 1)
+    XCTAssertEqual(observed.values.count, 1)
+    XCTAssertEqual(observed.values.first?.0, "a")
+  }
+
+  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+  func test_sideEffect_does_not_cancel_previous_event_work() {
+    let input = PassthroughSubject<Event, Never>()
+    let firstStarted = expectation(description: "first side effect started")
+    let secondStarted = expectation(description: "second side effect started")
+    let release = AsyncGate()
+    let counter = LockedCounter()
+
+    let system = Publishers.system(
+      initial: State(request: nil, values: []),
+      machine: Machine<State, Event> {
+        Feedback<State, Event>.custom { _, output in
+          input.enqueue(to: output)
+        }
+
+        SideEffect<State, Event> { _, _ in
+          let count = counter.increment()
+          if count == 1 { firstStarted.fulfill() }
+          if count == 2 { secondStarted.fulfill() }
+          await release.wait()
+        }
+      }
+    )
+
+    cancellable = system.sink { _ in }
+    input.send(.noop)
+    input.send(.noop)
+
+    wait(for: [firstStarted, secondStarted], timeout: 1)
+    XCTAssertEqual(counter.value, 2)
+    Task { await release.open() }
   }
 
   func test_store_runtime_accepts_complete_machine() {
     let store = Store(
       initial: State(request: nil, values: []),
       machine: Machine<State, Event> {
-        Reduce { (state: inout State, event: Event) in
+        Reducer { (state: inout State, event: Event) in
           if case let .setRequest(request) = event {
             state.request = request
           }
@@ -336,7 +421,7 @@ final class CombineFeedbackTests: XCTestCase {
           event: /ParentEvent.child
         ) {
           Machine<ChildState, ChildEvent> {
-            Reduce { (state: inout ChildState, event: ChildEvent) in
+            Reducer { (state: inout ChildState, event: ChildEvent) in
               if case let .set(value) = event {
                 state.value = value
               }
@@ -364,7 +449,7 @@ final class CombineFeedbackTests: XCTestCase {
     let system = Publishers.system(
       initial: OptionalParentState(child: ChildState(value: "a")),
       machine: Machine<OptionalParentState, ParentEvent> {
-        Reduce { (state: inout OptionalParentState, event: ParentEvent) in
+        Reducer { (state: inout OptionalParentState, event: ParentEvent) in
           switch event {
           case .removeChild:
             state.child = nil
@@ -382,7 +467,7 @@ final class CombineFeedbackTests: XCTestCase {
           event: /ParentEvent.child
         ) {
           Machine<ChildState, ChildEvent> {
-            Reduce { (state: inout ChildState, event: ChildEvent) in
+            Reducer { (state: inout ChildState, event: ChildEvent) in
               if case let .set(value) = event {
                 state.value = value
               }
@@ -409,7 +494,7 @@ final class CombineFeedbackTests: XCTestCase {
     let system = Publishers.system(
       initial: OptionalParentState(child: ChildState(value: "a")),
       machine: Machine<OptionalParentState, ParentEvent> {
-        Reduce { (state: inout OptionalParentState, event: ParentEvent) in
+        Reducer { (state: inout OptionalParentState, event: ParentEvent) in
           switch event {
           case .child(.removeParent):
             state.child = nil
@@ -423,7 +508,7 @@ final class CombineFeedbackTests: XCTestCase {
           event: /ParentEvent.child
         ) {
           Machine<ChildState, ChildEvent> {
-            Reduce { (state: inout ChildState, event: ChildEvent) in
+            Reducer { (state: inout ChildState, event: ChildEvent) in
               if case let .set(value) = event {
                 state.value = value
               }
@@ -484,7 +569,7 @@ final class CombineFeedbackTests: XCTestCase {
     let system = Publishers.system(
       initial: State(request: "a", values: []),
       machine: Machine<State, Event> {
-        Reduce { (state: inout State, event: Event) in
+        Reducer { (state: inout State, event: Event) in
           if case let .response(value) = event {
             state.values.append(value)
           }
@@ -519,7 +604,7 @@ final class CombineFeedbackTests: XCTestCase {
     let system = Publishers.system(
       initial: State(request: nil, values: []),
       machine: Machine<State, Event> {
-        Reduce { (state: inout State, event: Event) in
+        Reducer { (state: inout State, event: Event) in
           if case let .response(value) = event {
             state.values.append(value)
           }
@@ -530,7 +615,7 @@ final class CombineFeedbackTests: XCTestCase {
         }
 
         OnEvent<State, Event, String?>(/Event.setRequest) { request in
-          EventSequence([.response(request ?? "nil"), .response("done")])
+          ArrayAsyncSequence([.response(request ?? "nil"), .response("done")])
         }
       }
     )
@@ -580,73 +665,4 @@ private struct ChildState: Equatable {
 private enum ChildEvent: Equatable, Sendable {
   case set(String)
   case removeParent
-}
-
-private struct PendingOutputPublisher<Output>: Publisher {
-  typealias Failure = Never
-
-  let outputs: [Output]
-
-  init(_ outputs: [Output]) {
-    self.outputs = outputs
-  }
-
-  func receive<S>(subscriber: S) where S: Subscriber, Never == S.Failure, Output == S.Input {
-    subscriber.receive(subscription: Subscription(outputs: outputs, subscriber: AnySubscriber(subscriber)))
-  }
-
-  private final class Subscription: Combine.Subscription {
-    private var outputs: [Output]
-    private var subscriber: AnySubscriber<Output, Never>?
-
-    init(outputs: [Output], subscriber: AnySubscriber<Output, Never>) {
-      self.outputs = outputs
-      self.subscriber = subscriber
-    }
-
-    func request(_ demand: Subscribers.Demand) {
-      guard let subscriber else { return }
-
-      for output in outputs {
-        _ = subscriber.receive(output)
-      }
-      outputs = []
-    }
-
-    func cancel() {
-      subscriber = nil
-      outputs = []
-    }
-  }
-}
-
-@available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, *)
-private struct EventSequence: AsyncSequence, Sendable {
-  typealias Element = Event
-  typealias Failure = Never
-
-  let events: [Event]
-
-  init(_ events: [Event]) {
-    self.events = events
-  }
-
-  func makeAsyncIterator() -> Iterator {
-    Iterator(events: events)
-  }
-
-  struct Iterator: AsyncIteratorProtocol, Sendable {
-    private let events: [Event]
-    private var index = 0
-
-    init(events: [Event]) {
-      self.events = events
-    }
-
-    mutating func next() async -> Event? {
-      guard index < events.count else { return nil }
-      defer { index += 1 }
-      return events[index]
-    }
-  }
 }
