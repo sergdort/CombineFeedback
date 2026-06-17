@@ -2,7 +2,9 @@ import Combine
 import CombineFeedback
 import Foundation
 
-enum SignIn {
+struct SignIn: StateMachine {
+  let dependencies: Dependencies
+
   struct Dependencies {
     var signIn: (
       _ userName: String,
@@ -82,8 +84,15 @@ enum SignIn {
     case dismissAlertTap
   }
 
-  static func reducer() -> Reducer<State, Event> {
-    return .init { state, event in
+  @StateMachineBuilder<State, Event>
+  var body: some StateMachine<State, Event> {
+    reducer
+    whenChangingUserName
+    whenSubmitting
+  }
+
+  var reducer: Reducer<State, Event> {
+    Reducer { state, event in
       switch event {
       case .didChangeUserName(let userName):
         state.userName = userName
@@ -110,43 +119,32 @@ enum SignIn {
     }
   }
 
-  static var feedback: Feedback<State, Event, Dependencies> {
-    return Feedback.combine(
-      whenChangingUserName(),
-      whenSubmitting()
-    )
-  }
-
-  static func whenChangingUserName() -> Feedback<State, Event, Dependencies> {
-    return Feedback.custom { state, consumer, dependency in
-      state
-        .map {
-          $0.0.userName
-        }
-        .filter { $0.isEmpty == false }
-        .removeDuplicates()
-        .debounce(
-          for: 0.5,
-          scheduler: DispatchQueue.main
-        )
-        .flatMapLatest { userName in
-          dependency.usernameAvailable(userName)
-            .map(Event.isAvailable)
-        }
-        .enqueue(to: consumer)
+  var whenChangingUserName: OnChange<State, Event, String> {
+    OnChange(of: { state in
+      state.userName.isEmpty ? nil : state.userName
+    }) { userName in
+      Just(userName)
+        .delay(for: 0.5, scheduler: DispatchQueue.main)
+        .flatMap(dependencies.usernameAvailable)
+        .map(Event.isAvailable)
+        .eraseToAnyPublisher()
     }
   }
 
-  static func whenSubmitting() -> Feedback<State, Event, Dependencies> {
-    return .middleware { (state: State, dependency: Dependencies) -> AnyPublisher<Event, Never> in
-      guard state.status.isSubmitting else {
-        return Empty().eraseToAnyPublisher()
-      }
-
-      return dependency
-        .signIn(state.userName, state.email, state.password)
-        .map(Event.didSignIn)
-        .eraseToAnyPublisher()
+  var whenSubmitting: Feedback<State, Event> {
+    Feedback.custom { input, output in
+      input.updates
+        .compactMap { update -> State? in
+          guard case .some(.signIn) = update.event else { return nil }
+          guard update.state.status.isSubmitting else { return nil }
+          return update.state
+        }
+        .flatMapLatest { state in
+          dependencies
+            .signIn(state.userName, state.email, state.password)
+            .map(Event.didSignIn)
+            .enqueue(to: output)
+        }
     }
   }
 }

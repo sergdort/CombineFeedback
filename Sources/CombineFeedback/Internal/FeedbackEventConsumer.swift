@@ -30,9 +30,9 @@ final class FeedbackEventConsumer<Event> {
 }
 
 extension FeedbackEventConsumer {
-  func pullback<LocalEvent>(_ f: @escaping (LocalEvent) -> Event) -> FeedbackEventConsumer<LocalEvent> {
+  func mapInput<LocalEvent>(_ transform: @escaping (LocalEvent) -> Event) -> FeedbackEventConsumer<LocalEvent> {
     FeedbackEventConsumer<LocalEvent>(
-      process: { event, token in self.process(f(event), for: token) },
+      process: { event, token in self.process(transform(event), for: token) },
       dequeueAllEvents: { token in self.dequeueAllEvents(for: token) }
     )
   }

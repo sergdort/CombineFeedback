@@ -81,39 +81,63 @@ public struct Feedback<State, Event>: StateMachine {
   }
 }
 
-extension Feedback {
-  func pullback<ParentState, ParentEvent>(
-    state stateKeyPath: KeyPath<ParentState, State>,
-    event eventCasePath: CasePath<ParentEvent, Event>
-  ) -> Feedback<ParentState, ParentEvent> {
-    Feedback<ParentState, ParentEvent> { input, output in
-      let localInput = FeedbackInput<State, Event>(
-        updates: input.updates
-          .map { update in
-            FeedbackInput<State, Event>.Update(
-              state: update.state[keyPath: stateKeyPath],
-              event: update.event.flatMap(eventCasePath.extract(from:))
-            )
-          }
-          .eraseToAnyPublisher()
-      )
-      return self.run(localInput, FeedbackOutput<Event>(consumer: output.consumer.pullback(eventCasePath.embed)))
-    }
+func scopedFeedback<ParentState, ParentEvent, ChildState, ChildEvent>(
+  _ feedback: Feedback<ChildState, ChildEvent>,
+  state stateKeyPath: KeyPath<ParentState, ChildState>,
+  event eventCasePath: CasePath<ParentEvent, ChildEvent>
+) -> Feedback<ParentState, ParentEvent> {
+  Feedback<ParentState, ParentEvent> { input, output in
+    let childInput = FeedbackInput<ChildState, ChildEvent>(
+      updates: input.updates
+        .map { update in
+          FeedbackInput<ChildState, ChildEvent>.Update(
+            state: update.state[keyPath: stateKeyPath],
+            event: update.event.flatMap(eventCasePath.extract(from:))
+          )
+        }
+        .eraseToAnyPublisher()
+    )
+    return feedback.run(childInput, FeedbackOutput<ChildEvent>(consumer: output.consumer.mapInput(eventCasePath.embed)))
   }
+}
 
-  func optionalPullback<ParentState, ParentEvent>(
-    state stateKeyPath: KeyPath<ParentState, State?>,
-    event eventCasePath: CasePath<ParentEvent, Event>
-  ) -> Feedback<ParentState, ParentEvent> {
-    Feedback<ParentState, ParentEvent> { input, output in
-      OptionalFeedbackSubscription(
-        updates: input.updates,
-        output: FeedbackOutput<Event>(consumer: output.consumer.pullback(eventCasePath.embed)),
-        state: stateKeyPath,
-        event: eventCasePath,
-        run: self.run
-      )
-    }
+func scopedFeedback<ParentState, ParentEvent, ChildState, ChildEvent>(
+  _ feedback: Feedback<ChildState, ChildEvent>,
+  state stateCasePath: CasePath<ParentState, ChildState>,
+  event eventCasePath: CasePath<ParentEvent, ChildEvent>
+) -> Feedback<ParentState, ParentEvent> {
+  optionalScopedFeedback(
+    feedback,
+    state: { stateCasePath.extract(from: $0) },
+    event: eventCasePath
+  )
+}
+
+func scopedFeedback<ParentState, ParentEvent, ChildState, ChildEvent>(
+  _ feedback: Feedback<ChildState, ChildEvent>,
+  state stateKeyPath: KeyPath<ParentState, ChildState?>,
+  event eventCasePath: CasePath<ParentEvent, ChildEvent>
+) -> Feedback<ParentState, ParentEvent> {
+  optionalScopedFeedback(
+    feedback,
+    state: { $0[keyPath: stateKeyPath] },
+    event: eventCasePath
+  )
+}
+
+private func optionalScopedFeedback<ParentState, ParentEvent, ChildState, ChildEvent>(
+  _ feedback: Feedback<ChildState, ChildEvent>,
+  state: @escaping (ParentState) -> ChildState?,
+  event eventCasePath: CasePath<ParentEvent, ChildEvent>
+) -> Feedback<ParentState, ParentEvent> {
+  Feedback<ParentState, ParentEvent> { input, output in
+    OptionalFeedbackSubscription(
+      updates: input.updates,
+      output: FeedbackOutput<ChildEvent>(consumer: output.consumer.mapInput(eventCasePath.embed)),
+      state: state,
+      event: eventCasePath,
+      run: feedback.run
+    )
   }
 }
 
@@ -284,7 +308,7 @@ extension Array: @retroactive Cancellable where Element == Cancellable {
 private final class OptionalFeedbackSubscription<ParentState, ParentEvent, State, Event>: Cancellable {
   private let lock = NSRecursiveLock()
   private let output: FeedbackOutput<Event>
-  private let stateKeyPath: KeyPath<ParentState, State?>
+  private let state: (ParentState) -> State?
   private let eventCasePath: CasePath<ParentEvent, Event>
   private let run: (FeedbackInput<State, Event>, FeedbackOutput<Event>) -> Cancellable
   private var upstream: Cancellable?
@@ -295,12 +319,12 @@ private final class OptionalFeedbackSubscription<ParentState, ParentEvent, State
   init(
     updates: AnyPublisher<FeedbackInput<ParentState, ParentEvent>.Update, Never>,
     output: FeedbackOutput<Event>,
-    state stateKeyPath: KeyPath<ParentState, State?>,
+    state: @escaping (ParentState) -> State?,
     event eventCasePath: CasePath<ParentEvent, Event>,
     run: @escaping (FeedbackInput<State, Event>, FeedbackOutput<Event>) -> Cancellable
   ) {
     self.output = output
-    self.stateKeyPath = stateKeyPath
+    self.state = state
     self.eventCasePath = eventCasePath
     self.run = run
     self.upstream = updates.sink { [weak self] update in
@@ -325,7 +349,7 @@ private final class OptionalFeedbackSubscription<ParentState, ParentEvent, State
 
     guard !isCancelled else { return }
 
-    guard let localState = update.state[keyPath: stateKeyPath] else {
+    guard let localState = state(update.state) else {
       cancelChild()
       return
     }

@@ -2,9 +2,9 @@ import CombineFeedback
 import SwiftUI
 
 struct SingleStoreExampleView: View {
-  let store: Store<State, Event>
+  let store: Store<AppFeature.State, AppFeature.Event>
 
-  init(store: Store<State, Event>) {
+  init(store: Store<AppFeature.State, AppFeature.Event>) {
     self.store = store
     logInit(of: self)
   }
@@ -13,7 +13,7 @@ struct SingleStoreExampleView: View {
     TabView {
       NavigationView {
         CounterView(
-          store: store.scoped(to: \.counter, event: Event.counter)
+          store: store.scoped(to: \.counter, event: AppFeature.Event.counter)
         )
         .navigationBarTitle(Text("Counter"))
       }
@@ -21,8 +21,8 @@ struct SingleStoreExampleView: View {
         Image(systemName: "eye")
       }
       NavigationView {
-        SwitchStoreExample.RootView(
-          store: store.scoped(to: \.switchExample, event: Event.switchExample)
+        SwitchStoreExampleView(
+          store: store.scoped(to: \.switchExample, event: AppFeature.Event.switchExample)
         )
           .navigationBarTitle(Text("Switch Store"))
       }
@@ -30,8 +30,8 @@ struct SingleStoreExampleView: View {
         Image(systemName: "switch.2")
       }
       NavigationView {
-        FavouriteMovies.RootView(
-          store: store.scoped(to: \.favouriteMovies, event: Event.favouriteMovies)
+        FavouriteMoviesView(
+          store: store.scoped(to: \.favouriteMovies, event: AppFeature.Event.favouriteMovies)
         )
         .navigationBarTitle(Text("Parent Child State"))
       }
@@ -39,14 +39,14 @@ struct SingleStoreExampleView: View {
         Image(systemName: "film")
       }
       NavigationView {
-        SignInView(store: store.scoped(to: \.signIn, event: Event.signIn))
+        SignInView(store: store.scoped(to: \.signIn, event: AppFeature.Event.signIn))
           .navigationBarTitle(Text("Form Example"))
       }
       .tabItem {
         Image(systemName: "person")
       }
       NavigationView {
-        TrafficLightView(store: store.scoped(to: \.traficLight, event: Event.trafficLight))
+        TrafficLightView(store: store.scoped(to: \.traficLight, event: AppFeature.Event.trafficLight))
           .navigationBarTitle(Text("Non UI Effects"))
       }
       .tabItem {

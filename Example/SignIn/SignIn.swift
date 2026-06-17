@@ -5,48 +5,16 @@ import SwiftUI
 extension SignIn {
   final class ViewModel: Store<SignIn.State, SignIn.Event> {
     init(initial: State = State()) {
+      let api = GithubAPI()
       super.init(
         initial: initial,
-        feedbacks: [
-          ViewModel.whenChangingUserName(api: GithubAPI()),
-          ViewModel.whenSubmitting(api: GithubAPI())
-        ],
-        reducer: SignIn.reducer(),
-        dependency: ()
-      )
-    }
-
-    static func whenChangingUserName(api: GithubAPI) -> Feedback<State, Event, Void> {
-      return Feedback.custom { state, consumer, _ in
-        state
-          .map {
-            $0.0.userName
-          }
-          .filter { $0.isEmpty == false }
-          .removeDuplicates()
-          .debounce(
-            for: 0.5,
-            scheduler: DispatchQueue.main
+        machine: SignIn(
+          dependencies: SignIn.Dependencies(
+            signIn: { api.signIn(username: $0, email: $1, password: $2) },
+            usernameAvailable: { api.usernameAvailable(username: $0) }
           )
-          .flatMapLatest { userName in
-            api.usernameAvailable(username: userName)
-              .map(Event.isAvailable)
-              .enqueue(to: consumer)
-          }
-      }
-    }
-
-    static func whenSubmitting(api: GithubAPI) -> Feedback<State, Event, Void> {
-      return .middleware { (state, _) -> AnyPublisher<Event, Never> in
-        guard state.status.isSubmitting else {
-          return Empty().eraseToAnyPublisher()
-        }
-
-        return api
-          .signIn(username: state.userName, email: state.email, password: state.password)
-          .map(Event.didSignIn)
-          .eraseToAnyPublisher()
-      }
+        )
+      )
     }
   }
 }

@@ -10,46 +10,16 @@ extension Movies {
       movies: [],
       status: .loading
     )
-    var feedbacks: [Feedback<State, Event, Void>] {
-      if #available(iOS 15.0, *) {
-        return [
-          ViewModel.whenLoadingIOS15()
-        ]
-      } else {
-        return [
-          ViewModel.whenLoading()
-        ]
-      }
-    }
 
     init() {
       super.init(
         initial: initial,
-        feedbacks: [ViewModel.whenLoading()],
-        reducer: Movies.reducer(),
-        dependency: ()
+        machine: Movies(
+          dependencies: Movies.Dependencies(
+            fetchMovies: URLSession.shared.fetchMovies(page:)
+          )
+        )
       )
-    }
-
-    private static func whenLoading() -> Feedback<State, Event, Void> {
-      .lensing(state: { $0.nextPage }) { page, _ in
-        URLSession.shared
-          .fetchMovies(page: page)
-          .map(Event.didLoad)
-          .replaceError(replace: Event.didFail)
-          .receive(on: DispatchQueue.main)
-      }
-    }
-
-    @available(iOS 15.0, *)
-    private static func whenLoadingIOS15() -> Feedback<State, Event, Void> {
-      .lensing(state: \.nextPage) { page, _ in
-        do {
-          return Event.didLoad(try await URLSession.shared.movies(page: page))
-        } catch {
-          return Event.didFail(error as NSError)
-        }
-      }
     }
   }
 }

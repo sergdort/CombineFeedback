@@ -115,28 +115,44 @@ public struct Scope<ParentState, ParentEvent, Child: StateMachine>: StateMachine
   public typealias Event = ParentEvent
   public typealias Body = Never
 
-  private let stateKeyPath: WritableKeyPath<ParentState, Child.State>
-  private let eventCasePath: CasePath<ParentEvent, Child.Event>
-  private let child: Child
+  private let resolve: () -> ResolvedMachine<ParentState, ParentEvent>
 
   public init(
     state: WritableKeyPath<ParentState, Child.State>,
     event: CasePath<ParentEvent, Child.Event>,
     @StateMachineBuilder<Child.State, Child.Event> child: () -> Child
   ) {
-    self.stateKeyPath = state
-    self.eventCasePath = event
-    self.child = child()
+    let child = child()
+    self.resolve = {
+      let resolved = child._resolve()
+      return ResolvedMachine(
+        reducer: scopedReducer(resolved.reducer, state: state, event: event),
+        feedbacks: resolved.feedbacks.map {
+          scopedFeedback($0, state: state, event: event)
+        }
+      )
+    }
+  }
+
+  public init(
+    state: CasePath<ParentState, Child.State>,
+    event: CasePath<ParentEvent, Child.Event>,
+    @StateMachineBuilder<Child.State, Child.Event> child: () -> Child
+  ) {
+    let child = child()
+    self.resolve = {
+      let resolved = child._resolve()
+      return ResolvedMachine(
+        reducer: scopedReducer(resolved.reducer, state: state, event: event),
+        feedbacks: resolved.feedbacks.map {
+          scopedFeedback($0, state: state, event: event)
+        }
+      )
+    }
   }
 
   public func _resolve() -> ResolvedMachine<ParentState, ParentEvent> {
-    let resolved = child._resolve()
-    return ResolvedMachine(
-      reducer: resolved.reducer.pullback(state: stateKeyPath, event: eventCasePath),
-      feedbacks: resolved.feedbacks.map {
-        $0.pullback(state: stateKeyPath, event: eventCasePath)
-      }
-    )
+    resolve()
   }
 }
 
@@ -162,9 +178,9 @@ public struct IfLet<ParentState, ParentEvent, Child: StateMachine>: StateMachine
   public func _resolve() -> ResolvedMachine<ParentState, ParentEvent> {
     let resolved = child._resolve()
     return ResolvedMachine(
-      reducer: resolved.reducer.optional().pullback(state: stateKeyPath, event: eventCasePath),
+      reducer: scopedReducer(resolved.reducer, state: stateKeyPath, event: eventCasePath),
       feedbacks: resolved.feedbacks.map {
-        $0.optionalPullback(state: stateKeyPath, event: eventCasePath)
+        scopedFeedback($0, state: stateKeyPath, event: eventCasePath)
       }
     )
   }

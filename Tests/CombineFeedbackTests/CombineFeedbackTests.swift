@@ -442,6 +442,76 @@ final class CombineFeedbackTests: XCTestCase {
     XCTAssertEqual(result, ["a", "a!"])
   }
 
+  func test_scope_composes_case_path_child_reducer_and_feedback() {
+    var result: [String?] = []
+
+    let system = Publishers.system(
+      initial: SwitchParentState.child(ChildState(value: "a")),
+      machine: Machine<SwitchParentState, ParentEvent> {
+        Scope<SwitchParentState, ParentEvent, Machine<ChildState, ChildEvent>>(
+          state: /SwitchParentState.child,
+          event: /ParentEvent.child
+        ) {
+          Machine<ChildState, ChildEvent> {
+            Reducer { (state: inout ChildState, event: ChildEvent) in
+              if case let .set(value) = event {
+                state.value = value
+              }
+            }
+
+            OnChange<ChildState, ChildEvent, String>(of: \.value) { value in
+              Just(ChildEvent.set(value + "!"))
+            }
+          }
+        }
+      }
+    )
+
+    cancellable = system.output(in: 0...1).sink { state in
+      result.append((/SwitchParentState.child).extract(from: state)?.value)
+    }
+
+    XCTAssertEqual(result, ["a", "a!"])
+  }
+
+  func test_case_path_scope_cancels_queued_child_output_when_parent_leaves_case() {
+    var result: [String?] = []
+
+    let system = Publishers.system(
+      initial: SwitchParentState.child(ChildState(value: "a")),
+      machine: Machine<SwitchParentState, ParentEvent> {
+        Scope<SwitchParentState, ParentEvent, Machine<ChildState, ChildEvent>>(
+          state: /SwitchParentState.child,
+          event: /ParentEvent.child
+        ) {
+          Machine<ChildState, ChildEvent> {
+            Reducer { (state: inout ChildState, event: ChildEvent) in
+              if case let .set(value) = event {
+                state.value = value
+              }
+            }
+
+            OnChange<ChildState, ChildEvent, String>(of: \.value) { _ in
+              PendingOutputPublisher([ChildEvent.removeParent, .set("stale")])
+            }
+          }
+        }
+
+        Reducer { (state: inout SwitchParentState, event: ParentEvent) in
+          if case .child(.removeParent) = event {
+            state = .other
+          }
+        }
+      }
+    )
+
+    cancellable = system.sink { state in
+      result.append((/SwitchParentState.child).extract(from: state)?.value)
+    }
+
+    XCTAssertEqual(result, ["a", nil])
+  }
+
   func test_ifLet_ignores_child_events_while_state_is_nil() {
     let input = PassthroughSubject<ParentEvent, Never>()
     var result: [String?] = []
@@ -650,6 +720,11 @@ private struct ParentState: Equatable {
 
 private struct OptionalParentState: Equatable {
   var child: ChildState?
+}
+
+private enum SwitchParentState: Equatable {
+  case child(ChildState)
+  case other
 }
 
 private enum ParentEvent: Equatable, Sendable {

@@ -196,6 +196,10 @@ struct Parent: StateMachine {
             Child()
         }
 
+        Scope(state: /State.selected, event: /Event.selected) {
+            Selected()
+        }
+
         IfLet(state: \State.details, event: /Event.details) {
             Details()
         }
@@ -203,7 +207,7 @@ struct Parent: StateMachine {
 }
 ```
 
-`Scope` in a machine composes child reducers and feedbacks together. `Store.scope` projects an already-running parent store for views.
+`Scope` in a machine composes child reducers and feedbacks together for stored child state via key paths and enum-case child state via case paths. `Store.scope` projects an already-running parent store for views.
 
 Advanced custom feedback can control cancellation policy by choosing where events are enqueued:
 

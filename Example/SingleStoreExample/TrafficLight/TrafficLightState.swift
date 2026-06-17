@@ -2,7 +2,7 @@ import Combine
 import CombineFeedback
 import Foundation
 
-enum TrafficLight {
+struct TrafficLight: StateMachine {
   enum State: Equatable {
     case red
     case yellow
@@ -40,8 +40,9 @@ enum TrafficLight {
     case next
   }
 
-  static func reducer() -> Reducer<State, Event> {
-    .init { state, _ in
+  @StateMachineBuilder<State, Event>
+  var body: some StateMachine<State, Event> {
+    Reducer<State, Event> { state, _ in
       switch state {
       case .red:
         state = .yellow
@@ -51,43 +52,9 @@ enum TrafficLight {
         state = .red
       }
     }
-  }
 
-  static var feedback: Feedback<State, Event, Void> {
-    return Feedback.combine(whenRed(), whenYellow(), whenGreen())
-  }
-
-  private static func whenRed() -> Feedback<State, Event, Void> {
-    .middleware { state, _ -> AnyPublisher<Event, Never> in
-      guard case .red = state else {
-        return Empty().eraseToAnyPublisher()
-      }
-
-      return Result.Publisher(Event.next)
-        .delay(for: 1, scheduler: DispatchQueue.main)
-        .eraseToAnyPublisher()
-    }
-  }
-
-  private static func whenYellow() -> Feedback<State, Event, Void> {
-    .middleware { state, _ -> AnyPublisher<Event, Never> in
-      guard case .yellow = state else {
-        return Empty().eraseToAnyPublisher()
-      }
-
-      return Result.Publisher(Event.next)
-        .delay(for: 1, scheduler: DispatchQueue.main)
-        .eraseToAnyPublisher()
-    }
-  }
-
-  private static func whenGreen() -> Feedback<State, Event, Void> {
-    .middleware { state, _ -> AnyPublisher<Event, Never> in
-      guard case .green = state else {
-        return Empty().eraseToAnyPublisher()
-      }
-
-      return Result.Publisher(Event.next)
+    OnChange<State, Event, State>(of: { $0 }) { _ in
+      Result.Publisher(Event.next)
         .delay(for: 1, scheduler: DispatchQueue.main)
         .eraseToAnyPublisher()
     }
