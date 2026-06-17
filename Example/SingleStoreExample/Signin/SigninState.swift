@@ -1,4 +1,3 @@
-import Combine
 import CombineFeedback
 import Foundation
 
@@ -10,11 +9,17 @@ struct SignIn: StateMachine {
       _ userName: String,
       _ email: String,
       _ password: String
-    ) -> AnyPublisher<Bool, Never>
+    ) async -> Bool
 
     var usernameAvailable: (
       _ username: String
-    ) -> AnyPublisher<Bool, Never>
+    ) async -> Bool
+  }
+
+  private struct SignInRequest: Equatable {
+    var userName: String
+    var email: String
+    var password: String
   }
 
   struct State: Equatable {
@@ -119,32 +124,31 @@ struct SignIn: StateMachine {
     }
   }
 
-  var whenChangingUserName: OnChange<State, Event, String> {
+  private var whenChangingUserName: OnChange<State, Event, String> {
     OnChange(of: { state in
       state.userName.isEmpty ? nil : state.userName
-    }) { userName in
-      Just(userName)
-        .delay(for: 0.5, scheduler: DispatchQueue.main)
-        .flatMap(dependencies.usernameAvailable)
-        .map(Event.isAvailable)
-        .eraseToAnyPublisher()
+    }) { userName async in
+      do {
+        try await Task.sleep(nanoseconds: 500_000_000)
+      } catch {
+        return .isAvailable(false)
+      }
+      let isAvailable = await dependencies.usernameAvailable(userName)
+      return .isAvailable(isAvailable)
     }
   }
 
-  var whenSubmitting: Feedback<State, Event> {
-    Feedback.custom { input, output in
-      input.updates
-        .compactMap { update -> State? in
-          guard case .some(.signIn) = update.event else { return nil }
-          guard update.state.status.isSubmitting else { return nil }
-          return update.state
-        }
-        .flatMapLatest { state in
-          dependencies
-            .signIn(state.userName, state.email, state.password)
-            .map(Event.didSignIn)
-            .enqueue(to: output)
-        }
+  private var whenSubmitting: OnChange<State, Event, SignInRequest> {
+    OnChange(of: { state -> SignInRequest? in
+      guard state.status.isSubmitting else { return nil }
+      return SignInRequest(
+        userName: state.userName,
+        email: state.email,
+        password: state.password
+      )
+    }) { request async in
+      let didSignIn = await dependencies.signIn(request.userName, request.email, request.password)
+      return .didSignIn(didSignIn)
     }
   }
 }

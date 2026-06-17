@@ -1,60 +1,58 @@
 import SwiftUI
-import Combine
-import CombineFeedback
 
 struct AsyncImage<Content: View>: View {
-  private let image: SwiftUI.State<UIImage>
-  private let source: AnyPublisher<UIImage, Never>
+  @Environment(\.imageFetcher)
+  private var fetcher: ImageFetcher
+
+  @State
+  private var image: UIImage
+
+  private let url: URL?
+  private let placeholder: UIImage
   private let content: (UIImage) -> Content
 
   init(
-    source: AnyPublisher<UIImage, Never>,
+    url: URL?,
     placeholder: UIImage,
     @ViewBuilder content: @escaping (UIImage) -> Content
   ) {
-    self.source = source
-    self.image = SwiftUI.State(initialValue: placeholder)
+    self.url = url
+    self.placeholder = placeholder
+    self._image = State(initialValue: placeholder)
     self.content = content
   }
 
   var body: some View {
-    return content(image.wrappedValue)
-      .bind(source, to: image.projectedValue)
-  }
-}
+    content(image)
+      .task(id: url) {
+        guard let url else {
+          image = placeholder
+          return
+        }
 
-extension View {
-  func bind<P: Publisher, Value>(
-    _ publisher: P,
-    to state: Binding<Value>
-  ) -> some View where P.Failure == Never, P.Output == Value {
-    return onReceive(publisher) { value in
-      state.wrappedValue = value
-    }
+        image = await fetcher.image(for: url) ?? placeholder
+      }
   }
 }
 
 class ImageFetcher {
   private let cache = NSCache<NSURL, UIImage>()
 
-  func image(for url: URL) -> AnyPublisher<UIImage, Never> {
-    return Deferred { () -> AnyPublisher<UIImage, Never> in
-      if let image = self.cache.object(forKey: url as NSURL) {
-        return Result.Publisher(image)
-          .eraseToAnyPublisher()
-      }
-
-      return URLSession.shared
-        .dataTaskPublisher(for: url)
-        .map { $0.data }
-        .compactMap(UIImage.init(data:))
-        .receive(on: DispatchQueue.main)
-        .handleEvents(receiveOutput: { image in
-          self.cache.setObject(image, forKey: url as NSURL)
-        })
-        .ignoreError()
+  func image(for url: URL) async -> UIImage? {
+    if let image = cache.object(forKey: url as NSURL) {
+      return image
     }
-    .eraseToAnyPublisher()
+
+    do {
+      let (data, _) = try await URLSession.shared.data(from: url)
+      guard let image = UIImage(data: data) else {
+        return nil
+      }
+      cache.setObject(image, forKey: url as NSURL)
+      return image
+    } catch {
+      return nil
+    }
   }
 }
 

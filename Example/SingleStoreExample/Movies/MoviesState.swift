@@ -1,12 +1,11 @@
 import Foundation
 import CombineFeedback
-import Combine
 
 struct Movies: StateMachine {
   let dependencies: Dependencies
 
   struct Dependencies {
-    var fetchMovies: (Int) -> AnyPublisher<Results, NSError>
+    var fetchMovies: (Int) async throws -> Results
   }
 
   struct State: Equatable {
@@ -74,19 +73,13 @@ struct Movies: StateMachine {
     }
   }
 
-  var feedback: Feedback<State, Event> {
-    Feedback.custom { input, output in
-      input.changes(of: \.nextPage)
-        .flatMapLatest { page -> AnyPublisher<Never, Never> in
-          guard let page else { return Empty().eraseToAnyPublisher() }
-
-          return dependencies.fetchMovies(page)
-            .map(Event.didLoad)
-            .replaceError(replace: Event.didFail)
-            .receive(on: DispatchQueue.main)
-            .enqueue(to: output)
-            .eraseToAnyPublisher()
-        }
+  var feedback: OnChange<State, Event, Int> {
+    OnChange(of: \.nextPage) { page async in
+      do {
+        return .didLoad(try await dependencies.fetchMovies(page))
+      } catch {
+        return .didFail(error as NSError)
+      }
     }
   }
 }

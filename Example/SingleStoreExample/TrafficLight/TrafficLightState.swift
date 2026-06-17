@@ -1,4 +1,3 @@
-import Combine
 import CombineFeedback
 import Foundation
 
@@ -53,10 +52,13 @@ struct TrafficLight: StateMachine {
       }
     }
 
-    OnChange<State, Event, State>(of: { $0 }) { _ in
-      Result.Publisher(Event.next)
-        .delay(for: 1, scheduler: DispatchQueue.main)
-        .eraseToAnyPublisher()
+    OnChange<State, Event, State>(of: { $0 }) { _ async in
+      do {
+        try await Task.sleep(nanoseconds: 1_000_000_000)
+      } catch {
+        return .next
+      }
+      return .next
     }
   }
 }

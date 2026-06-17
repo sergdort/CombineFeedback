@@ -1,4 +1,3 @@
-import Combine
 import CombineFeedback
 import Foundation
 import SwiftUI
@@ -57,17 +56,11 @@ struct MoviesView: View {
 }
 
 struct MovieCell: View {
-  @Environment(\.imageFetcher) var fetcher: ImageFetcher
   var movie: Movie
-
-  private var poster: AnyPublisher<UIImage, Never> {
-    return movie.posterURL.map(fetcher.image)
-      .default(to: Empty().eraseToAnyPublisher())
-  }
 
   var body: some View {
     return HStack {
-      AsyncImage(source: poster, placeholder: UIImage(systemName: "film")!) { image in
+      AsyncImage(url: movie.posterURL, placeholder: UIImage(systemName: "film")!) { image in
         Image(uiImage: image)
           .resizable()
           .frame(width: 100)
@@ -131,31 +124,11 @@ func switchFail() {
 }
 
 extension URLSession {
-  func fetchMovies(page: Int) -> AnyPublisher<Results, NSError> {
-    let url = URL(string: "https://api.themoviedb.org/3/discover/movie?api_key=\(shouldFail ? "" : correctAPIKey)&sort_by=popularity.desc&page=\(page)")!
-    let request = URLRequest(url: url)
-
-    return dataTaskPublisher(for: request)
-      .map { $0.data }
-      .decode(type: Results.self, decoder: JSONDecoder())
-      .mapError { (error) -> NSError in
-        error as NSError
-      }
-      .eraseToAnyPublisher()
-  }
-
-  @available(iOS 15.0, *)
-  func movies(page: Int) async throws -> Results {
+  func fetchMovies(page: Int) async throws -> Results {
     let url = URL(string: "https://api.themoviedb.org/3/discover/movie?api_key=\(shouldFail ? "" : correctAPIKey)&sort_by=popularity.desc&page=\(page)")!
     let request = URLRequest(url: url)
     let decoder = JSONDecoder()
     let (data, _) = try await self.data(for: request, delegate: nil)
     return try decoder.decode(Results.self, from: data)
-  }
-}
-
-extension Optional {
-  func `default`(to value: Wrapped) -> Wrapped {
-    return self ?? value
   }
 }

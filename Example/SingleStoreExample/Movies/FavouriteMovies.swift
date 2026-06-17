@@ -2,7 +2,6 @@ import Foundation
 import CombineFeedback
 import CasePaths
 import SwiftUI
-import Combine
 
 struct FavouriteMovies: StateMachine {
   let dependencies: Movies.Dependencies
@@ -46,9 +45,6 @@ struct FavouriteMovies: StateMachine {
 }
 
 struct FavouriteMoviesView: View {
-  @Environment(\.imageFetcher)
-  private var fetcher: ImageFetcher
-
   var store: Store<FavouriteMovies.State, FavouriteMovies.Event>
 
   var body: some View {
@@ -102,8 +98,7 @@ struct FavouriteMoviesView: View {
 
   func gridItem(movie: Movie) -> some View {
     AsyncImage(
-      source: movie.posterURL.map(fetcher.image)
-        .default(to: Empty().eraseToAnyPublisher()),
+      url: movie.posterURL,
       placeholder: UIImage(systemName: "film")!
     ) { image in
       Image(uiImage: image)

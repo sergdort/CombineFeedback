@@ -1,4 +1,3 @@
-import Combine
 import CombineFeedback
 import SwiftUI
 
@@ -10,8 +9,8 @@ extension SignIn {
         initial: initial,
         machine: SignIn(
           dependencies: SignIn.Dependencies(
-            signIn: { api.signIn(username: $0, email: $1, password: $2) },
-            usernameAvailable: { api.usernameAvailable(username: $0) }
+            signIn: { await api.signIn(username: $0, email: $1, password: $2) },
+            usernameAvailable: { await api.usernameAvailable(username: $0) }
           )
         )
       )
@@ -102,25 +101,25 @@ struct SignInView: View {
   }
 }
 
-extension Publisher where Failure == Never {
-  func promoteError<E: Error>(to: E.Type) -> Publishers.MapError<Self, E> {
-    return mapError { _ -> E in }
-  }
-}
-
 final class GithubAPI {
-  func usernameAvailable(username: String) -> AnyPublisher<Bool, Never> {
+  func usernameAvailable(username: String) async -> Bool {
     // Fake implementation
-    return Result.Publisher(Int.random(in: 0 ... 100) % 2 == 0)
-      .delay(for: 0.3, scheduler: DispatchQueue.main)
-      .eraseToAnyPublisher()
+    do {
+      try await Task.sleep(nanoseconds: 300_000_000)
+    } catch {
+      return false
+    }
+    return Int.random(in: 0 ... 100) % 2 == 0
   }
 
-  func signIn(username: String, email: String, password: String) -> AnyPublisher<Bool, Never> {
+  func signIn(username: String, email: String, password: String) async -> Bool {
     // Fake implementation
-    return Result.Publisher(true)
-      .delay(for: 0.3, scheduler: DispatchQueue.main)
-      .eraseToAnyPublisher()
+    do {
+      try await Task.sleep(nanoseconds: 300_000_000)
+    } catch {
+      return false
+    }
+    return true
   }
 }
 
