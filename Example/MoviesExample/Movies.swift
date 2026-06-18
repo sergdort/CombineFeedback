@@ -26,32 +26,30 @@ extension Movies {
 struct MoviesView: View {
   typealias State = Movies.State
   typealias Event = Movies.Event
-  let store: Store<State, Event>
+  @StoreBinding<State, Event> private var state: State
 
   init(store: Store<State, Event>) {
-    self.store = store
+    self._state = StoreBinding(store)
     logInit(of: self)
   }
 
   var body: some View {
-    WithContextView(store: store) { context in
-      ScrollView {
-        LazyVStack {
-          ForEach(Array(context.movies.enumerated()), id: \.element) { element in
-            MovieCell(movie: element.element)
-              .contentShape(Rectangle())
-              .onTapGesture {
-                context.send(event: Event.didLike(element.element, index: element.offset))
-              }
-          }
-          if context.status == .loading {
-            Spinner(style: .medium)
-          }
+    ScrollView {
+      LazyVStack {
+        ForEach(Array(state.movies.enumerated()), id: \.element) { element in
+          MovieCell(movie: element.element)
+            .contentShape(Rectangle())
+            .onTapGesture {
+              $state.send(Event.didLike(element.element, index: element.offset))
+            }
         }
-        .padding(.horizontal)
+        if state.status == .loading {
+          Spinner(style: .medium)
+        }
       }
-      .navigationBarTitle("Pagination Example", displayMode: .inline)
+      .padding(.horizontal)
     }
+    .navigationBarTitle("Pagination Example", displayMode: .inline)
   }
 }
 

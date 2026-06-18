@@ -16,30 +16,28 @@ struct CounterView: View {
   typealias State = Counter.State
   typealias Event = Counter.Event
 
-  let store: Store<State, Event>
+  @StoreBinding<State, Event> private var state: State
 
   init(store: Store<State, Event>) {
-    self.store = store
+    self._state = StoreBinding(store)
     logInit(of: self)
   }
 
   var body: some View {
-    WithContextView(store: store) { context in
-      Form {
-        Button(action: {
-          context.send(event: .decrement)
-        }) {
-          Text("-").font(.largeTitle)
-        }
-        Button(action: {
-          context.send(event: .increment)
-        }) {
-          Text("+").font(.largeTitle)
-        }
-        if context.count >= 0 {
-          ForEach((0 ..< context.count).reversed(), id: \.self) { item in
-            Text("\(item)")
-          }
+    Form {
+      Button(action: {
+        $state.send(.decrement)
+      }) {
+        Text("-").font(.largeTitle)
+      }
+      Button(action: {
+        $state.send(.increment)
+      }) {
+        Text("+").font(.largeTitle)
+      }
+      if state.count >= 0 {
+        ForEach((0 ..< state.count).reversed(), id: \.self) { item in
+          Text("\(item)")
         }
       }
     }

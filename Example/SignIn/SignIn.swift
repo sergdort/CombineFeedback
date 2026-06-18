@@ -22,82 +22,80 @@ struct SignInView: View {
   typealias State = SignIn.State
   typealias Event = SignIn.Event
 
-  let store: Store<State, Event>
+  @StoreBinding<State, Event> private var state: State
 
   init(store: Store<State, Event>) {
-    self.store = store
+    self._state = StoreBinding(store)
     logInit(of: self)
   }
 
   var body: some View {
-    WithContextView(store: store) { context in
-      Form {
-        Section {
+    Form {
+      Section {
+        HStack {
+          TextField(
+            "Username",
+            text: $state.binding(for: \.userName, event: Event.didChangeUserName)
+          )
+          .textFieldStyle(RoundedBorderTextFieldStyle())
+          .textContentType(.username)
+          if state.status.isCheckingUserName {
+            Spinner(style: .medium)
+          } else {
+            Image(systemName: state.isAvailable ? "hand.thumbsup.fill" : "xmark.seal.fill")
+          }
+        }
+        TextField(
+          "Email",
+          text: $state.binding(for: \.email, event: Event.emailDidChange)
+        )
+        .textFieldStyle(RoundedBorderTextFieldStyle())
+        .textContentType(.emailAddress)
+        TextField(
+          "Password",
+          text: $state.binding(for: \.password, event: Event.passwordDidChange)
+        )
+        .textFieldStyle(RoundedBorderTextFieldStyle())
+        .textContentType(.newPassword)
+        TextField(
+          "Repeat Password",
+          text: $state.binding(for: \.repeatPassword, event: Event.repeatPasswordDidChange)
+        )
+        .textFieldStyle(RoundedBorderTextFieldStyle())
+        .textContentType(.newPassword)
+      }
+      Section {
+        Toggle(isOn: $state.binding(for: \.termsAccepted, event: Event.termsDidChange)) {
+          Text("Accept Terms and Conditions")
+        }
+      }
+      Section {
+        ZStack {
           HStack {
-            TextField(
-              "Username",
-              text: context.binding(for: \.userName, event: Event.didChangeUserName)
-            )
-            .textFieldStyle(RoundedBorderTextFieldStyle())
-            .textContentType(.username)
-            if context.status.isCheckingUserName {
+            Spacer()
+            Button(action: $state.action(for: .signIn)) {
+              Text("Sign In")
+                .multilineTextAlignment(.center)
+            }
+            .disabled(!state.canSubmit)
+            Spacer()
+          }
+          Group {
+            if state.status.isSubmitting {
               Spinner(style: .medium)
             } else {
-              Image(systemName: context.isAvailable ? "hand.thumbsup.fill" : "xmark.seal.fill")
-            }
-          }
-          TextField(
-            "Email",
-            text: context.binding(for: \.email, event: Event.emailDidChange)
-          )
-          .textFieldStyle(RoundedBorderTextFieldStyle())
-          .textContentType(.emailAddress)
-          TextField(
-            "Password",
-            text: context.binding(for: \.password, event: Event.passwordDidChange)
-          )
-          .textFieldStyle(RoundedBorderTextFieldStyle())
-          .textContentType(.newPassword)
-          TextField(
-            "Repeat Password",
-            text: context.binding(for: \.repeatPassword, event: Event.repeatPasswordDidChange)
-          )
-          .textFieldStyle(RoundedBorderTextFieldStyle())
-          .textContentType(.newPassword)
-        }
-        Section {
-          Toggle(isOn: context.binding(for: \.termsAccepted, event: Event.termsDidChange)) {
-            Text("Accept Terms and Conditions")
-          }
-        }
-        Section {
-          ZStack {
-            HStack {
-              Spacer()
-              Button(action: context.action(for: .signIn)) {
-                Text("Sign In")
-                  .multilineTextAlignment(.center)
-              }
-              .disabled(!context.canSubmit)
-              Spacer()
-            }
-            Group {
-              if context.status.isSubmitting {
-                Spinner(style: .medium)
-              } else {
-                EmptyView()
-              }
+              EmptyView()
             }
           }
         }
       }
-      .alert(
-        isPresented: context.binding(for: \.showSignedInAlert, event: .dismissAlertTap),
-        content: {
-          Alert(title: Text("Signed In"))
-        }
-      )
     }
+    .alert(
+      isPresented: $state.binding(for: \.showSignedInAlert, event: .dismissAlertTap),
+      content: {
+        Alert(title: Text("Signed In"))
+      }
+    )
   }
 }
 

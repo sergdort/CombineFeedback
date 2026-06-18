@@ -27,12 +27,6 @@ open class Store<State, Event> {
     )
   }
 
-  @MainActor func context(
-    removeDuplicates isDuplicate: @escaping @Sendable (State, State) -> Bool
-  ) -> ViewContext<State, Event> {
-    ViewContext(store: box, removeDuplicates: isDuplicate)
-  }
-
   open func send(event: Event) {
     box.send(event: event)
   }

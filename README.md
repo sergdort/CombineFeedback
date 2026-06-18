@@ -108,16 +108,20 @@ enum Status {
 struct MoviesView: View {
     typealias State = MoviesViewModel.State
     typealias Event = MoviesViewModel.Event
-    let context: Context<State, Event>
+    @StoreBinding<State, Event> private var state: State
+
+    init(store: Store<State, Event>) {
+        self._state = StoreBinding(store)
+    }
 
     var body: some View {
         List {
-            ForEach(context.movies.identified(by: \.id)) { movie in
+            ForEach(state.movies.identified(by: \.id)) { movie in
                 MovieCell(movie: movie).onAppear {
                 // When we reach the end of the list
                 // we send `fetchNext` event
-                    if self.context.movies.last == movie {
-                        self.context.send(event: .fetchNext)
+                    if self.state.movies.last == movie {
+                        self.$state.send(.fetchNext)
                     }
                 }
             }
@@ -222,9 +226,9 @@ Feedback.custom { input, output in
 
 Put `enqueue(to:)` at the lifecycle whose cancellation should clean up queued events.
 
-#### ViewContext
+#### StoreBinding
 
-`ViewContext<State, Event>` - is a rendering context that we can use to interact with UI and render information. Via  `@dynamicMemberLookup` it has all of the properties of the `State` and several conveniences methods for more seamless integration with SwiftUI. (Credits to [@andersio](https://github.com/andersio))
+`@StoreBinding` is a SwiftUI property wrapper that observes a `Store` and exposes the latest state as a plain value. Use the projected value to send events, create SwiftUI bindings, and build button actions.
 
 ```swift
 struct State  {
@@ -232,27 +236,28 @@ struct State  {
     var password = ""
 }
 enum Event {
-	case signIn
+    case signIn
+    case emailDidChange(String)
+    case passwordDidCange(String)
 }
 struct SignInView: View {
-    private let store: Store<State, Event>
-    
+    @StoreBinding<State, Event> private var state: State
+
     init(store: Store<State, Event>) {
-        self.store = store
+        self._state = StoreBinding(store)
     }
-    
+
     var body: some View {
-      WithContextView(store: store) { context in
         Form {
             Section {
-                TextField(context.binding(for: \.email, event: Event.emailDidChange))
-                TextField(context.binding(for: \.password, event: Event.passwordDidCange))
-                Button(action: context.action(for: .signIn)) {
+                TextField("Email", text: $state.binding(for: \.email, event: Event.emailDidChange))
+                TextField("Password", text: $state.binding(for: \.password, event: Event.passwordDidCange))
+                Button(action: $state.action(for: .signIn)) {
                     Text("Sign In")
                 }
+                Text(state.email)
             }
         }
-      }
     }
 }
 ```

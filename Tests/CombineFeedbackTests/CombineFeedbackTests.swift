@@ -701,6 +701,85 @@ final class CombineFeedbackTests: XCTestCase {
     wait(for: [expectation], timeout: 1)
     XCTAssertEqual(result, ["a", "done"])
   }
+
+  @MainActor
+  func test_storeBinding_exposesInitialState() {
+    let store = Store<BindingTestState, BindingTestEvent>(
+      initial: BindingTestState(count: 0, text: ""),
+      machine: BindingTestMachine()
+    )
+
+    let binding = StoreBinding<BindingTestState, BindingTestEvent>(store)
+
+    XCTAssertEqual(binding.wrappedValue, BindingTestState(count: 0, text: ""))
+  }
+
+  @MainActor
+  func test_storeBinding_sendsEventsThroughStore() {
+    let store = Store<BindingTestState, BindingTestEvent>(
+      initial: BindingTestState(count: 0, text: ""),
+      machine: BindingTestMachine()
+    )
+
+    let binding = StoreBinding<BindingTestState, BindingTestEvent>(store)
+    binding.projectedValue.send(.increment)
+
+    XCTAssertEqual(store.state.count, 1)
+  }
+
+  @MainActor
+  func test_storeBinding_keyPathBindingSendsMappedEvent() {
+    let store = Store<BindingTestState, BindingTestEvent>(
+      initial: BindingTestState(count: 0, text: ""),
+      machine: BindingTestMachine()
+    )
+
+    let binding = StoreBinding<BindingTestState, BindingTestEvent>(store)
+    binding.projectedValue.binding(for: \.text, event: BindingTestEvent.setText).wrappedValue = "hello"
+
+    XCTAssertEqual(store.state.text, "hello")
+  }
+
+  @MainActor
+  func test_storeBinding_constantEventBindingSendsEvent() {
+    let store = Store<BindingTestState, BindingTestEvent>(
+      initial: BindingTestState(count: 0, text: ""),
+      machine: BindingTestMachine()
+    )
+
+    let binding = StoreBinding<BindingTestState, BindingTestEvent>(store)
+    binding.projectedValue.binding(for: \.text, event: BindingTestEvent.increment).wrappedValue = "ignored"
+
+    XCTAssertEqual(store.state.count, 1)
+    XCTAssertEqual(store.state.text, "")
+  }
+}
+
+private struct BindingTestState: Equatable, Sendable {
+  var count: Int
+  var text: String
+}
+
+private enum BindingTestEvent: Sendable {
+  case increment
+  case setText(String)
+}
+
+private struct BindingTestMachine: StateMachine {
+  typealias State = BindingTestState
+  typealias Event = BindingTestEvent
+
+  @StateMachineBuilder<State, Event>
+  var body: some StateMachine<State, Event> {
+    Reducer { (state: inout BindingTestState, event: BindingTestEvent) in
+      switch event {
+      case .increment:
+        state.count += 1
+      case let .setText(text):
+        state.text = text
+      }
+    }
+  }
 }
 
 private struct State: Equatable {

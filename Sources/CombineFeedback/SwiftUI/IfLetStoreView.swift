@@ -2,7 +2,8 @@ import SwiftUI
 
 public struct IfLetStoreView<State, Event, Content: View>: View {
   private let store: Store<State?, Event>
-  private let content: (ViewContext<State?, Event>) -> Content
+  @StoreBinding<State?, Event> private var state: State?
+  private let content: (State?) -> Content
 
   public init<IfContent: View, ElseContent: View>(
     store: Store<State?, Event>,
@@ -10,8 +11,12 @@ public struct IfLetStoreView<State, Event, Content: View>: View {
     @ViewBuilder else elseContent: @escaping () -> ElseContent
   ) where Content == _ConditionalContent<IfContent, ElseContent> {
     self.store = store
-    self.content = { context in
-      if let state = context[dynamicMember: \State.self] {
+    self._state = StoreBinding(
+      store,
+      removeDuplicates: { @Sendable in ($0 != nil) == ($1 != nil) }
+    )
+    self.content = { state in
+      if let state {
         return ViewBuilder.buildEither(
           first: ifContent(
             store.scope(
@@ -35,10 +40,6 @@ public struct IfLetStoreView<State, Event, Content: View>: View {
   }
 
   public var body: some View {
-    WithContextView(
-      store: self.store,
-      removeDuplicates: { @Sendable in ($0 != nil) == ($1 != nil) },
-      content: content
-    )
+    content(state)
   }
 }

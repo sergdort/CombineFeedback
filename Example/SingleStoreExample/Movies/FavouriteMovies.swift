@@ -46,54 +46,58 @@ struct FavouriteMovies: StateMachine {
 
 struct FavouriteMoviesView: View {
   var store: Store<FavouriteMovies.State, FavouriteMovies.Event>
+  @StoreBinding<FavouriteMovies.State, FavouriteMovies.Event> private var state: FavouriteMovies.State
+
+  init(store: Store<FavouriteMovies.State, FavouriteMovies.Event>) {
+    self.store = store
+    self._state = StoreBinding(store)
+  }
 
   var body: some View {
-    WithContextView(store: store) { context in
-      ScrollView {
-        if context.favouriteMovies.isEmpty {
-          VStack {
-            Button(action: context.action(for: FavouriteMovies.Event.didChangeNavigation(true))) {
-              HStack {
-                Image(systemName: "plus")
-                Text("Select movies")
-              }
+    ScrollView {
+      if state.favouriteMovies.isEmpty {
+        VStack {
+          Button(action: $state.action(for: FavouriteMovies.Event.didChangeNavigation(true))) {
+            HStack {
+              Image(systemName: "plus")
+              Text("Select movies")
             }
           }
-        } else {
-          LazyVGrid(
-            columns: Array(
-              repeating: GridItem(
-                .adaptive(minimum: 200, maximum: 400),
-                spacing: 8,
-                alignment: .leading
-              ),
-              count: 3
-            ),
-            alignment: .leading,
-            spacing: 8
-          ) {
-            ForEach(context.favouriteMovies) { movie in
-              gridItem(movie: movie)
-            }
-          }
-          .padding(.horizontal)
         }
-      }
-      .navigate(
-        using: context.binding(for: \.isNavigationActive, event: FavouriteMovies.Event.didChangeNavigation)
-      ) {
-        MoviesView(store: store.scoped(to: \.moviesState, event: FavouriteMovies.Event.movies))
-      }
-      .navigationBarItems(
-        leading: EmptyView(),
-        trailing: Button(
-          action: context.action(for: FavouriteMovies.Event.didChangeNavigation(true)),
-          label: {
-            Image(systemName: "plus")
+      } else {
+        LazyVGrid(
+          columns: Array(
+            repeating: GridItem(
+              .adaptive(minimum: 200, maximum: 400),
+              spacing: 8,
+              alignment: .leading
+            ),
+            count: 3
+          ),
+          alignment: .leading,
+          spacing: 8
+        ) {
+          ForEach(state.favouriteMovies) { movie in
+            gridItem(movie: movie)
           }
-        )
-      )
+        }
+        .padding(.horizontal)
+      }
     }
+    .navigate(
+      using: $state.binding(for: \.isNavigationActive, event: FavouriteMovies.Event.didChangeNavigation)
+    ) {
+      MoviesView(store: store.scoped(to: \.moviesState, event: FavouriteMovies.Event.movies))
+    }
+    .navigationBarItems(
+      leading: EmptyView(),
+      trailing: Button(
+        action: $state.action(for: FavouriteMovies.Event.didChangeNavigation(true)),
+        label: {
+          Image(systemName: "plus")
+        }
+      )
+    )
   }
 
   func gridItem(movie: Movie) -> some View {
