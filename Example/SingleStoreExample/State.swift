@@ -13,6 +13,7 @@ struct AppFeature: StateMachine {
     var traficLight = TrafficLight.State.red
   }
 
+  @CasePathable
   enum Event {
     case switchExample(SwitchStoreExample.Event)
     case counter(Counter.Event)
@@ -43,13 +44,13 @@ struct AppFeature: StateMachine {
   var body: some StateMachine<State, Event> {
     Scope<State, Event, Machine<Counter.State, Counter.Event>>(
       state: \State.counter,
-      event: /Event.counter
+      event: \.counter
     ) {
       Counter()
     }
     Scope<State, Event, Machine<SwitchStoreExample.State, SwitchStoreExample.Event>>(
       state: \State.switchExample,
-      event: /Event.switchExample
+      event: \.switchExample
     ) {
       SwitchStoreExample(
         dependencies: SwitchStoreExample.Dependencies(signIn: dependencies.signIn)
@@ -57,19 +58,19 @@ struct AppFeature: StateMachine {
     }
     Scope<State, Event, Machine<FavouriteMovies.State, FavouriteMovies.Event>>(
       state: \State.favouriteMovies,
-      event: /Event.favouriteMovies
+      event: \.favouriteMovies
     ) {
       FavouriteMovies(dependencies: dependencies.movies)
     }
     Scope<State, Event, Machine<SignIn.State, SignIn.Event>>(
       state: \State.signIn,
-      event: /Event.signIn
+      event: \.signIn
     ) {
       SignIn(dependencies: dependencies.signIn)
     }
     Scope<State, Event, Machine<TrafficLight.State, TrafficLight.Event>>(
       state: \State.traficLight,
-      event: /Event.trafficLight
+      event: \.trafficLight
     ) {
       TrafficLight()
     }

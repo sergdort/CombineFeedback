@@ -119,9 +119,10 @@ public struct Scope<ParentState, ParentEvent, Child: StateMachine>: StateMachine
 
   public init(
     state: WritableKeyPath<ParentState, Child.State>,
-    event: CasePath<ParentEvent, Child.Event>,
+    event: CaseKeyPath<ParentEvent, Child.Event>,
     @StateMachineBuilder<Child.State, Child.Event> child: () -> Child
-  ) {
+  ) where ParentEvent: CasePathable {
+    let event = AnyCasePath(event)
     let child = child()
     self.resolve = {
       let resolved = child._resolve()
@@ -135,10 +136,12 @@ public struct Scope<ParentState, ParentEvent, Child: StateMachine>: StateMachine
   }
 
   public init(
-    state: CasePath<ParentState, Child.State>,
-    event: CasePath<ParentEvent, Child.Event>,
+    state: CaseKeyPath<ParentState, Child.State>,
+    event: CaseKeyPath<ParentEvent, Child.Event>,
     @StateMachineBuilder<Child.State, Child.Event> child: () -> Child
-  ) {
+  ) where ParentState: CasePathable, ParentEvent: CasePathable {
+    let state = AnyCasePath(state)
+    let event = AnyCasePath(event)
     let child = child()
     self.resolve = {
       let resolved = child._resolve()
@@ -162,16 +165,16 @@ public struct IfLet<ParentState, ParentEvent, Child: StateMachine>: StateMachine
   public typealias Body = Never
 
   private let stateKeyPath: WritableKeyPath<ParentState, Child.State?>
-  private let eventCasePath: CasePath<ParentEvent, Child.Event>
+  private let eventCasePath: AnyCasePath<ParentEvent, Child.Event>
   private let child: Child
 
   public init(
     state: WritableKeyPath<ParentState, Child.State?>,
-    event: CasePath<ParentEvent, Child.Event>,
+    event: CaseKeyPath<ParentEvent, Child.Event>,
     @StateMachineBuilder<Child.State, Child.Event> child: () -> Child
-  ) {
+  ) where ParentEvent: CasePathable {
     self.stateKeyPath = state
-    self.eventCasePath = event
+    self.eventCasePath = AnyCasePath(event)
     self.child = child()
   }
 

@@ -12,6 +12,7 @@ struct FavouriteMovies: StateMachine {
     var moviesState = Movies.State(batch: .empty(), movies: [], status: .loading)
   }
 
+  @CasePathable
   enum Event {
     case movies(Movies.Event)
     case didChangeNavigation(Bool)
@@ -21,7 +22,7 @@ struct FavouriteMovies: StateMachine {
   var body: some StateMachine<State, Event> {
     reducer
 
-    Scope<State, Event, Machine<Movies.State, Movies.Event>>(state: \State.moviesState, event: /Event.movies) {
+    Scope<State, Event, Machine<Movies.State, Movies.Event>>(state: \State.moviesState, event: \.movies) {
       Movies(dependencies: dependencies)
     }
   }

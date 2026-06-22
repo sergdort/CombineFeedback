@@ -5,11 +5,13 @@ import SwiftUI
 struct SwitchStoreExample: StateMachine {
   let dependencies: Dependencies
 
+  @CasePathable
   enum State: Equatable {
     case signIn(SignIn.State)
     case counter(Counter.State)
   }
 
+  @CasePathable
   enum Event {
     case signIn(SignIn.Event)
     case counter(Counter.Event)
@@ -22,15 +24,15 @@ struct SwitchStoreExample: StateMachine {
   @StateMachineBuilder<State, Event>
   var body: some StateMachine<State, Event> {
     Scope<State, Event, Machine<SignIn.State, SignIn.Event>>(
-      state: /State.signIn,
-      event: /Event.signIn
+      state: \.signIn,
+      event: \.signIn
     ) {
       SignIn(dependencies: dependencies.signIn)
     }
 
     Scope<State, Event, Machine<Counter.State, Counter.Event>>(
-      state: /State.counter,
-      event: /Event.counter
+      state: \.counter,
+      event: \.counter
     ) {
       Counter()
     }
@@ -55,11 +57,11 @@ struct SwitchStoreExampleView: View {
     SwitchStoreView(store: store) { state in
       switch state {
       case .signIn:
-        CaseLetStoreView(state: /SwitchStoreExample.State.signIn, action: SwitchStoreExample.Event.signIn) { store in
+        CaseLetStoreView(state: { (state: SwitchStoreExample.State) in state[case: \.signIn] }, action: SwitchStoreExample.Event.signIn) { store in
           SignInView(store: store)
         }
       case .counter:
-        CaseLetStoreView(state: /SwitchStoreExample.State.counter, action: SwitchStoreExample.Event.counter) { store in
+        CaseLetStoreView(state: { (state: SwitchStoreExample.State) in state[case: \.counter] }, action: SwitchStoreExample.Event.counter) { store in
           CounterView(store: store)
         }
       }

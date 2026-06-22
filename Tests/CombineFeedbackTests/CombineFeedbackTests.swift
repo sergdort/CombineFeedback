@@ -198,7 +198,7 @@ final class CombineFeedbackTests: XCTestCase {
           input.enqueue(to: output)
         }
 
-        OnEvent<State, Event, String?>(/Event.setRequest) { request in
+        OnEvent<State, Event, String?>(\.setRequest) { request in
           Just(Event.response(request ?? "nil"))
         }
       }
@@ -231,7 +231,7 @@ final class CombineFeedbackTests: XCTestCase {
           input.enqueue(to: output)
         }
 
-        OnEvent<State, Event, Void>(/Event.noop) {
+        OnEvent<State, Event, Void>(\.noop) {
           Just(Event.response("retried"))
         }
       }
@@ -256,7 +256,7 @@ final class CombineFeedbackTests: XCTestCase {
           input.enqueue(to: output)
         }
 
-        OnEvent<State, Event, String?>(/Event.setRequest) { _ in
+        OnEvent<State, Event, String?>(\.setRequest) { _ in
           effect
         }
       }
@@ -285,11 +285,11 @@ final class CombineFeedbackTests: XCTestCase {
           input.enqueue(to: output)
         }
 
-        OnEvent<State, Event, String?>(/Event.setRequest) { _ in
+        OnEvent<State, Event, String?>(\.setRequest) { _ in
           firstLane
         }
 
-        OnEvent<State, Event, String?>(/Event.setRequest) { _ in
+        OnEvent<State, Event, String?>(\.setRequest) { _ in
           secondLane
         }
       }
@@ -418,7 +418,7 @@ final class CombineFeedbackTests: XCTestCase {
       machine: Machine<ParentState, ParentEvent> {
         Scope<ParentState, ParentEvent, Machine<ChildState, ChildEvent>>(
           state: \ParentState.child,
-          event: /ParentEvent.child
+          event: \.child
         ) {
           Machine<ChildState, ChildEvent> {
             Reducer { (state: inout ChildState, event: ChildEvent) in
@@ -449,8 +449,8 @@ final class CombineFeedbackTests: XCTestCase {
       initial: SwitchParentState.child(ChildState(value: "a")),
       machine: Machine<SwitchParentState, ParentEvent> {
         Scope<SwitchParentState, ParentEvent, Machine<ChildState, ChildEvent>>(
-          state: /SwitchParentState.child,
-          event: /ParentEvent.child
+          state: \.child,
+          event: \.child
         ) {
           Machine<ChildState, ChildEvent> {
             Reducer { (state: inout ChildState, event: ChildEvent) in
@@ -468,7 +468,7 @@ final class CombineFeedbackTests: XCTestCase {
     )
 
     cancellable = system.output(in: 0...1).sink { state in
-      result.append((/SwitchParentState.child).extract(from: state)?.value)
+      result.append(state[case: \.child]?.value)
     }
 
     XCTAssertEqual(result, ["a", "a!"])
@@ -481,8 +481,8 @@ final class CombineFeedbackTests: XCTestCase {
       initial: SwitchParentState.child(ChildState(value: "a")),
       machine: Machine<SwitchParentState, ParentEvent> {
         Scope<SwitchParentState, ParentEvent, Machine<ChildState, ChildEvent>>(
-          state: /SwitchParentState.child,
-          event: /ParentEvent.child
+          state: \.child,
+          event: \.child
         ) {
           Machine<ChildState, ChildEvent> {
             Reducer { (state: inout ChildState, event: ChildEvent) in
@@ -506,7 +506,7 @@ final class CombineFeedbackTests: XCTestCase {
     )
 
     cancellable = system.sink { state in
-      result.append((/SwitchParentState.child).extract(from: state)?.value)
+      result.append(state[case: \.child]?.value)
     }
 
     XCTAssertEqual(result, ["a", nil])
@@ -534,7 +534,7 @@ final class CombineFeedbackTests: XCTestCase {
 
         IfLet<OptionalParentState, ParentEvent, Machine<ChildState, ChildEvent>>(
           state: \OptionalParentState.child,
-          event: /ParentEvent.child
+          event: \.child
         ) {
           Machine<ChildState, ChildEvent> {
             Reducer { (state: inout ChildState, event: ChildEvent) in
@@ -575,7 +575,7 @@ final class CombineFeedbackTests: XCTestCase {
 
         IfLet<OptionalParentState, ParentEvent, Machine<ChildState, ChildEvent>>(
           state: \OptionalParentState.child,
-          event: /ParentEvent.child
+          event: \.child
         ) {
           Machine<ChildState, ChildEvent> {
             Reducer { (state: inout ChildState, event: ChildEvent) in
@@ -612,7 +612,7 @@ final class CombineFeedbackTests: XCTestCase {
 
         IfLet<OptionalParentState, ParentEvent, Machine<ChildState, ChildEvent>>(
           state: \OptionalParentState.child,
-          event: /ParentEvent.child
+          event: \.child
         ) {
           Machine<ChildState, ChildEvent> {
             Feedback<ChildState, ChildEvent>.custom { _, _ in
@@ -684,7 +684,7 @@ final class CombineFeedbackTests: XCTestCase {
           input.enqueue(to: output)
         }
 
-        OnEvent<State, Event, String?>(/Event.setRequest) { request in
+        OnEvent<State, Event, String?>(\.setRequest) { request in
           ArrayAsyncSequence([.response(request ?? "nil"), .response("done")])
         }
       }
@@ -787,6 +787,7 @@ private struct State: Equatable {
   var values: [String]
 }
 
+@CasePathable
 private enum Event: Equatable, Sendable {
   case setRequest(String?)
   case response(String)
@@ -801,11 +802,13 @@ private struct OptionalParentState: Equatable {
   var child: ChildState?
 }
 
+@CasePathable
 private enum SwitchParentState: Equatable {
   case child(ChildState)
   case other
 }
 
+@CasePathable
 private enum ParentEvent: Equatable, Sendable {
   case child(ChildEvent)
   case removeChild

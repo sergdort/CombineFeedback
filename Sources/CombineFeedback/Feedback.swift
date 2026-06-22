@@ -84,7 +84,7 @@ public struct Feedback<State, Event>: StateMachine {
 func scopedFeedback<ParentState, ParentEvent, ChildState, ChildEvent>(
   _ feedback: Feedback<ChildState, ChildEvent>,
   state stateKeyPath: KeyPath<ParentState, ChildState>,
-  event eventCasePath: CasePath<ParentEvent, ChildEvent>
+  event eventCasePath: AnyCasePath<ParentEvent, ChildEvent>
 ) -> Feedback<ParentState, ParentEvent> {
   Feedback<ParentState, ParentEvent> { input, output in
     let childInput = FeedbackInput<ChildState, ChildEvent>(
@@ -103,8 +103,8 @@ func scopedFeedback<ParentState, ParentEvent, ChildState, ChildEvent>(
 
 func scopedFeedback<ParentState, ParentEvent, ChildState, ChildEvent>(
   _ feedback: Feedback<ChildState, ChildEvent>,
-  state stateCasePath: CasePath<ParentState, ChildState>,
-  event eventCasePath: CasePath<ParentEvent, ChildEvent>
+  state stateCasePath: AnyCasePath<ParentState, ChildState>,
+  event eventCasePath: AnyCasePath<ParentEvent, ChildEvent>
 ) -> Feedback<ParentState, ParentEvent> {
   optionalScopedFeedback(
     feedback,
@@ -116,7 +116,7 @@ func scopedFeedback<ParentState, ParentEvent, ChildState, ChildEvent>(
 func scopedFeedback<ParentState, ParentEvent, ChildState, ChildEvent>(
   _ feedback: Feedback<ChildState, ChildEvent>,
   state stateKeyPath: KeyPath<ParentState, ChildState?>,
-  event eventCasePath: CasePath<ParentEvent, ChildEvent>
+  event eventCasePath: AnyCasePath<ParentEvent, ChildEvent>
 ) -> Feedback<ParentState, ParentEvent> {
   optionalScopedFeedback(
     feedback,
@@ -128,7 +128,7 @@ func scopedFeedback<ParentState, ParentEvent, ChildState, ChildEvent>(
 private func optionalScopedFeedback<ParentState, ParentEvent, ChildState, ChildEvent>(
   _ feedback: Feedback<ChildState, ChildEvent>,
   state: @escaping (ParentState) -> ChildState?,
-  event eventCasePath: CasePath<ParentEvent, ChildEvent>
+  event eventCasePath: AnyCasePath<ParentEvent, ChildEvent>
 ) -> Feedback<ParentState, ParentEvent> {
   Feedback<ParentState, ParentEvent> { input, output in
     OptionalFeedbackSubscription(
@@ -220,28 +220,28 @@ public struct OnEvent<State, Event, Payload>: StateMachine {
   private let feedback: Feedback<State, Event>
 
   public init<Effect: Publisher>(
-    _ eventCasePath: CasePath<Event, Payload>,
+    _ eventCasePath: CaseKeyPath<Event, Payload>,
     _ effect: @escaping (Payload) -> Effect
-  ) where Effect.Output == Event, Effect.Failure == Never {
+  ) where Event: CasePathable, Effect.Output == Event, Effect.Failure == Never {
     self.feedback = Feedback.custom { input, output in
       input.events
-        .compactMap(eventCasePath.extract(from:))
+        .compactMap { $0[case: eventCasePath] }
         .flatMapLatest { effect($0).enqueue(to: output) }
     }
   }
 
   public init<Effect: Publisher>(
-    _ eventCasePath: CasePath<Event, Void>,
+    _ eventCasePath: CaseKeyPath<Event, Void>,
     _ effect: @escaping () -> Effect
-  ) where Payload == Void, Effect.Output == Event, Effect.Failure == Never {
+  ) where Event: CasePathable, Payload == Void, Effect.Output == Event, Effect.Failure == Never {
     self.init(eventCasePath) { _ in effect() }
   }
 
   @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
   public init(
-    _ eventCasePath: CasePath<Event, Payload>,
+    _ eventCasePath: CaseKeyPath<Event, Payload>,
     _ effect: @escaping (Payload) async -> Event
-  ) {
+  ) where Event: CasePathable {
     self.init(eventCasePath) { payload in
       TaskPublisher { await effect(payload) }
     }
@@ -249,9 +249,9 @@ public struct OnEvent<State, Event, Payload>: StateMachine {
 
   @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
   public init(
-    _ eventCasePath: CasePath<Event, Void>,
+    _ eventCasePath: CaseKeyPath<Event, Void>,
     _ effect: @escaping () async -> Event
-  ) where Payload == Void {
+  ) where Event: CasePathable, Payload == Void {
     self.init(eventCasePath) { _ in
       TaskPublisher { await effect() }
     }
@@ -259,9 +259,9 @@ public struct OnEvent<State, Event, Payload>: StateMachine {
 
   @available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, *)
   public init<S: AsyncSequence & Sendable>(
-    _ eventCasePath: CasePath<Event, Payload>,
+    _ eventCasePath: CaseKeyPath<Event, Payload>,
     _ effect: @escaping (Payload) -> S
-  ) where S.Element == Event, S.Failure == Never, S.AsyncIterator: Sendable {
+  ) where Event: CasePathable, S.Element == Event, S.Failure == Never, S.AsyncIterator: Sendable {
     self.init(eventCasePath) { payload in
       AsyncSequencePublisher(effect(payload))
     }
@@ -309,7 +309,7 @@ private final class OptionalFeedbackSubscription<ParentState, ParentEvent, State
   private let lock = NSRecursiveLock()
   private let output: FeedbackOutput<Event>
   private let state: (ParentState) -> State?
-  private let eventCasePath: CasePath<ParentEvent, Event>
+  private let eventCasePath: AnyCasePath<ParentEvent, Event>
   private let run: (FeedbackInput<State, Event>, FeedbackOutput<Event>) -> Cancellable
   private var upstream: Cancellable?
   private var childInput: PassthroughSubject<FeedbackInput<State, Event>.Update, Never>?
@@ -320,7 +320,7 @@ private final class OptionalFeedbackSubscription<ParentState, ParentEvent, State
     updates: AnyPublisher<FeedbackInput<ParentState, ParentEvent>.Update, Never>,
     output: FeedbackOutput<Event>,
     state: @escaping (ParentState) -> State?,
-    event eventCasePath: CasePath<ParentEvent, Event>,
+    event eventCasePath: AnyCasePath<ParentEvent, Event>,
     run: @escaping (FeedbackInput<State, Event>, FeedbackOutput<Event>) -> Cancellable
   ) {
     self.output = output

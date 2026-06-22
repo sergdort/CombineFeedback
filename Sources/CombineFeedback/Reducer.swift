@@ -41,7 +41,7 @@ public struct Reducer<State, Event> {
 func scopedReducer<ParentState, ParentEvent, ChildState, ChildEvent>(
   _ reducer: Reducer<ChildState, ChildEvent>,
   state stateKeyPath: WritableKeyPath<ParentState, ChildState>,
-  event eventCasePath: CasePath<ParentEvent, ChildEvent>
+  event eventCasePath: AnyCasePath<ParentEvent, ChildEvent>
 ) -> Reducer<ParentState, ParentEvent> {
   Reducer<ParentState, ParentEvent> { parentState, parentEvent in
     guard let childEvent = eventCasePath.extract(from: parentEvent) else { return }
@@ -51,8 +51,8 @@ func scopedReducer<ParentState, ParentEvent, ChildState, ChildEvent>(
 
 func scopedReducer<ParentState, ParentEvent, ChildState, ChildEvent>(
   _ reducer: Reducer<ChildState, ChildEvent>,
-  state stateCasePath: CasePath<ParentState, ChildState>,
-  event eventCasePath: CasePath<ParentEvent, ChildEvent>
+  state stateCasePath: AnyCasePath<ParentState, ChildState>,
+  event eventCasePath: AnyCasePath<ParentEvent, ChildEvent>
 ) -> Reducer<ParentState, ParentEvent> {
   Reducer<ParentState, ParentEvent> { parentState, parentEvent in
     guard let childEvent = eventCasePath.extract(from: parentEvent) else { return }
@@ -65,7 +65,7 @@ func scopedReducer<ParentState, ParentEvent, ChildState, ChildEvent>(
 func scopedReducer<ParentState, ParentEvent, ChildState, ChildEvent>(
   _ reducer: Reducer<ChildState, ChildEvent>,
   state stateKeyPath: WritableKeyPath<ParentState, ChildState?>,
-  event eventCasePath: CasePath<ParentEvent, ChildEvent>
+  event eventCasePath: AnyCasePath<ParentEvent, ChildEvent>
 ) -> Reducer<ParentState, ParentEvent> {
   Reducer<ParentState, ParentEvent> { parentState, parentEvent in
     guard let childEvent = eventCasePath.extract(from: parentEvent) else { return }
