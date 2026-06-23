@@ -41,34 +41,34 @@ public struct Reducer<State, Event> {
 func scopedReducer<ParentState, ParentEvent, ChildState, ChildEvent>(
   _ reducer: Reducer<ChildState, ChildEvent>,
   state stateKeyPath: WritableKeyPath<ParentState, ChildState>,
-  event eventCasePath: AnyCasePath<ParentEvent, ChildEvent>
-) -> Reducer<ParentState, ParentEvent> {
+  event eventKeyPath: CaseKeyPath<ParentEvent, ChildEvent>
+) -> Reducer<ParentState, ParentEvent> where ParentEvent: CasePathable {
   Reducer<ParentState, ParentEvent> { parentState, parentEvent in
-    guard let childEvent = eventCasePath.extract(from: parentEvent) else { return }
+    guard let childEvent = parentEvent[case: eventKeyPath] else { return }
     reducer(&parentState[keyPath: stateKeyPath], childEvent)
   }
 }
 
 func scopedReducer<ParentState, ParentEvent, ChildState, ChildEvent>(
   _ reducer: Reducer<ChildState, ChildEvent>,
-  state stateCasePath: AnyCasePath<ParentState, ChildState>,
-  event eventCasePath: AnyCasePath<ParentEvent, ChildEvent>
-) -> Reducer<ParentState, ParentEvent> {
+  state stateKeyPath: CaseKeyPath<ParentState, ChildState>,
+  event eventKeyPath: CaseKeyPath<ParentEvent, ChildEvent>
+) -> Reducer<ParentState, ParentEvent> where ParentState: CasePathable, ParentEvent: CasePathable {
   Reducer<ParentState, ParentEvent> { parentState, parentEvent in
-    guard let childEvent = eventCasePath.extract(from: parentEvent) else { return }
-    guard var childState = stateCasePath.extract(from: parentState) else { return }
+    guard let childEvent = parentEvent[case: eventKeyPath] else { return }
+    guard var childState = parentState[case: stateKeyPath] else { return }
     reducer(&childState, childEvent)
-    parentState = stateCasePath.embed(childState)
+    parentState = stateKeyPath(childState)
   }
 }
 
 func scopedReducer<ParentState, ParentEvent, ChildState, ChildEvent>(
   _ reducer: Reducer<ChildState, ChildEvent>,
   state stateKeyPath: WritableKeyPath<ParentState, ChildState?>,
-  event eventCasePath: AnyCasePath<ParentEvent, ChildEvent>
-) -> Reducer<ParentState, ParentEvent> {
+  event eventKeyPath: CaseKeyPath<ParentEvent, ChildEvent>
+) -> Reducer<ParentState, ParentEvent> where ParentEvent: CasePathable {
   Reducer<ParentState, ParentEvent> { parentState, parentEvent in
-    guard let childEvent = eventCasePath.extract(from: parentEvent) else { return }
+    guard let childEvent = parentEvent[case: eventKeyPath] else { return }
     guard var childState = parentState[keyPath: stateKeyPath] else { return }
     reducer(&childState, childEvent)
     parentState[keyPath: stateKeyPath] = childState

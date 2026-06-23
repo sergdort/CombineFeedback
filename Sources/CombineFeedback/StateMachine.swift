@@ -122,7 +122,6 @@ public struct Scope<ParentState, ParentEvent, Child: StateMachine>: StateMachine
     event: CaseKeyPath<ParentEvent, Child.Event>,
     @StateMachineBuilder<Child.State, Child.Event> child: () -> Child
   ) where ParentEvent: CasePathable {
-    let event = AnyCasePath(event)
     let child = child()
     self.resolve = {
       let resolved = child._resolve()
@@ -140,8 +139,6 @@ public struct Scope<ParentState, ParentEvent, Child: StateMachine>: StateMachine
     event: CaseKeyPath<ParentEvent, Child.Event>,
     @StateMachineBuilder<Child.State, Child.Event> child: () -> Child
   ) where ParentState: CasePathable, ParentEvent: CasePathable {
-    let state = AnyCasePath(state)
-    let event = AnyCasePath(event)
     let child = child()
     self.resolve = {
       let resolved = child._resolve()
@@ -159,31 +156,32 @@ public struct Scope<ParentState, ParentEvent, Child: StateMachine>: StateMachine
   }
 }
 
-public struct IfLet<ParentState, ParentEvent, Child: StateMachine>: StateMachine {
+public struct IfLet<ParentState, ParentEvent, Child: StateMachine>: StateMachine
+where ParentEvent: CasePathable {
   public typealias State = ParentState
   public typealias Event = ParentEvent
   public typealias Body = Never
 
   private let stateKeyPath: WritableKeyPath<ParentState, Child.State?>
-  private let eventCasePath: AnyCasePath<ParentEvent, Child.Event>
+  private let eventKeyPath: CaseKeyPath<ParentEvent, Child.Event>
   private let child: Child
 
   public init(
     state: WritableKeyPath<ParentState, Child.State?>,
     event: CaseKeyPath<ParentEvent, Child.Event>,
     @StateMachineBuilder<Child.State, Child.Event> child: () -> Child
-  ) where ParentEvent: CasePathable {
+  ) {
     self.stateKeyPath = state
-    self.eventCasePath = AnyCasePath(event)
+    self.eventKeyPath = event
     self.child = child()
   }
 
   public func _resolve() -> ResolvedMachine<ParentState, ParentEvent> {
     let resolved = child._resolve()
     return ResolvedMachine(
-      reducer: scopedReducer(resolved.reducer, state: stateKeyPath, event: eventCasePath),
+      reducer: scopedReducer(resolved.reducer, state: stateKeyPath, event: eventKeyPath),
       feedbacks: resolved.feedbacks.map {
-        scopedFeedback($0, state: stateKeyPath, event: eventCasePath)
+        scopedFeedback($0, state: stateKeyPath, event: eventKeyPath)
       }
     )
   }

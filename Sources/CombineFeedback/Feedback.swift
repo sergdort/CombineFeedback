@@ -84,58 +84,58 @@ public struct Feedback<State, Event>: StateMachine {
 func scopedFeedback<ParentState, ParentEvent, ChildState, ChildEvent>(
   _ feedback: Feedback<ChildState, ChildEvent>,
   state stateKeyPath: KeyPath<ParentState, ChildState>,
-  event eventCasePath: AnyCasePath<ParentEvent, ChildEvent>
-) -> Feedback<ParentState, ParentEvent> {
+  event eventKeyPath: CaseKeyPath<ParentEvent, ChildEvent>
+) -> Feedback<ParentState, ParentEvent> where ParentEvent: CasePathable {
   Feedback<ParentState, ParentEvent> { input, output in
     let childInput = FeedbackInput<ChildState, ChildEvent>(
       updates: input.updates
         .map { update in
           FeedbackInput<ChildState, ChildEvent>.Update(
             state: update.state[keyPath: stateKeyPath],
-            event: update.event.flatMap(eventCasePath.extract(from:))
+            event: update.event.flatMap { $0[case: eventKeyPath] }
           )
         }
         .eraseToAnyPublisher()
     )
-    return feedback.run(childInput, FeedbackOutput<ChildEvent>(consumer: output.consumer.mapInput(eventCasePath.embed)))
+    return feedback.run(childInput, FeedbackOutput<ChildEvent>(consumer: output.consumer.mapInput { eventKeyPath($0) }))
   }
 }
 
 func scopedFeedback<ParentState, ParentEvent, ChildState, ChildEvent>(
   _ feedback: Feedback<ChildState, ChildEvent>,
-  state stateCasePath: AnyCasePath<ParentState, ChildState>,
-  event eventCasePath: AnyCasePath<ParentEvent, ChildEvent>
-) -> Feedback<ParentState, ParentEvent> {
+  state stateKeyPath: CaseKeyPath<ParentState, ChildState>,
+  event eventKeyPath: CaseKeyPath<ParentEvent, ChildEvent>
+) -> Feedback<ParentState, ParentEvent> where ParentState: CasePathable, ParentEvent: CasePathable {
   optionalScopedFeedback(
     feedback,
-    state: { stateCasePath.extract(from: $0) },
-    event: eventCasePath
+    state: { $0[case: stateKeyPath] },
+    event: eventKeyPath
   )
 }
 
 func scopedFeedback<ParentState, ParentEvent, ChildState, ChildEvent>(
   _ feedback: Feedback<ChildState, ChildEvent>,
   state stateKeyPath: KeyPath<ParentState, ChildState?>,
-  event eventCasePath: AnyCasePath<ParentEvent, ChildEvent>
-) -> Feedback<ParentState, ParentEvent> {
+  event eventKeyPath: CaseKeyPath<ParentEvent, ChildEvent>
+) -> Feedback<ParentState, ParentEvent> where ParentEvent: CasePathable {
   optionalScopedFeedback(
     feedback,
     state: { $0[keyPath: stateKeyPath] },
-    event: eventCasePath
+    event: eventKeyPath
   )
 }
 
 private func optionalScopedFeedback<ParentState, ParentEvent, ChildState, ChildEvent>(
   _ feedback: Feedback<ChildState, ChildEvent>,
   state: @escaping (ParentState) -> ChildState?,
-  event eventCasePath: AnyCasePath<ParentEvent, ChildEvent>
-) -> Feedback<ParentState, ParentEvent> {
+  event eventKeyPath: CaseKeyPath<ParentEvent, ChildEvent>
+) -> Feedback<ParentState, ParentEvent> where ParentEvent: CasePathable {
   Feedback<ParentState, ParentEvent> { input, output in
     OptionalFeedbackSubscription(
       updates: input.updates,
-      output: FeedbackOutput<ChildEvent>(consumer: output.consumer.mapInput(eventCasePath.embed)),
+      output: FeedbackOutput<ChildEvent>(consumer: output.consumer.mapInput { eventKeyPath($0) }),
       state: state,
-      event: eventCasePath,
+      event: eventKeyPath,
       run: feedback.run
     )
   }
@@ -305,11 +305,12 @@ extension Array: @retroactive Cancellable where Element == Cancellable {
   }
 }
 
-private final class OptionalFeedbackSubscription<ParentState, ParentEvent, State, Event>: Cancellable {
+private final class OptionalFeedbackSubscription<ParentState, ParentEvent, State, Event>: Cancellable
+where ParentEvent: CasePathable {
   private let lock = NSRecursiveLock()
   private let output: FeedbackOutput<Event>
   private let state: (ParentState) -> State?
-  private let eventCasePath: AnyCasePath<ParentEvent, Event>
+  private let eventKeyPath: CaseKeyPath<ParentEvent, Event>
   private let run: (FeedbackInput<State, Event>, FeedbackOutput<Event>) -> Cancellable
   private var upstream: Cancellable?
   private var childInput: PassthroughSubject<FeedbackInput<State, Event>.Update, Never>?
@@ -320,12 +321,12 @@ private final class OptionalFeedbackSubscription<ParentState, ParentEvent, State
     updates: AnyPublisher<FeedbackInput<ParentState, ParentEvent>.Update, Never>,
     output: FeedbackOutput<Event>,
     state: @escaping (ParentState) -> State?,
-    event eventCasePath: AnyCasePath<ParentEvent, Event>,
+    event eventKeyPath: CaseKeyPath<ParentEvent, Event>,
     run: @escaping (FeedbackInput<State, Event>, FeedbackOutput<Event>) -> Cancellable
   ) {
     self.output = output
     self.state = state
-    self.eventCasePath = eventCasePath
+    self.eventKeyPath = eventKeyPath
     self.run = run
     self.upstream = updates.sink { [weak self] update in
       self?.receive(update)
@@ -356,7 +357,7 @@ private final class OptionalFeedbackSubscription<ParentState, ParentEvent, State
 
     let localUpdate = FeedbackInput<State, Event>.Update(
       state: localState,
-      event: update.event.flatMap(eventCasePath.extract(from:))
+      event: update.event.flatMap { $0[case: eventKeyPath] }
     )
 
     if let childInput {

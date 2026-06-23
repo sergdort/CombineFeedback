@@ -1,6 +1,5 @@
 import Combine
 import Foundation
-import CasePaths
 
 open class Store<State, Event> {
   private let box: StoreBoxBase<State, Event>

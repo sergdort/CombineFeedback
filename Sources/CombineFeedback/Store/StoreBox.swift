@@ -1,5 +1,4 @@
 import Combine
-import CasePaths
 import SwiftUI
 
 internal class RootStoreBox<State, Event>: StoreBoxBase<State, Event> {

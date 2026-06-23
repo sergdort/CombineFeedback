@@ -1,5 +1,4 @@
 import SwiftUI
-import CasePaths
 
 /// A view that can switch over a store of enum state and handle each case.
 ///
