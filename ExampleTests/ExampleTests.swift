@@ -25,7 +25,7 @@ final class MoviesTestStoreTests: XCTestCase {
     )
 
     store.send(.fetchNext)
-    try await store.wait { $0.status == .idle && !$0.movies.isEmpty }
+    await store.wait { $0.status == .idle && !$0.movies.isEmpty }
 
     XCTAssertEqual(store.state.movies, [movie(10)])
   }
@@ -40,10 +40,10 @@ final class MoviesTestStoreTests: XCTestCase {
     )
 
     store.send(.fetchNext)
-    try await store.wait { $0.movies == [movie(1)] }
+    await store.wait { $0.movies == [movie(1)] }
 
     store.send(.fetchNext)
-    try await store.wait { $0.movies == [movie(1), movie(2)] }
+    await store.wait { $0.movies == [movie(1), movie(2)] }
   }
 
   // Failure -> retry -> loaded. The destination is asserted, not the path.
@@ -60,10 +60,10 @@ final class MoviesTestStoreTests: XCTestCase {
     )
 
     store.send(.fetchNext)
-    try await store.wait { if case .failed = $0.status { return true } else { return false } }
+    await store.wait { if case .failed = $0.status { return true } else { return false } }
 
     store.send(.retry)
-    try await store.wait { $0.status == .idle && $0.movies == [movie(10)] }
+    await store.wait { $0.status == .idle && $0.movies == [movie(10)] }
   }
 }
 

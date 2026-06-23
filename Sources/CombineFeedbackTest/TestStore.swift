@@ -2,6 +2,7 @@ import Combine
 import CombineFeedback
 import CustomDump
 import Foundation
+import IssueReporting
 
 // MARK: - A TestStore-like facility for CombineFeedback state machines.
 //
@@ -15,34 +16,14 @@ import Foundation
 //   - in-flight effect leak detection
 //   - controllable clocks (time is the consumer's concern: inject a scheduler)
 
-/// Thrown by ``TestStore/wait(timeout:until:)`` when the predicate is never
-/// satisfied before the timeout elapses.
-public struct WaitTimeout<State>: Error, CustomStringConvertible {
-  public let lastState: State
-  public let trajectory: [State]
-  public let timeout: TimeInterval
-
-  public var description: String {
-    var out = "wait(until:) timed out after \(Int(timeout * 1000))ms — predicate never satisfied.\n"
-    out += "  Last state: \(Self.dump(lastState))\n"
-    out += "  Observed trajectory:\n"
-    for state in trajectory {
-      out += "    \(Self.dump(state))\n"
-    }
-    return out
-  }
-
-  private static func dump(_ state: State) -> String {
-    var rendered = ""
-    customDump(state, to: &rendered)
-    // Keep each state on a single indented line in the trajectory list.
-    return rendered.replacingOccurrences(of: "\n", with: "\n    ")
-  }
-}
-
 /// Drives a state machine for testing: send events, then `wait` for the state
 /// the user would observe.
-public final class TestStore<State, Event> {
+///
+/// `@unchecked Sendable`: the underlying `Store` serialises event processing
+/// (Floodgate) and exposes state through a thread-safe `CurrentValueSubject`,
+/// and the trajectory recorder is mutex-guarded, so the store is safe to use
+/// across isolation boundaries in tests.
+public final class TestStore<State, Event>: @unchecked Sendable {
   /// The underlying production store. Exposed so tests can `scope` or inspect it.
   public let store: Store<State, Event>
 
@@ -69,28 +50,62 @@ public final class TestStore<State, Event> {
     store.send(event: event)
   }
 
-  /// Suspends until `predicate(state)` is true, or fails after `timeout`.
+  /// Suspends until `predicate(state)` is true, or reports a test failure after
+  /// `timeout`.
   ///
   /// On success this returns the instant the loop reaches a matching state
   /// (microseconds with immediate mocks). The full timeout only elapses when the
-  /// machine never arrives — i.e. a real bug — at which point ``WaitTimeout`` is
-  /// thrown with the last state and the observed trajectory.
+  /// machine never arrives — i.e. a real bug — at which point an issue is
+  /// reported at the call site (via swift-issue-reporting, so it surfaces in both
+  /// XCTest and Swift Testing) with the last state and the observed trajectory.
   public func wait(
     timeout: TimeInterval = 0.1,
+    fileID: StaticString = #fileID,
+    filePath: StaticString = #filePath,
+    line: UInt = #line,
+    column: UInt = #column,
     until predicate: (State) -> Bool
-  ) async throws {
+  ) async {
     let deadline = Date().addingTimeInterval(timeout)
     while true {
       if predicate(store.state) { return }
       if Date() >= deadline {
-        throw WaitTimeout(
-          lastState: store.state,
-          trajectory: trajectory.value,
-          timeout: timeout
+        reportIssue(
+          Self.timeoutMessage(
+            timeout: timeout,
+            lastState: store.state,
+            trajectory: trajectory.value
+          ),
+          fileID: fileID,
+          filePath: filePath,
+          line: line,
+          column: column
         )
+        return
       }
       await Task.yield()
     }
+  }
+
+  private static func timeoutMessage(
+    timeout: TimeInterval,
+    lastState: State,
+    trajectory: [State]
+  ) -> String {
+    var out = "wait(until:) timed out after \(Int(timeout * 1000))ms — predicate never satisfied.\n"
+    out += "  Last state: \(dump(lastState))\n"
+    out += "  Observed trajectory:\n"
+    for state in trajectory {
+      out += "    \(dump(state))\n"
+    }
+    return out
+  }
+
+  private static func dump(_ state: State) -> String {
+    var rendered = ""
+    customDump(state, to: &rendered)
+    // Keep each state on a single indented line in the trajectory list.
+    return rendered.replacingOccurrences(of: "\n", with: "\n    ")
   }
 }
 

@@ -1,6 +1,7 @@
 import Combine
 import CombineFeedback
 import CombineFeedbackTest
+import IssueReporting
 import Foundation
 import XCTest
 
@@ -77,7 +78,7 @@ final class TestStoreSpikeTests: XCTestCase {
     )
 
     store.send(.fetchNext)
-    try await store.wait { $0.status == .idle && !$0.items.isEmpty }
+    await store.wait { $0.status == .idle && !$0.items.isEmpty }
 
     XCTAssertEqual(store.state.items, [10, 11])
     XCTAssertEqual(store.state.page, 1)
@@ -91,10 +92,10 @@ final class TestStoreSpikeTests: XCTestCase {
     )
 
     store.send(.fetchNext)
-    try await store.wait { $0.status == .idle && $0.items == [10] }
+    await store.wait { $0.status == .idle && $0.items == [10] }
 
     store.send(.fetchNext)
-    try await store.wait { $0.status == .idle && $0.items == [10, 20] }
+    await store.wait { $0.status == .idle && $0.items == [10, 20] }
 
     XCTAssertEqual(store.state.page, 2)
   }
@@ -113,29 +114,55 @@ final class TestStoreSpikeTests: XCTestCase {
     )
 
     store.send(.fetchNext)
-    try await store.wait { if case .failed = $0.status { return true } else { return false } }
+    await store.wait { if case .failed = $0.status { return true } else { return false } }
 
     store.send(.retry)
-    try await store.wait { $0.status == .idle && $0.items == [10] }
+    await store.wait { $0.status == .idle && $0.items == [10] }
   }
 
   // Prove the diagnostic: a predicate that never holds times out with a
   // trajectory the developer can actually read.
-  func test_timeout_reports_trajectory() async throws {
+  func test_timeout_reports_trajectory() async {
     let store = TestStore(
       initial: Fetcher.State(),
       machine: Fetcher(fetch: { _ in [1] })
     )
 
     store.send(.fetchNext)
-    do {
-      try await store.wait(timeout: 0.05) { $0.items.count == 99 } // never true
-      XCTFail("expected a timeout")
-    } catch let error as WaitTimeout<Fetcher.State> {
-      // The message should show idle -> loading -> idle(items:[1]).
-      XCTAssertTrue(error.trajectory.contains { $0.items == [1] })
-      print(error.description)
+    // The predicate never holds, so wait reports a test issue once the timeout
+    // elapses. A custom reporter captures it instead of failing this test.
+    let reporter = RecordingIssueReporter()
+    await withIssueReporters([reporter]) {
+      await store.wait(timeout: 0.05) { $0.items.count == 99 }
     }
+
+    XCTAssertEqual(reporter.messages.count, 1)
+    let message = reporter.messages.first ?? ""
+    XCTAssertTrue(message.contains("timed out"), message)
+    // The recorded trajectory should show the loaded state with items [1].
+    XCTAssertTrue(message.contains("Observed trajectory"), message)
+    XCTAssertTrue(message.contains("1"), message)
+  }
+}
+
+private final class RecordingIssueReporter: IssueReporter, @unchecked Sendable {
+  private let lock = NSLock()
+  private var _messages: [String] = []
+  var messages: [String] {
+    lock.lock(); defer { lock.unlock() }
+    return _messages
+  }
+
+  func reportIssue(
+    _ message: @autoclosure () -> String?,
+    severity: IssueSeverity,
+    fileID: StaticString,
+    filePath: StaticString,
+    line: UInt,
+    column: UInt
+  ) {
+    let captured = message() ?? ""
+    lock.lock(); _messages.append(captured); lock.unlock()
   }
 }
 
