@@ -196,15 +196,15 @@ struct Parent: StateMachine {
             // Parent transitions
         }
 
-        Scope(state: \State.child, event: /Event.child) {
+        Scope(state: \State.child, event: \.child) {
             Child()
         }
 
-        Scope(state: /State.selected, event: /Event.selected) {
+        Scope(state: \.selected, event: \.selected) {
             Selected()
         }
 
-        IfLet(state: \State.details, event: /Event.details) {
+        IfLet(state: \State.details, event: \.details) {
             Details()
         }
     }
@@ -212,6 +212,17 @@ struct Parent: StateMachine {
 ```
 
 `Scope` in a machine composes child reducers and feedbacks together for stored child state via key paths and enum-case child state via case paths. `Store.scope` projects an already-running parent store for views.
+
+Child events (and enum-case child state) are routed with [CasePaths](https://github.com/pointfreeco/swift-case-paths) case key paths, so the parent `Event` (and any enum `State`) must be annotated with `@CasePathable`:
+
+```swift
+@CasePathable
+enum Event {
+    case child(Child.Event)
+    case selected(Selected.Event)
+    case details(Details.Event)
+}
+```
 
 Advanced custom feedback can control cancellation policy by choosing where events are enqueued:
 
@@ -261,6 +272,34 @@ struct SignInView: View {
     }
 }
 ```
+
+### Testing
+
+`CombineFeedbackTest` provides a `TestStore` for testing state machines by
+**destination, not journey**: drive the real loop with dependencies mocked
+through the machine's initializer, then `wait` for the state the user would
+observe.
+
+```swift
+import CombineFeedbackTest
+
+func test_appearing_loads_movies() async {
+    let store = TestStore(
+        initial: Movies.State(),
+        machine: Movies(fetch: { page in [Movie(id: page)] })
+    )
+
+    store.send(.fetchNext)
+    await store.wait { $0.status == .idle && !$0.movies.isEmpty }
+
+    XCTAssertEqual(store.state.movies, [Movie(id: 1)])
+}
+```
+
+`wait` completes the instant the predicate holds; on timeout it reports a
+failure at the call site (in both XCTest and Swift Testing) with the observed
+state trajectory. See [`Sources/CombineFeedbackTest/README.md`](Sources/CombineFeedbackTest/README.md)
+for the full guide.
 
 ### Example
 

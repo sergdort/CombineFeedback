@@ -49,7 +49,8 @@ let package = Package(
                 "CombineFeedback",
                 .product(name: "CustomDump", package: "swift-custom-dump"),
                 .product(name: "IssueReporting", package: "xctest-dynamic-overlay")
-            ]
+            ],
+            exclude: ["README.md"]
         ),
         .testTarget(
             name: "CombineFeedbackTests",
