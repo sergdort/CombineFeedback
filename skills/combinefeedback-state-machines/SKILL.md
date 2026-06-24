@@ -28,7 +28,8 @@ Use this skill for:
 Do not use this skill for:
 
 - SwiftUI/store binding guidance.
-- Testing strategy or test-store patterns.
+- Testing strategy or test-store patterns (use the companion skill
+  `combinefeedback-state-machine-testing`).
 - Generic finite-state-machine theory unrelated to CombineFeedback.
 
 If the user is exploring or refactoring, proactively challenge state boundaries
