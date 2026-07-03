@@ -6,7 +6,7 @@ import Foundation
 import XCTest
 
 // A fetch + pagination + retry machine mirroring the Example `Movies` machine,
-// inlined so the spike runs under `swift test` without the Xcode app target.
+// inlined so these tests run under `swift test` without the Xcode app target.
 private struct Fetcher: StateMachine {
   let fetch: (Int) async throws -> [Int]
 
@@ -68,9 +68,9 @@ private struct Fetcher: StateMachine {
   }
 }
 
-final class TestStoreSpikeTests: XCTestCase {
-  // Guess #2: with an immediate mock, the loop reaches `.idle` with data
-  // essentially instantly, well under the default 100ms budget.
+final class TestStoreTests: XCTestCase {
+  // With an immediate mock, the loop reaches `.idle` with data essentially
+  // instantly, well under the default 100ms budget.
   func test_fetchNext_reaches_loaded() async throws {
     let store = TestStore(
       initial: Fetcher.State(),
@@ -98,6 +98,51 @@ final class TestStoreSpikeTests: XCTestCase {
     await store.wait { $0.status == .idle && $0.items == [10, 20] }
 
     XCTAssertEqual(store.state.page, 2)
+  }
+
+  // A transient waypoint (`.loading`) the loop has already left behind is still
+  // observable, because `wait` consumes the recorded trajectory in order rather
+  // than polling the instantaneous state. This settles the loop to `.idle`
+  // *before* the first `wait`, so `.loading` is provably gone from the current
+  // state — the pre-fix polling implementation timed out here.
+  func test_wait_observes_a_transient_waypoint_after_the_loop_settled() async {
+    let store = TestStore(
+      initial: Fetcher.State(),
+      machine: Fetcher(fetch: { page in [page * 10] })
+    )
+
+    store.send(.fetchNext)
+
+    // Spin (not via `wait`) until the loop is back at `.idle` with data.
+    while !(store.state.status == .idle && !store.state.items.isEmpty) {
+      await Task.yield()
+    }
+
+    let reporter = RecordingIssueReporter()
+    await withIssueReporters([reporter]) {
+      await store.wait { $0.status == .loading }                       // the spinner...
+      await store.wait { $0.status == .idle && $0.items == [10] }      // ...then data
+    }
+
+    XCTAssertEqual(reporter.messages, [], reporter.messages.first ?? "")
+  }
+
+  // The trajectory cursor must not manufacture false positives: a predicate no
+  // recorded state satisfies still times out.
+  func test_wait_times_out_for_a_state_never_reached() async {
+    let store = TestStore(
+      initial: Fetcher.State(),
+      machine: Fetcher(fetch: { page in [page * 10] })
+    )
+
+    store.send(.fetchNext)
+
+    let reporter = RecordingIssueReporter()
+    await withIssueReporters([reporter]) {
+      await store.wait(timeout: 0.05) { $0.items.count == 99 }
+    }
+
+    XCTAssertEqual(reporter.messages.count, 1)
   }
 
   // Retry after a failure: the destination is what matters, not the path.

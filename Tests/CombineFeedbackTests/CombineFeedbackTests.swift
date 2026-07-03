@@ -753,6 +753,61 @@ final class CombineFeedbackTests: XCTestCase {
     XCTAssertEqual(store.state.count, 1)
     XCTAssertEqual(store.state.text, "")
   }
+
+  // `TaskSubscription.start()` runs after the subscriber receives the
+  // subscription, so a synchronous cancel (or a concurrent cancel from a
+  // re-subscribing operator) can land before `start()`. A cancelled subscriber
+  // must not receive a value: downstream of `enqueue(to:)` that value would
+  // re-enter the loop as a stale, already-flushed effect output.
+  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+  func test_taskPublisher_does_not_deliver_after_synchronous_cancel() async {
+    let received = LockedArray<Int>()
+    let settled = expectation(description: "publisher settled")
+    settled.assertForOverFulfill = false
+
+    TaskPublisher { 42 }.receive(
+      subscriber: CancelImmediatelySubscriber<Int>(
+        onValue: { received.append($0) },
+        onSettled: { settled.fulfill() }
+      )
+    )
+
+    await fulfillment(of: [settled], timeout: 1)
+
+    XCTAssertEqual(
+      received.values, [],
+      "a subscriber that cancelled before start() must not receive values"
+    )
+  }
+}
+
+/// A subscriber that cancels the moment it receives its subscription, used to
+/// prove a cancelled `TaskPublisher` never delivers.
+private final class CancelImmediatelySubscriber<Input>: Subscriber, @unchecked Sendable {
+  typealias Failure = Never
+
+  private let onValue: @Sendable (Input) -> Void
+  private let onSettled: @Sendable () -> Void
+
+  init(onValue: @escaping @Sendable (Input) -> Void, onSettled: @escaping @Sendable () -> Void) {
+    self.onValue = onValue
+    self.onSettled = onSettled
+  }
+
+  func receive(subscription: Subscription) {
+    subscription.cancel()
+    // Give the task time to run and attempt delivery before the test asserts.
+    DispatchQueue.global().asyncAfter(deadline: .now() + 0.1) { [onSettled] in
+      onSettled()
+    }
+  }
+
+  func receive(_ input: Input) -> Subscribers.Demand {
+    onValue(input)
+    return .none
+  }
+
+  func receive(completion: Subscribers.Completion<Never>) {}
 }
 
 private struct BindingTestState: Equatable, Sendable {

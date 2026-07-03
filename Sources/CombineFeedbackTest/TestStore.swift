@@ -27,7 +27,19 @@ public final class TestStore<State, Event>: @unchecked Sendable {
   /// The underlying production store. Exposed so tests can `scope` or inspect it.
   public let store: Store<State, Event>
 
-  private let trajectory = Locked<[State]>([])
+  /// Every state the loop has emitted, plus how far `wait` has consumed it.
+  ///
+  /// `wait` matches against this recorded trajectory rather than the
+  /// instantaneous `store.state`, so a state the machine only *passed through*
+  /// (a spinner between idle and loaded) is still observable even if the effect
+  /// executor replaced it before `wait` ran. Sequential `wait`s advance the
+  /// cursor, which makes ordered waypoints deterministic regardless of
+  /// scheduling.
+  private struct Recorder {
+    var states: [State] = []
+    var cursor: Int = 0
+  }
+  private let recorder = Locked<Recorder>(Recorder())
   private var bag = Set<AnyCancellable>()
 
   public init<M: StateMachine>(
@@ -36,8 +48,8 @@ public final class TestStore<State, Event>: @unchecked Sendable {
   ) where M.State == State, M.Event == Event {
     let store = Store(initial: initial, machine: machine)
     self.store = store
-    store.publisher.sink { [trajectory] state in
-      trajectory.withLock { $0.append(state) }
+    store.publisher.sink { [recorder] state in
+      recorder.withLock { $0.states.append(state) }
     }
     .store(in: &bag)
   }
@@ -50,14 +62,18 @@ public final class TestStore<State, Event>: @unchecked Sendable {
     store.send(event: event)
   }
 
-  /// Suspends until `predicate(state)` is true, or reports a test failure after
-  /// `timeout`.
+  /// Suspends until some state the loop has reached satisfies `predicate`, or
+  /// reports a test failure after `timeout`.
   ///
-  /// On success this returns the instant the loop reaches a matching state
-  /// (microseconds with immediate mocks). The full timeout only elapses when the
-  /// machine never arrives — i.e. a real bug — at which point an issue is
-  /// reported at the call site (via swift-issue-reporting, so it surfaces in both
-  /// XCTest and Swift Testing) with the last state and the observed trajectory.
+  /// Matching is against the recorded trajectory from the point the previous
+  /// `wait` left off — not the instantaneous `store.state` — so a transient
+  /// state the machine passed through is still observable, and sequential
+  /// `wait`s consume waypoints in order. On success this returns the instant a
+  /// matching state is found (microseconds with immediate mocks). The full
+  /// timeout only elapses when the machine never arrives — i.e. a real bug — at
+  /// which point an issue is reported at the call site (via
+  /// swift-issue-reporting, so it surfaces in both XCTest and Swift Testing)
+  /// with the last state and the observed trajectory.
   public func wait(
     timeout: TimeInterval = 0.1,
     fileID: StaticString = #fileID,
@@ -68,13 +84,14 @@ public final class TestStore<State, Event>: @unchecked Sendable {
   ) async {
     let deadline = Date().addingTimeInterval(timeout)
     while true {
-      if predicate(store.state) { return }
+      if consumeMatch(predicate) { return }
       if Date() >= deadline {
+        let snapshot = recorder.value
         reportIssue(
           Self.timeoutMessage(
             timeout: timeout,
-            lastState: store.state,
-            trajectory: trajectory.value
+            lastState: snapshot.states.last ?? store.state,
+            trajectory: snapshot.states
           ),
           fileID: fileID,
           filePath: filePath,
@@ -84,6 +101,23 @@ public final class TestStore<State, Event>: @unchecked Sendable {
         return
       }
       await Task.yield()
+    }
+  }
+
+  /// Scans the trajectory from the cursor forward. If a recorded state matches,
+  /// advances the cursor past it and returns `true`; otherwise leaves the cursor
+  /// in place so newly appended states are considered on the next attempt.
+  private func consumeMatch(_ predicate: (State) -> Bool) -> Bool {
+    recorder.withLock { recorder in
+      var index = recorder.cursor
+      while index < recorder.states.count {
+        if predicate(recorder.states[index]) {
+          recorder.cursor = index + 1
+          return true
+        }
+        index += 1
+      }
+      return false
     }
   }
 

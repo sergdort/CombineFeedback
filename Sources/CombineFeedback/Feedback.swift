@@ -397,6 +397,8 @@ struct TaskPublisher<Output>: Publisher {
   }
 
   final class TaskSubscription: Combine.Subscription, @unchecked Sendable {
+    private let lock = NSLock()
+    private var isCancelled = false
     private var handle: Task<Void, Never>?
     private let work: () async -> Output
     private let subscriber: AnySubscriber<Output, Never>
@@ -407,8 +409,21 @@ struct TaskPublisher<Output>: Publisher {
     }
 
     func start() {
+      lock.lock()
+      // `start()` runs after `receive(subscription:)`, so a synchronous cancel
+      // from the subscriber (or a concurrent cancel from a re-subscribing
+      // operator) can land first. Without this guard the task would launch and
+      // deliver to an already-cancelled subscriber, re-entering the loop as a
+      // stale, already-flushed effect output.
+      guard !isCancelled else {
+        lock.unlock()
+        return
+      }
       self.handle = Task { [self] in
         let result = await work()
+        // `cancel()` cancels this task, so `Task.isCancelled` covers a cancel
+        // that arrives while `work()` is suspended. The lock above only closes
+        // the cancel-before-`start()` window, which is not reachable here.
         guard !Task.isCancelled else {
           subscriber.receive(completion: .finished)
           return
@@ -416,11 +431,17 @@ struct TaskPublisher<Output>: Publisher {
         _ = subscriber.receive(result)
         subscriber.receive(completion: .finished)
       }
+      lock.unlock()
     }
 
     func request(_ demand: Subscribers.Demand) {}
 
     func cancel() {
+      lock.lock()
+      isCancelled = true
+      let handle = self.handle
+      self.handle = nil
+      lock.unlock()
       handle?.cancel()
     }
   }
@@ -459,8 +480,10 @@ where Sequence.Failure == Never, Sequence.AsyncIterator: Sendable {
   }
 
   final class Subscription: Combine.Subscription, @unchecked Sendable {
+    private let lock = NSLock()
+    private var isCancelled = false
     private var handle: Task<Void, Never>?
-    private var sequence: Sequence?
+    private let sequence: Sequence
     private let subscriber: AnySubscriber<Sequence.Element, Never>
 
     init(sequence: Sequence, subscriber: AnySubscriber<Sequence.Element, Never>) {
@@ -469,7 +492,14 @@ where Sequence.Failure == Never, Sequence.AsyncIterator: Sendable {
     }
 
     func start() {
-      guard let sequence else { return }
+      lock.lock()
+      // A cancel arriving between `receive(subscription:)` and `start()` must
+      // stop the iteration from ever launching. See `TaskPublisher` for the
+      // detailed rationale.
+      guard !isCancelled else {
+        lock.unlock()
+        return
+      }
       self.handle = Task { [self] in
         for await value in sequence {
           guard !Task.isCancelled else {
@@ -480,12 +510,17 @@ where Sequence.Failure == Never, Sequence.AsyncIterator: Sendable {
         }
         subscriber.receive(completion: .finished)
       }
+      lock.unlock()
     }
 
     func request(_ demand: Subscribers.Demand) {}
 
     func cancel() {
-      sequence = nil
+      lock.lock()
+      isCancelled = true
+      let handle = self.handle
+      self.handle = nil
+      lock.unlock()
       handle?.cancel()
     }
   }
