@@ -169,6 +169,24 @@ public struct OnChange<State, Event, Value>: StateMachine {
     }
   }
 
+  public init(
+    of projection: @escaping (State) -> Value,
+    _ effect: @escaping (Value) -> Event
+  ) where Value: Equatable {
+    self.init(of: projection) { value in
+      Just(effect(value))
+    }
+  }
+
+  public init(
+    of projection: @escaping (State) -> Value?,
+    _ effect: @escaping (Value) -> Event
+  ) where Value: Equatable {
+    self.init(of: projection) { value in
+      Just(effect(value))
+    }
+  }
+
   @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
   public init(
     of projection: @escaping (State) -> Value,
@@ -234,6 +252,22 @@ public struct OnEvent<State, Event, Payload>: StateMachine {
     _ eventCasePath: CaseKeyPath<Event, Void>,
     _ effect: @escaping () -> Effect
   ) where Event: CasePathable, Payload == Void, Effect.Output == Event, Effect.Failure == Never {
+    self.init(eventCasePath) { _ in effect() }
+  }
+
+  public init(
+    _ eventCasePath: CaseKeyPath<Event, Payload>,
+    _ effect: @escaping (Payload) -> Event
+  ) where Event: CasePathable {
+    self.init(eventCasePath) { payload in
+      Just(effect(payload))
+    }
+  }
+
+  public init(
+    _ eventCasePath: CaseKeyPath<Event, Void>,
+    _ effect: @escaping () -> Event
+  ) where Event: CasePathable, Payload == Void {
     self.init(eventCasePath) { _ in effect() }
   }
 
