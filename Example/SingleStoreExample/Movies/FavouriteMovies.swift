@@ -22,7 +22,7 @@ struct FavouriteMovies: StateMachine {
   var body: some StateMachine<State, Event> {
     reducer
 
-    Scope<State, Event, Machine<Movies.State, Movies.Event>>(state: \State.moviesState, event: \.movies) {
+    Scope(state: \.moviesState, event: \.movies) {
       Movies(dependencies: dependencies)
     }
   }

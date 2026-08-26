@@ -23,14 +23,14 @@ struct SwitchStoreExample: StateMachine {
 
   @StateMachineBuilder<State, Event>
   var body: some StateMachine<State, Event> {
-    Scope<State, Event, Machine<SignIn.State, SignIn.Event>>(
+    Scope(
       state: \.signIn,
       event: \.signIn
     ) {
       SignIn(dependencies: dependencies.signIn)
     }
 
-    Scope<State, Event, Machine<Counter.State, Counter.Event>>(
+    Scope(
       state: \.counter,
       event: \.counter
     ) {

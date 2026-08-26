@@ -57,6 +57,13 @@ public struct Machine<State, Event>: StateMachine {
 
 @resultBuilder
 public enum StateMachineBuilder<State, Event> {
+  /// Gives every statement in a builder block an immediate contextual type of
+  /// `some StateMachine<State, Event>`, which lets unrooted key paths such as
+  /// `event: \.child` infer their root from the enclosing machine.
+  public static func buildExpression<M: StateMachine>(_ expression: M) -> M where M.State == State, M.Event == Event {
+    expression
+  }
+
   public static func buildBlock() -> Machine<State, Event> {
     Machine(resolved: .empty)
   }
@@ -117,11 +124,11 @@ public struct Scope<ParentState, ParentEvent, Child: StateMachine>: StateMachine
 
   private let resolve: () -> ResolvedMachine<ParentState, ParentEvent>
 
-  public init(
-    state: WritableKeyPath<ParentState, Child.State>,
-    event: CaseKeyPath<ParentEvent, Child.Event>,
-    @StateMachineBuilder<Child.State, Child.Event> child: () -> Child
-  ) where ParentEvent: CasePathable {
+  public init<ChildState, ChildEvent>(
+    state: WritableKeyPath<ParentState, ChildState>,
+    event: CaseKeyPath<ParentEvent, ChildEvent>,
+    @StateMachineBuilder<ChildState, ChildEvent> child: () -> Child
+  ) where ParentEvent: CasePathable, ChildState == Child.State, ChildEvent == Child.Event {
     let child = child()
     self.resolve = {
       let resolved = child._resolve()
@@ -134,11 +141,11 @@ public struct Scope<ParentState, ParentEvent, Child: StateMachine>: StateMachine
     }
   }
 
-  public init(
-    state: CaseKeyPath<ParentState, Child.State>,
-    event: CaseKeyPath<ParentEvent, Child.Event>,
-    @StateMachineBuilder<Child.State, Child.Event> child: () -> Child
-  ) where ParentState: CasePathable, ParentEvent: CasePathable {
+  public init<ChildState, ChildEvent>(
+    state: CaseKeyPath<ParentState, ChildState>,
+    event: CaseKeyPath<ParentEvent, ChildEvent>,
+    @StateMachineBuilder<ChildState, ChildEvent> child: () -> Child
+  ) where ParentState: CasePathable, ParentEvent: CasePathable, ChildState == Child.State, ChildEvent == Child.Event {
     let child = child()
     self.resolve = {
       let resolved = child._resolve()
@@ -166,11 +173,11 @@ where ParentEvent: CasePathable {
   private let eventKeyPath: CaseKeyPath<ParentEvent, Child.Event>
   private let child: Child
 
-  public init(
-    state: WritableKeyPath<ParentState, Child.State?>,
-    event: CaseKeyPath<ParentEvent, Child.Event>,
-    @StateMachineBuilder<Child.State, Child.Event> child: () -> Child
-  ) {
+  public init<ChildState, ChildEvent>(
+    state: WritableKeyPath<ParentState, ChildState?>,
+    event: CaseKeyPath<ParentEvent, ChildEvent>,
+    @StateMachineBuilder<ChildState, ChildEvent> child: () -> Child
+  ) where ChildState == Child.State, ChildEvent == Child.Event {
     self.stateKeyPath = state
     self.eventKeyPath = event
     self.child = child()

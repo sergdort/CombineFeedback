@@ -416,8 +416,8 @@ final class CombineFeedbackTests: XCTestCase {
     let system = Publishers.system(
       initial: ParentState(child: ChildState(value: "a")),
       machine: Machine<ParentState, ParentEvent> {
-        Scope<ParentState, ParentEvent, Machine<ChildState, ChildEvent>>(
-          state: \ParentState.child,
+        Scope(
+          state: \.child,
           event: \.child
         ) {
           Machine<ChildState, ChildEvent> {
@@ -448,7 +448,7 @@ final class CombineFeedbackTests: XCTestCase {
     let system = Publishers.system(
       initial: SwitchParentState.child(ChildState(value: "a")),
       machine: Machine<SwitchParentState, ParentEvent> {
-        Scope<SwitchParentState, ParentEvent, Machine<ChildState, ChildEvent>>(
+        Scope(
           state: \.child,
           event: \.child
         ) {
@@ -480,7 +480,7 @@ final class CombineFeedbackTests: XCTestCase {
     let system = Publishers.system(
       initial: SwitchParentState.child(ChildState(value: "a")),
       machine: Machine<SwitchParentState, ParentEvent> {
-        Scope<SwitchParentState, ParentEvent, Machine<ChildState, ChildEvent>>(
+        Scope(
           state: \.child,
           event: \.child
         ) {
@@ -532,8 +532,8 @@ final class CombineFeedbackTests: XCTestCase {
           input.enqueue(to: output)
         }
 
-        IfLet<OptionalParentState, ParentEvent, Machine<ChildState, ChildEvent>>(
-          state: \OptionalParentState.child,
+        IfLet(
+          state: \.child,
           event: \.child
         ) {
           Machine<ChildState, ChildEvent> {
@@ -573,8 +573,8 @@ final class CombineFeedbackTests: XCTestCase {
           }
         }
 
-        IfLet<OptionalParentState, ParentEvent, Machine<ChildState, ChildEvent>>(
-          state: \OptionalParentState.child,
+        IfLet(
+          state: \.child,
           event: \.child
         ) {
           Machine<ChildState, ChildEvent> {
@@ -610,8 +610,8 @@ final class CombineFeedbackTests: XCTestCase {
           input.enqueue(to: output)
         }
 
-        IfLet<OptionalParentState, ParentEvent, Machine<ChildState, ChildEvent>>(
-          state: \OptionalParentState.child,
+        IfLet(
+          state: \.child,
           event: \.child
         ) {
           Machine<ChildState, ChildEvent> {

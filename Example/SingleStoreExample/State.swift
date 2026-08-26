@@ -42,34 +42,34 @@ struct AppFeature: StateMachine {
 
   @StateMachineBuilder<State, Event>
   var body: some StateMachine<State, Event> {
-    Scope<State, Event, Machine<Counter.State, Counter.Event>>(
-      state: \State.counter,
+    Scope(
+      state: \.counter,
       event: \.counter
     ) {
       Counter()
     }
-    Scope<State, Event, Machine<SwitchStoreExample.State, SwitchStoreExample.Event>>(
-      state: \State.switchExample,
+    Scope(
+      state: \.switchExample,
       event: \.switchExample
     ) {
       SwitchStoreExample(
         dependencies: SwitchStoreExample.Dependencies(signIn: dependencies.signIn)
       )
     }
-    Scope<State, Event, Machine<FavouriteMovies.State, FavouriteMovies.Event>>(
-      state: \State.favouriteMovies,
+    Scope(
+      state: \.favouriteMovies,
       event: \.favouriteMovies
     ) {
       FavouriteMovies(dependencies: dependencies.movies)
     }
-    Scope<State, Event, Machine<SignIn.State, SignIn.Event>>(
-      state: \State.signIn,
+    Scope(
+      state: \.signIn,
       event: \.signIn
     ) {
       SignIn(dependencies: dependencies.signIn)
     }
-    Scope<State, Event, Machine<TrafficLight.State, TrafficLight.Event>>(
-      state: \State.traficLight,
+    Scope(
+      state: \.traficLight,
       event: \.trafficLight
     ) {
       TrafficLight()
