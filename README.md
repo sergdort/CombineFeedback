@@ -1,5 +1,7 @@
 # CombineFeedback
 
+> ⚠️ **Work in progress.** This library is being actively developed and is not yet ready for production or commercial use. The public API is still evolving and may change without notice between versions. It is currently being polished as the sole author's personal project, and breaking changes should be expected until a stable release is announced.
+
 Unidirectional Reactive Architecture. This is a [Combine](https://developer.apple.com/documentation/combine) implemetation of [ReactiveFeedback](https://github.com/Babylonpartners/ReactiveFeedback) and [RxFeedback](https://github.com/kzaher/RxFeedback)
 
 ## Diagram
