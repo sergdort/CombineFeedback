@@ -2,29 +2,27 @@ import SwiftUI
 import CombineFeedback
 
 struct TrafficLightView: View {
-  let store: Store<TrafficLight.State, TrafficLight.Event>
+  @StoreBinding<TrafficLight.State, TrafficLight.Event> private var state: TrafficLight.State
 
   init(store: Store<TrafficLight.State, TrafficLight.Event>) {
-    self.store = store
+    self._state = StoreBinding(store)
     logInit(of: self)
   }
 
   var body: some View {
-    WithContextView(store: store) { context in
-      VStack {
-        Circle()
-          .fill(Color.red.opacity(context.isRed ? 1 : 0.5))
-          .frame(width: 150, height: 150)
-        Circle()
-          .fill(Color.yellow.opacity(context.isYellow ? 1 : 0.5))
-          .frame(width: 150, height: 150)
-        Circle()
-          .fill(Color.green.opacity(context.isGreen ? 1 : 0.5))
-          .frame(width: 150, height: 150)
-      }
-      .padding()
-      .background(Color.black)
+    VStack {
+      Circle()
+        .fill(Color.red.opacity(state.isRed ? 1 : 0.5))
+        .frame(width: 150, height: 150)
+      Circle()
+        .fill(Color.yellow.opacity(state.isYellow ? 1 : 0.5))
+        .frame(width: 150, height: 150)
+      Circle()
+        .fill(Color.green.opacity(state.isGreen ? 1 : 0.5))
+        .frame(width: 150, height: 150)
     }
+    .padding()
+    .background(Color.black)
   }
 }
 

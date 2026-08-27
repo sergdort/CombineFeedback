@@ -1,5 +1,4 @@
 import Combine
-import CasePaths
 import SwiftUI
 
 internal class RootStoreBox<State, Event>: StoreBoxBase<State, Event> {
@@ -16,21 +15,18 @@ internal class RootStoreBox<State, Event>: StoreBoxBase<State, Event> {
     subject.eraseToAnyPublisher()
   }
 
-  public init<Dependency>(
+  public init<M: StateMachine>(
     initial: State,
-    feedbacks: [Feedback<State, Event, Dependency>],
-    reducer: Reducer<State, Event>,
-    dependency: Dependency
-  ) {
-    let input = Feedback<State, Event, Dependency>.input
+    machine: M
+  ) where M.State == State, M.Event == Event {
+    let input = Feedback<State, Event>.input
+    let resolved = machine._resolve()
     self.subject = CurrentValueSubject(initial)
     self.inputObserver = input.observer
     Publishers.FeedbackLoop(
       initial: initial,
-      reduce: reducer,
-      feedbacks: feedbacks
-      .appending(input.feedback),
-      dependency: dependency
+      reduce: resolved.reducer,
+      feedbacks: resolved.feedbacks.appending(input.feedback)
     )
     .sink(receiveValue: { [subject] state in
       subject.send(state)

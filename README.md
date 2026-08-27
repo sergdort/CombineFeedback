@@ -1,5 +1,7 @@
 # CombineFeedback
 
+> ⚠️ **Work in progress.** This library is being actively developed and is not yet ready for production or commercial use. The public API is still evolving and may change without notice between versions. It is currently being polished as the sole author's personal project, and breaking changes should be expected until a stable release is announced.
+
 Unidirectional Reactive Architecture. This is a [Combine](https://developer.apple.com/documentation/combine) implemetation of [ReactiveFeedback](https://github.com/Babylonpartners/ReactiveFeedback) and [RxFeedback](https://github.com/kzaher/RxFeedback)
 
 ## Diagram
@@ -30,11 +32,38 @@ A Reducer is a pure function with a signature of `( inout State, Event) -> Void`
 
 While `State` represents where the system is at a given time, `Event` represents a state change, and a `Reducer` is the pure function that enacts the event causing the state to change, there is not as of yet any type to decide which event should take place given a particular current state. That's the job of the `Feedback`. It's essentially a "processing engine", listening to changes in the current `State` and emitting the corresponding next events to take place. Feedbacks don't directly mutate states. Instead, they only emit events which then cause states to change in reducers.
 
-To some extent it's like reactive [Middleware](https://redux.js.org/advanced/middleware) in [Redux](https://redux.js.org)
+Feedbacks are the effect side of the state machine. Most apps use `OnChange`, `OnEvent`, and `SideEffect`; `Feedback.custom` is available for advanced stream composition.
 
-### Dependency
+### StateMachine
 
-Dependency is the type that holds all services that feature needs, such as API clients, analytics clients, etc.
+A `StateMachine` is the complete behavior of a feature or subsystem. It composes pure transitions and feedback pieces in one ordered body so reducers and effects cannot be accidentally half-wired.
+
+```swift
+struct Counter: StateMachine {
+    struct State {
+        var count = 0
+    }
+
+    enum Event {
+        case increment
+        case decrement
+    }
+
+    @StateMachineBuilder<State, Event>
+    var body: some StateMachine<State, Event> {
+        Reducer { state, event in
+            switch event {
+            case .increment:
+                state.count += 1
+            case .decrement:
+                state.count -= 1
+            }
+        }
+    }
+}
+```
+
+Dependencies are plain Swift values captured by the machine, feedback closures, or service objects. CombineFeedback does not require a specific dependency-injection framework.
 
 #### Store
 
@@ -43,17 +72,10 @@ Store - is a base class responsible for initializing a UI state machine. It prov
 - We can start a state machine by observing `var state: AnyPublisher<State, Never>`. 
 - We can send input events into it via `public final func send(event: Event)`. 
 
-This is useful if we want to mutate our state in response to user input. Let's consider a `Counter` example
+This is useful if we want to mutate our state in response to user input. A store is initialized with complete machine behavior:
 
 ```swift
-struct State {
-    var count = 0
-}
-
-enum Event {
-    case increment
-    case decrement
-}
+let store = Store(initial: Counter.State(), machine: Counter())
 ```
 When we press **+** button we want the `State` of the system to be incremented by `1`. To do that somewhere in our UI we can do:
 
@@ -88,16 +110,20 @@ enum Status {
 struct MoviesView: View {
     typealias State = MoviesViewModel.State
     typealias Event = MoviesViewModel.Event
-    let context: Context<State, Event>
+    @StoreBinding<State, Event> private var state: State
+
+    init(store: Store<State, Event>) {
+        self._state = StoreBinding(store)
+    }
 
     var body: some View {
         List {
-            ForEach(context.movies.identified(by: \.id)) { movie in
+            ForEach(state.movies.identified(by: \.id)) { movie in
                 MovieCell(movie: movie).onAppear {
                 // When we reach the end of the list
                 // we send `fetchNext` event
-                    if self.context.movies.last == movie {
-                        self.context.send(event: .fetchNext)
+                    if self.state.movies.last == movie {
+                        self.$state.send(.fetchNext)
                     }
                 }
             }
@@ -105,44 +131,117 @@ struct MoviesView: View {
     }
 }
 ```
-When we send `.fetchNext` event, it goes to the `reducer` where we put our system into `.loading`  state, which in response triggers effect in the `whenLoading` feedback, which is reacting to particular state changes
+When we send `.fetchNext` event, it goes to `Reducer`, where we put our system into `.loading` state. That state can derive a request, and `OnChange` observes that request, including the initial state, skips repeated values, and cancels in-flight work when the request changes or becomes `nil`.
 
 ```swift
-    static func reducer(state: inout State, event: Event) {
-        switch event {
-        case .didLoad(let batch):
-            state.movies += batch.results
-            state.status = .idle
-            state.batch = batch
-        case .didFail(let error):
-            state.status = .failed(error)
-        case .retry:
-            state.status = .loading
-        case .fetchNext:
-            state.status = .loading
+struct Movies: StateMachine {
+    struct State {
+        var batch: Results
+        var movies: [Movie]
+        var status: Status
+
+        var nextPage: Int? {
+            status == .loading ? batch.nextPage : nil
         }
     }
 
-    static var feedback: Feedback<State, Event> {
-        return Feedback(lensing: { $0.nextPage }) { page in
-            URLSession.shared
-                .fetchMovies(page: page)
+    enum Event {
+        case didLoad(Results)
+        case didFail(Error)
+        case fetchNext
+        case retry
+    }
+
+    let fetchMovies: (Int) -> AnyPublisher<Results, Error>
+
+    @StateMachineBuilder<State, Event>
+    var body: some StateMachine<State, Event> {
+        Reducer { state, event in
+            switch event {
+            case let .didLoad(batch):
+                state.movies += batch.results
+                state.status = .idle
+                state.batch = batch
+            case let .didFail(error):
+                state.status = .failed(error)
+            case .retry, .fetchNext:
+                state.status = .loading
+            }
+        }
+
+        OnChange(of: \.nextPage) { page in
+            fetchMovies(page)
                 .map(Event.didLoad)
-                .replaceError(replace: Event.didFail)
-                .receive(on: DispatchQueue.main)
+                .catch { Just(Event.didFail($0)) }
+        }
+
+        SideEffect { state, event in
+            await analytics.track(event, state: state)
         }
     }
+}
 ```
+
+`SideEffect` runs after the reducer for real events only. It cannot emit events; use it for fire-and-forget async work such as analytics. Later events do not cancel earlier side effects, but cancelling the system or store cancels active side-effect tasks.
 
 #### Composition
 
-Taking inspiration from [TCA](https://github.com/pointfreeco/swift-composable-architecture) `CombineFeedback` is build with a composition in mind.
+Taking inspiration from [TCA](https://github.com/pointfreeco/swift-composable-architecture), `CombineFeedback` is built with composition in mind while keeping reducers pure and effects in feedbacks.
 
-Meaning that we can compose smaller states into bigger states. For more details please see Example App.
+Use machine-level `Scope` and `IfLet` to compose child behavior:
 
-#### ViewContext
+```swift
+struct Parent: StateMachine {
+    @StateMachineBuilder<State, Event>
+    var body: some StateMachine<State, Event> {
+        Reducer { state, event in
+            // Parent transitions
+        }
 
-`ViewContext<State, Event>` - is a rendering context that we can use to interact with UI and render information. Via  `@dynamicMemberLookup` it has all of the properties of the `State` and several conveniences methods for more seamless integration with SwiftUI. (Credits to [@andersio](https://github.com/andersio))
+        Scope(state: \State.child, event: \.child) {
+            Child()
+        }
+
+        Scope(state: \.selected, event: \.selected) {
+            Selected()
+        }
+
+        IfLet(state: \State.details, event: \.details) {
+            Details()
+        }
+    }
+}
+```
+
+`Scope` in a machine composes child reducers and feedbacks together for stored child state via key paths and enum-case child state via case paths. `Store.scope` projects an already-running parent store for views.
+
+Child events (and enum-case child state) are routed with [CasePaths](https://github.com/pointfreeco/swift-case-paths) case key paths, so the parent `Event` (and any enum `State`) must be annotated with `@CasePathable`:
+
+```swift
+@CasePathable
+enum Event {
+    case child(Child.Event)
+    case selected(Selected.Event)
+    case details(Details.Event)
+}
+```
+
+Advanced custom feedback can control cancellation policy by choosing where events are enqueued:
+
+```swift
+Feedback.custom { input, output in
+    input.events
+        .flatMap { event in
+            worker(event).enqueue(to: output)
+        }
+}
+```
+
+Put `enqueue(to:)` at the lifecycle whose cancellation should clean up queued events.
+
+#### StoreBinding
+
+`@StoreBinding` is a SwiftUI property wrapper that observes a `Store` and exposes the latest state as a plain value. Use the projected value to send events, create SwiftUI bindings, and build button actions.
 
 ```swift
 struct State  {
@@ -150,30 +249,59 @@ struct State  {
     var password = ""
 }
 enum Event {
-	case signIn
+    case signIn
+    case emailDidChange(String)
+    case passwordDidCange(String)
 }
 struct SignInView: View {
-    private let store: Store<State, Event>
-    
+    @StoreBinding<State, Event> private var state: State
+
     init(store: Store<State, Event>) {
-        self.store = store
+        self._state = StoreBinding(store)
     }
-    
+
     var body: some View {
-      WithContextView(store: store) { context in
         Form {
             Section {
-                TextField(context.binding(for: \.email, event: Event.emailDidChange))
-                TextField(context.binding(for: \.password, event: Event.passwordDidCange))
-                Button(action: context.action(for: .signIn)) {
+                TextField("Email", text: $state.binding(for: \.email, event: Event.emailDidChange))
+                TextField("Password", text: $state.binding(for: \.password, event: Event.passwordDidCange))
+                Button(action: $state.action(for: .signIn)) {
                     Text("Sign In")
                 }
+                Text(state.email)
             }
         }
-      }
     }
 }
 ```
+
+### Testing
+
+`CombineFeedbackTest` provides a `TestStore` for testing state machines by
+**destination, not journey**: drive the real loop with dependencies mocked
+through the machine's initializer, then `wait` for the state the user would
+observe.
+
+```swift
+import CombineFeedbackTest
+
+func test_appearing_loads_movies() async {
+    let store = TestStore(
+        initial: Movies.State(),
+        machine: Movies(fetch: { page in [Movie(id: page)] })
+    )
+
+    store.send(.fetchNext)
+    await store.wait { $0.status == .idle && !$0.movies.isEmpty }
+
+    XCTAssertEqual(store.state.movies, [Movie(id: 1)])
+}
+```
+
+`wait` completes the instant the predicate holds; on timeout it reports a
+failure at the call site (in both XCTest and Swift Testing) with the observed
+state trajectory. See [`Sources/CombineFeedbackTest/README.md`](Sources/CombineFeedbackTest/README.md)
+for the full guide.
 
 ### Example
 

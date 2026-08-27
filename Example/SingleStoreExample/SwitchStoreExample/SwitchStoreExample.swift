@@ -1,53 +1,43 @@
-import Foundation
 import CombineFeedback
-import Combine
 import CasePaths
 import SwiftUI
 
-enum SwitchStoreExample {
-  struct RootView: View {
-    let store: Store<State, Event>
+struct SwitchStoreExample: StateMachine {
+  let dependencies: Dependencies
 
-    var body: some View {
-      SwitchStoreView(store: store) { state in
-        switch state {
-        case .signIn:
-          CaseLetStoreView(state: /State.signIn, action: Event.signIn) { store in
-            SignInView(store: store)
-          }
-        case .counter:
-          CaseLetStoreView(state: /State.counter, action: Event.counter) { store in
-            CounterView(store: store)
-          }
-        }
-      }
+  @CasePathable
+  enum State: Equatable {
+    case signIn(SignIn.State)
+    case counter(Counter.State)
+  }
+
+  @CasePathable
+  enum Event {
+    case signIn(SignIn.Event)
+    case counter(Counter.Event)
+  }
+
+  struct Dependencies {
+    var signIn: SignIn.Dependencies
+  }
+
+  @StateMachineBuilder<State, Event>
+  var body: some StateMachine<State, Event> {
+    Scope(
+      state: \.signIn,
+      event: \.signIn
+    ) {
+      SignIn(dependencies: dependencies.signIn)
     }
-  }
 
-  static var reducer: Reducer<State, Event> {
-    Reducer.combine(
-      SignIn.reducer()
-        .pullback(
-          state: /State.signIn,
-          event: /Event.signIn
-        ),
-      Counter.reducer()
-        .pullback(
-          state: /State.counter,
-          event: /Event.counter
-        ),
-      Reducer(reduce: Self.innerReducer(state:event:))
-    )
-  }
+    Scope(
+      state: \.counter,
+      event: \.counter
+    ) {
+      Counter()
+    }
 
-  static var feedbacks: Feedback<State, Event, Dependencies> {
-    .combine(
-      SignIn.feedback.pullback(
-        state: /State.signIn,
-        event: /Event.signIn,
-        dependency: \.signIn
-      )
-    )
+    Reducer(reduce: Self.innerReducer(state:event:))
   }
 
   private static func innerReducer(state: inout State, event: Event) {
@@ -58,18 +48,23 @@ enum SwitchStoreExample {
       break
     }
   }
+}
 
-  enum State: Equatable {
-    case signIn(SignIn.State)
-    case counter(Counter.State)
-  }
+struct SwitchStoreExampleView: View {
+  let store: Store<SwitchStoreExample.State, SwitchStoreExample.Event>
 
-  enum Event {
-    case signIn(SignIn.Event)
-    case counter(Counter.Event)
-  }
-
-  struct Dependencies {
-    var signIn: SignIn.Dependencies
+  var body: some View {
+    SwitchStoreView(store: store) { state in
+      switch state {
+      case .signIn:
+        CaseLetStoreView(state: { (state: SwitchStoreExample.State) in state[case: \.signIn] }, action: SwitchStoreExample.Event.signIn) { store in
+          SignInView(store: store)
+        }
+      case .counter:
+        CaseLetStoreView(state: { (state: SwitchStoreExample.State) in state[case: \.counter] }, action: SwitchStoreExample.Event.counter) { store in
+          CounterView(store: store)
+        }
+      }
+    }
   }
 }

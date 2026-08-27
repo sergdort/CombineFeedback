@@ -19,15 +19,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     return UIHostingController(
       rootView: SingleStoreExampleView(
         store: Store(
-          initial: State(),
-          feedbacks: [
-            moviesFeedback,
-            signInFeedback,
-            trafficLightFeedback,
-            switchStoreFeedback
-          ],
-          reducer: appReducer,
-          dependency: AppDependency()
+          initial: AppFeature.State(),
+          machine: AppFeature(dependencies: AppFeature.Dependencies())
         )
       )
     )

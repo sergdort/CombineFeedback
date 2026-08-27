@@ -1,4 +1,3 @@
-import Combine
 import CombineFeedback
 import Foundation
 import SwiftUI
@@ -10,46 +9,16 @@ extension Movies {
       movies: [],
       status: .loading
     )
-    var feedbacks: [Feedback<State, Event, Void>] {
-      if #available(iOS 15.0, *) {
-        return [
-          ViewModel.whenLoadingIOS15()
-        ]
-      } else {
-        return [
-          ViewModel.whenLoading()
-        ]
-      }
-    }
 
     init() {
       super.init(
         initial: initial,
-        feedbacks: [ViewModel.whenLoading()],
-        reducer: Movies.reducer(),
-        dependency: ()
+        machine: Movies(
+          dependencies: Movies.Dependencies(
+            fetchMovies: URLSession.shared.fetchMovies(page:)
+          )
+        )
       )
-    }
-
-    private static func whenLoading() -> Feedback<State, Event, Void> {
-      .lensing(state: { $0.nextPage }) { page, _ in
-        URLSession.shared
-          .fetchMovies(page: page)
-          .map(Event.didLoad)
-          .replaceError(replace: Event.didFail)
-          .receive(on: DispatchQueue.main)
-      }
-    }
-
-    @available(iOS 15.0, *)
-    private static func whenLoadingIOS15() -> Feedback<State, Event, Void> {
-      .lensing(state: \.nextPage) { page, _ in
-        do {
-          return Event.didLoad(try await URLSession.shared.movies(page: page))
-        } catch {
-          return Event.didFail(error as NSError)
-        }
-      }
     }
   }
 }
@@ -57,47 +26,39 @@ extension Movies {
 struct MoviesView: View {
   typealias State = Movies.State
   typealias Event = Movies.Event
-  let store: Store<State, Event>
+  @StoreBinding<State, Event> private var state: State
 
   init(store: Store<State, Event>) {
-    self.store = store
+    self._state = StoreBinding(store)
     logInit(of: self)
   }
 
   var body: some View {
-    WithContextView(store: store) { context in
-      ScrollView {
-        LazyVStack {
-          ForEach(Array(context.movies.enumerated()), id: \.element) { element in
-            MovieCell(movie: element.element)
-              .contentShape(Rectangle())
-              .onTapGesture {
-                context.send(event: Event.didLike(element.element, index: element.offset))
-              }
-          }
-          if context.status == .loading {
-            Spinner(style: .medium)
-          }
+    ScrollView {
+      LazyVStack {
+        ForEach(Array(state.movies.enumerated()), id: \.element) { element in
+          MovieCell(movie: element.element)
+            .contentShape(Rectangle())
+            .onTapGesture {
+              $state.send(Event.didLike(element.element, index: element.offset))
+            }
         }
-        .padding(.horizontal)
+        if state.status == .loading {
+          Spinner(style: .medium)
+        }
       }
-      .navigationBarTitle("Pagination Example", displayMode: .inline)
+      .padding(.horizontal)
     }
+    .navigationBarTitle("Pagination Example", displayMode: .inline)
   }
 }
 
 struct MovieCell: View {
-  @Environment(\.imageFetcher) var fetcher: ImageFetcher
   var movie: Movie
-
-  private var poster: AnyPublisher<UIImage, Never> {
-    return movie.posterURL.map(fetcher.image)
-      .default(to: Empty().eraseToAnyPublisher())
-  }
 
   var body: some View {
     return HStack {
-      AsyncImage(source: poster, placeholder: UIImage(systemName: "film")!) { image in
+      AsyncImage(url: movie.posterURL, placeholder: UIImage(systemName: "film")!) { image in
         Image(uiImage: image)
           .resizable()
           .frame(width: 100)
@@ -161,31 +122,11 @@ func switchFail() {
 }
 
 extension URLSession {
-  func fetchMovies(page: Int) -> AnyPublisher<Results, NSError> {
-    let url = URL(string: "https://api.themoviedb.org/3/discover/movie?api_key=\(shouldFail ? "" : correctAPIKey)&sort_by=popularity.desc&page=\(page)")!
-    let request = URLRequest(url: url)
-
-    return dataTaskPublisher(for: request)
-      .map { $0.data }
-      .decode(type: Results.self, decoder: JSONDecoder())
-      .mapError { (error) -> NSError in
-        error as NSError
-      }
-      .eraseToAnyPublisher()
-  }
-
-  @available(iOS 15.0, *)
-  func movies(page: Int) async throws -> Results {
+  func fetchMovies(page: Int) async throws -> Results {
     let url = URL(string: "https://api.themoviedb.org/3/discover/movie?api_key=\(shouldFail ? "" : correctAPIKey)&sort_by=popularity.desc&page=\(page)")!
     let request = URLRequest(url: url)
     let decoder = JSONDecoder()
     let (data, _) = try await self.data(for: request, delegate: nil)
     return try decoder.decode(Results.self, from: data)
-  }
-}
-
-extension Optional {
-  func `default`(to value: Wrapped) -> Wrapped {
-    return self ?? value
   }
 }

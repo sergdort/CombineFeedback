@@ -1,5 +1,4 @@
 import SwiftUI
-import CasePaths
 
 /// A view that can switch over a store of enum state and handle each case.
 ///
@@ -28,8 +27,8 @@ import CasePaths
 /// }
 public struct SwitchStoreView<State, Event, Content>: View where Content: View {
   private let store: Store<State, Event>
+  @StoreBinding<State, Event> private var state: State
   private let content: (State) -> Content
-  private let removeDuplicates: @Sendable (State, State) -> Bool
 
   public init(
     store: Store<State, Event>,
@@ -37,14 +36,12 @@ public struct SwitchStoreView<State, Event, Content>: View where Content: View {
     @ViewBuilder content: @escaping (State) -> Content
   ) {
     self.store = store
-    self.removeDuplicates = removeDuplicates
+    self._state = StoreBinding(store, removeDuplicates: removeDuplicates)
     self.content = content
   }
 
   public var body: some View {
-    WithContextView(store: store, removeDuplicates: removeDuplicates) { context in
-      self.content(context[dynamicMember: \State.self])
-    }
+    content(state)
     .environmentObject(StoreObservableObject(store: self.store))
   }
 }

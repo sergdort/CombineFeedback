@@ -1,18 +1,25 @@
-import Combine
 import CombineFeedback
 import Foundation
 
-enum SignIn {
+struct SignIn: StateMachine {
+  let dependencies: Dependencies
+
   struct Dependencies {
     var signIn: (
       _ userName: String,
       _ email: String,
       _ password: String
-    ) -> AnyPublisher<Bool, Never>
+    ) async -> Bool
 
     var usernameAvailable: (
       _ username: String
-    ) -> AnyPublisher<Bool, Never>
+    ) async -> Bool
+  }
+
+  private struct SignInRequest: Equatable {
+    var userName: String
+    var email: String
+    var password: String
   }
 
   struct State: Equatable {
@@ -82,8 +89,15 @@ enum SignIn {
     case dismissAlertTap
   }
 
-  static func reducer() -> Reducer<State, Event> {
-    return .init { state, event in
+  @StateMachineBuilder<State, Event>
+  var body: some StateMachine<State, Event> {
+    reducer
+    whenChangingUserName
+    whenSubmitting
+  }
+
+  var reducer: Reducer<State, Event> {
+    Reducer { state, event in
       switch event {
       case .didChangeUserName(let userName):
         state.userName = userName
@@ -110,43 +124,31 @@ enum SignIn {
     }
   }
 
-  static var feedback: Feedback<State, Event, Dependencies> {
-    return Feedback.combine(
-      whenChangingUserName(),
-      whenSubmitting()
-    )
-  }
-
-  static func whenChangingUserName() -> Feedback<State, Event, Dependencies> {
-    return Feedback.custom { state, consumer, dependency in
-      state
-        .map {
-          $0.0.userName
-        }
-        .filter { $0.isEmpty == false }
-        .removeDuplicates()
-        .debounce(
-          for: 0.5,
-          scheduler: DispatchQueue.main
-        )
-        .flatMapLatest { userName in
-          dependency.usernameAvailable(userName)
-            .map(Event.isAvailable)
-        }
-        .enqueue(to: consumer)
+  private var whenChangingUserName: OnChange<State, Event, String> {
+    OnChange(of: { state in
+      state.userName.isEmpty ? nil : state.userName
+    }) { userName async in
+      do {
+        try await Task.sleep(nanoseconds: 500_000_000)
+      } catch {
+        return .isAvailable(false)
+      }
+      let isAvailable = await dependencies.usernameAvailable(userName)
+      return .isAvailable(isAvailable)
     }
   }
 
-  static func whenSubmitting() -> Feedback<State, Event, Dependencies> {
-    return .middleware { (state: State, dependency: Dependencies) -> AnyPublisher<Event, Never> in
-      guard state.status.isSubmitting else {
-        return Empty().eraseToAnyPublisher()
-      }
-
-      return dependency
-        .signIn(state.userName, state.email, state.password)
-        .map(Event.didSignIn)
-        .eraseToAnyPublisher()
+  private var whenSubmitting: OnChange<State, Event, SignInRequest> {
+    OnChange(of: { state -> SignInRequest? in
+      guard state.status.isSubmitting else { return nil }
+      return SignInRequest(
+        userName: state.userName,
+        email: state.email,
+        password: state.password
+      )
+    }) { request async in
+      let didSignIn = await dependencies.signIn(request.userName, request.email, request.password)
+      return .didSignIn(didSignIn)
     }
   }
 }

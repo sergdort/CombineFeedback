@@ -1,0 +1,12 @@
+schemaVersion: 1
+enabledWorkflows:
+  - simulator
+  - swift-package
+  - project-discovery
+sessionDefaults:
+  projectPath: ./CombineFeedback.xcodeproj
+  scheme: Example
+  configuration: Debug
+  simulatorName: iPhone 17
+  simulatorPlatform: iOS Simulator
+  useLatestOS: true

@@ -1,6 +1,5 @@
 import Combine
 import Foundation
-import CasePaths
 
 open class Store<State, Event> {
   private let box: StoreBoxBase<State, Event>
@@ -9,7 +8,7 @@ open class Store<State, Event> {
     box._current
   }
 
-  var publisher: AnyPublisher<State, Never> {
+  public var publisher: AnyPublisher<State, Never> {
     box.publisher
   }
 
@@ -17,24 +16,14 @@ open class Store<State, Event> {
     self.box = box
   }
 
-  public init<Dependency>(
+  public init<M: StateMachine>(
     initial: State,
-    feedbacks: [Feedback<State, Event, Dependency>],
-    reducer: Reducer<State, Event>,
-    dependency: Dependency
-  ) {
+    machine: M
+  ) where M.State == State, M.Event == Event {
     self.box = RootStoreBox(
       initial: initial,
-      feedbacks: feedbacks,
-      reducer: reducer,
-      dependency: dependency
+      machine: machine
     )
-  }
-
-  @MainActor func context(
-    removeDuplicates isDuplicate: @escaping @Sendable (State, State) -> Bool
-  ) -> ViewContext<State, Event> {
-    ViewContext(store: box, removeDuplicates: isDuplicate)
   }
 
   open func send(event: Event) {

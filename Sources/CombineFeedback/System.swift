@@ -2,17 +2,15 @@ import Combine
 import Foundation
 
 public extension Publishers {
-  static func system<State, Event, Dependency>(
+  static func system<State, Event, M: StateMachine>(
     initial: State,
-    feedbacks: [Feedback<State, Event, Dependency>],
-    reduce: Reducer<State, Event>,
-    dependency: Dependency
-  ) -> AnyPublisher<State, Never> {
+    machine: M
+  ) -> AnyPublisher<State, Never> where M.State == State, M.Event == Event {
+    let resolved = machine._resolve()
     return Publishers.FeedbackLoop(
       initial: initial,
-      reduce: reduce,
-      feedbacks: feedbacks,
-      dependency: dependency
+      reduce: resolved.reducer,
+      feedbacks: resolved.feedbacks
     )
     .eraseToAnyPublisher()
   }

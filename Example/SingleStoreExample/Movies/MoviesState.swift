@@ -1,11 +1,11 @@
 import Foundation
 import CombineFeedback
-import Combine
 
-enum Movies {
+struct Movies: StateMachine {
+  let dependencies: Dependencies
+
   struct Dependencies {
-    var movies: (Int) async throws -> Results
-    var fetchMovies: (Int) -> AnyPublisher<Results, NSError>
+    var fetchMovies: (Int) async throws -> Results
   }
 
   struct State: Equatable {
@@ -48,8 +48,14 @@ enum Movies {
     case didLike(Movie, index: Int)
   }
 
-  static func reducer() -> Reducer<State, Event> {
-    .init { state, event in
+  @StateMachineBuilder<State, Event>
+  var body: some StateMachine<State, Event> {
+    reducer
+    feedback
+  }
+
+  var reducer: Reducer<State, Event> {
+    Reducer { state, event in
       switch event {
       case .didLoad(let batch):
         state.movies += batch.results
@@ -67,21 +73,12 @@ enum Movies {
     }
   }
 
-  static var feedback: Feedback<State, Event, Dependencies> {
-    if #available(iOS 15.0, *) {
-      return .lensing(state: \.nextPage) { page, dependency in
-        do {
-          return Event.didLoad(try await URLSession.shared.movies(page: page))
-        } catch {
-          return Event.didFail(error as NSError)
-        }
-      }
-    } else {
-      return .lensing(state: { $0.nextPage }) { page, dependency in
-        dependency.fetchMovies(page)
-          .map(Event.didLoad)
-          .replaceError(replace: Event.didFail)
-          .receive(on: DispatchQueue.main)
+  var feedback: OnChange<State, Event, Int> {
+    OnChange(of: \.nextPage) { page async in
+      do {
+        return .didLoad(try await dependencies.fetchMovies(page))
+      } catch {
+        return .didFail(error as NSError)
       }
     }
   }
