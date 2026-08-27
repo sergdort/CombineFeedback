@@ -8,7 +8,7 @@ open class Store<State, Event> {
     box._current
   }
 
-  package var publisher: AnyPublisher<State, Never> {
+  public var publisher: AnyPublisher<State, Never> {
     box.publisher
   }
 
