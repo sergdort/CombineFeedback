@@ -211,7 +211,7 @@ public struct OnChange<State, Event, Value>: StateMachine {
   public init<S: AsyncSequence & Sendable>(
     of projection: @escaping (State) -> Value,
     _ effect: @escaping (Value) -> S
-  ) where Value: Equatable, S.Element == Event, S.Failure == Never, S.AsyncIterator: Sendable {
+  ) where Value: Equatable, S.Element == Event, S.Failure == Never {
     self.init(of: projection) { value in
       AsyncSequencePublisher(effect(value))
     }
@@ -221,7 +221,7 @@ public struct OnChange<State, Event, Value>: StateMachine {
   public init<S: AsyncSequence & Sendable>(
     of projection: @escaping (State) -> Value?,
     _ effect: @escaping (Value) -> S
-  ) where Value: Equatable, S.Element == Event, S.Failure == Never, S.AsyncIterator: Sendable {
+  ) where Value: Equatable, S.Element == Event, S.Failure == Never {
     self.init(of: projection) { value in
       AsyncSequencePublisher(effect(value))
     }
@@ -295,7 +295,7 @@ public struct OnEvent<State, Event, Payload>: StateMachine {
   public init<S: AsyncSequence & Sendable>(
     _ eventCasePath: CaseKeyPath<Event, Payload>,
     _ effect: @escaping (Payload) -> S
-  ) where Event: CasePathable, S.Element == Event, S.Failure == Never, S.AsyncIterator: Sendable {
+  ) where Event: CasePathable, S.Element == Event, S.Failure == Never {
     self.init(eventCasePath) { payload in
       AsyncSequencePublisher(effect(payload))
     }
@@ -497,7 +497,7 @@ private struct VoidTaskPublisher: Publisher {
 
 @available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, *)
 private struct AsyncSequencePublisher<Sequence: AsyncSequence & Sendable>: Publisher
-where Sequence.Failure == Never, Sequence.AsyncIterator: Sendable {
+where Sequence.Failure == Never {
   typealias Output = Sequence.Element
   typealias Failure = Never
 
@@ -534,6 +534,9 @@ where Sequence.Failure == Never, Sequence.AsyncIterator: Sendable {
         lock.unlock()
         return
       }
+      // The iterator is created and consumed entirely inside this task. It
+      // never crosses a task boundary, so the sequence need not expose a
+      // Sendable iterator to callers.
       self.handle = Task { [self] in
         for await value in sequence {
           guard !Task.isCancelled else {

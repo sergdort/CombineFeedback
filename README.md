@@ -184,6 +184,18 @@ struct Movies: StateMachine {
 
 `SideEffect` runs after the reducer for real events only. It cannot emit events; use it for fire-and-forget async work such as analytics. Later events do not cancel earlier side effects, but cancelling the system or store cancels active side-effect tasks.
 
+#### OnStoreStart
+
+`OnStoreStart` starts a typed `AsyncSequence` once per feedback subscription and forwards its elements as events:
+
+```swift
+OnStoreStart {
+    service.updates().map(Event.update)
+}
+```
+
+A finite sequence is one-shot: completion does not restart it after later state updates. Cancelling the feedback or store stops iteration and removes events queued by that effect. Tearing down and re-entering an optional `IfLet` or case-based `Scope` creates a new subscription. `OnStoreStart` is available on iOS 18+, macOS 15+, tvOS 18+, and watchOS 11+ because it uses typed `AsyncSequence.Failure`.
+
 #### Composition
 
 Taking inspiration from [TCA](https://github.com/pointfreeco/swift-composable-architecture), `CombineFeedback` is built with composition in mind while keeping reducers pure and effects in feedbacks.
