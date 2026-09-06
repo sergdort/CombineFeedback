@@ -312,6 +312,28 @@ public struct SideEffect<State, Event>: StateMachine {
 
   private let feedback: Feedback<State, Event>
 
+  /// Runs a bounded, nonblocking effect inline with each event's post-reduction state.
+  ///
+  /// The effect runs in event-drain order on the draining thread, not necessarily
+  /// the main thread. It does not run for the initial state or emit events.
+  /// For sequential sends to an idle Store, it finishes before `send` returns.
+  /// Reentrant or concurrently queued sends can return before their effects run;
+  /// reentrant events are drained after the current event, without recursive reduction.
+  /// Cancellation prevents future invocations, but cannot interrupt an effect
+  /// already running. Use the async initializer for work that may suspend or block.
+  public init(
+    synchronous effect: @escaping (State, Event) -> Void
+  ) {
+    self.feedback = Feedback.custom { input, _ in
+      input.updates
+        .compactMap { update -> (State, Event)? in
+          update.event.map { (update.state, $0) }
+        }
+        .handleEvents(receiveOutput: effect)
+        .ignoreOutput()
+    }
+  }
+
   public init(
     _ effect: @escaping (State, Event) async -> Void
   ) {
