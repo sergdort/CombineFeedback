@@ -184,6 +184,18 @@ struct Movies: StateMachine {
 
 `SideEffect` runs after the reducer for real events only. It cannot emit events; use it for fire-and-forget async work such as analytics. Later events do not cancel earlier side effects, but cancelling the system or store cancels active side-effect tasks.
 
+#### Thread safety
+
+A `Store` may cross isolation boundaries when its `State` and `Event` are `Sendable`: read `state`, observe `publisher`, and call `send(event:)` and `scope` from any thread, and hold the store directly in a `Sendable` type. Scope projections and event transforms are `@Sendable`, so the compiler diagnoses closures that capture non-`Sendable` state (an error wherever the capture is known non-`Sendable`; only a warning in generic contexts where the type may still prove `Sendable` after instantiation). Reducer, feedback and effect closures still run on whichever thread drives the loop, so the isolation of anything they capture remains the caller's responsibility, and a scoped store must not cross isolation unless every ancestor state is `Sendable`.
+
+```swift
+final class ConfigurationController: Sendable {
+    let store: Store<Configuration.State, Configuration.Event>
+}
+```
+
+State or events that are not `Sendable` keep working; a store over them simply is not `Sendable`. Since `Store` is an open class, a subclass must restate `@unchecked Sendable` to acknowledge the contract — without it the compiler warns, because only the subclass author knows whether its added state upholds it.
+
 #### OnStoreStart
 
 `OnStoreStart` starts a typed `AsyncSequence` once per feedback subscription and forwards its elements as events:

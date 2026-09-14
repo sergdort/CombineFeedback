@@ -39,8 +39,8 @@ internal class RootStoreBox<State, Event>: StoreBoxBase<State, Event> {
   }
 
   override func scoped<S, E>(
-    getValue: @escaping (State) -> S,
-    event: @escaping (E) -> Event
+    getValue: @Sendable @escaping (State) -> S,
+    event: @Sendable @escaping (E) -> Event
   ) -> StoreBoxBase<S, E> {
     ScopedStoreBox<State, Event, S, E>(
       parent: self,
@@ -52,8 +52,8 @@ internal class RootStoreBox<State, Event>: StoreBoxBase<State, Event> {
 
 internal class ScopedStoreBox<RootState, RootEvent, ScopedState, ScopedEvent>: StoreBoxBase<ScopedState, ScopedEvent> {
   private let parent: StoreBoxBase<RootState, RootEvent>
-  private let getValue: (RootState) -> ScopedState
-  private let eventTransform: (ScopedEvent) -> RootEvent
+  private let getValue: @Sendable (RootState) -> ScopedState
+  private let eventTransform: @Sendable (ScopedEvent) -> RootEvent
 
   override var _current: ScopedState {
     getValue(parent._current)
@@ -65,8 +65,8 @@ internal class ScopedStoreBox<RootState, RootEvent, ScopedState, ScopedEvent>: S
 
   init(
     parent: StoreBoxBase<RootState, RootEvent>,
-    getValue: @escaping (RootState) -> ScopedState,
-    event: @escaping (ScopedEvent) -> RootEvent
+    getValue: @Sendable @escaping (RootState) -> ScopedState,
+    event: @Sendable @escaping (ScopedEvent) -> RootEvent
   ) {
     self.parent = parent
     self.getValue = getValue
@@ -78,14 +78,16 @@ internal class ScopedStoreBox<RootState, RootEvent, ScopedState, ScopedEvent>: S
   }
 
   override func scoped<S, E>(
-    getValue: @escaping (ScopedState) -> S,
-    event: @escaping (E) -> ScopedEvent
+    getValue: @Sendable @escaping (ScopedState) -> S,
+    event: @Sendable @escaping (E) -> ScopedEvent
   ) -> StoreBoxBase<S, E> {
-    ScopedStoreBox<RootState, RootEvent, S, E>(
+    let outerGetValue = self.getValue
+    let outerEventTransform = self.eventTransform
+    return ScopedStoreBox<RootState, RootEvent, S, E>(
       parent: self.parent) { rootState in
-        getValue(self.getValue(rootState))
+        getValue(outerGetValue(rootState))
       } event: { e in
-        self.eventTransform(event(e))
+        outerEventTransform(event(e))
       }
   }
 }
@@ -102,22 +104,29 @@ internal class StoreBoxBase<State, Event> {
 
   final func scoped<S, E>(
     to scope: WritableKeyPath<State, S>,
-    event: @escaping (E) -> Event
+    event: @Sendable @escaping (E) -> Event
   ) -> StoreBoxBase<S, E> {
-    self.scoped(
+    let box = SendableKeyPath(keyPath: scope)
+    return self.scoped(
       getValue: { state in
-        return state[keyPath: scope]
+        return state[keyPath: box.keyPath]
       },
       event: event
     )
   }
 
   func scoped<S, E>(
-    getValue: @escaping (State) -> S,
-    event: @escaping (E) -> Event
+    getValue: @Sendable @escaping (State) -> S,
+    event: @Sendable @escaping (E) -> Event
   ) -> StoreBoxBase<S, E> {
     subclassMustImplement()
   }
+}
+
+// Key paths are immutable metadata, so sharing one across threads is safe.
+// The wrapper keeps key-path projections free of non-Sendable captures.
+private struct SendableKeyPath<Root, Value>: @unchecked Sendable {
+  let keyPath: WritableKeyPath<Root, Value>
 }
 
 @inline(never)
