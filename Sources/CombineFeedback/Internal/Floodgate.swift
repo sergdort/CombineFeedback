@@ -5,8 +5,15 @@ final class Floodgate<State, Event, S: Subscriber>: Subscription where S.Input =
   struct QueueState {
     var events: [(Event, Token)] = []
     var isOuterLifetimeEnded = false
+    /// The number of threads that hold, or just released, the reducer lock to
+    /// drain events. It covers the reducer, the sink, and the feedbacks.
+    var drainers = 0
     var hasEvents: Bool {
       events.isEmpty == false && isOuterLifetimeEnded == false
+    }
+    /// No event waits in the queue and no thread drains the loop.
+    var isIdle: Bool {
+      isOuterLifetimeEnded || (events.isEmpty && drainers == 0)
     }
   }
 
@@ -38,9 +45,22 @@ final class Floodgate<State, Event, S: Subscriber>: Subscription where S.Input =
     self.reducer = reducer
   }
 
+  /// `true` when no event waits in the queue and no thread is inside a drain.
+  ///
+  /// A drain publishes each new state to the sink *before* it runs the
+  /// feedbacks and releases the reducer lock. So a state that an observer sees
+  /// does not prove the loop is idle. This value does.
+  var isIdle: Bool {
+    queue.withValue { $0.isIdle }
+  }
+
   func bootstrap() {
     reducerLock.lock()
-    defer { reducerLock.unlock() }
+    queue.modify { $0.drainers += 1 }
+    defer {
+      reducerLock.unlock()
+      queue.modify { $0.drainers -= 1 }
+    }
 
     guard !hasStarted else { return }
     hasStarted = true
@@ -70,8 +90,12 @@ final class Floodgate<State, Event, S: Subscriber>: Subscription where S.Input =
 
     if reducerLock.try() {
       repeat {
+        queue.modify { $0.drainers += 1 }
         drainEvents()
         reducerLock.unlock()
+        // Count the drain until after the unlock, so `isIdle` never reports a
+        // loop whose lock is still held.
+        queue.modify { $0.drainers -= 1 }
       } while queue.withValue({ $0.hasEvents }) && reducerLock.try()
       // ^^^
       // Restart the event draining after we unlock the reducer lock, iff:

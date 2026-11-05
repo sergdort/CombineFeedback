@@ -5,10 +5,15 @@ internal class RootStoreBox<State, Event>: StoreBoxBase<State, Event> {
   private let subject: CurrentValueSubject<State, Never>
 
   private let inputObserver: (Event) -> Void
+  private let activity = LoopActivity()
   private var bag = Set<AnyCancellable>()
 
   override var _current: State {
     subject.value
+  }
+
+  override var _isIdle: Bool {
+    activity.isIdle
   }
 
   override var publisher: AnyPublisher<State, Never> {
@@ -26,7 +31,8 @@ internal class RootStoreBox<State, Event>: StoreBoxBase<State, Event> {
     Publishers.FeedbackLoop(
       initial: initial,
       reduce: resolved.reducer,
-      feedbacks: resolved.feedbacks.appending(input.feedback)
+      feedbacks: resolved.feedbacks.appending(input.feedback),
+      activity: activity
     )
     .sink(receiveValue: { [subject] state in
       subject.send(state)
@@ -39,8 +45,8 @@ internal class RootStoreBox<State, Event>: StoreBoxBase<State, Event> {
   }
 
   override func scoped<S, E>(
-    getValue: @escaping (State) -> S,
-    event: @escaping (E) -> Event
+    getValue: @Sendable @escaping (State) -> S,
+    event: @Sendable @escaping (E) -> Event
   ) -> StoreBoxBase<S, E> {
     ScopedStoreBox<State, Event, S, E>(
       parent: self,
@@ -52,11 +58,15 @@ internal class RootStoreBox<State, Event>: StoreBoxBase<State, Event> {
 
 internal class ScopedStoreBox<RootState, RootEvent, ScopedState, ScopedEvent>: StoreBoxBase<ScopedState, ScopedEvent> {
   private let parent: StoreBoxBase<RootState, RootEvent>
-  private let getValue: (RootState) -> ScopedState
-  private let eventTransform: (ScopedEvent) -> RootEvent
+  private let getValue: @Sendable (RootState) -> ScopedState
+  private let eventTransform: @Sendable (ScopedEvent) -> RootEvent
 
   override var _current: ScopedState {
     getValue(parent._current)
+  }
+
+  override var _isIdle: Bool {
+    parent._isIdle
   }
 
   override var publisher: AnyPublisher<ScopedState, Never> {
@@ -65,8 +75,8 @@ internal class ScopedStoreBox<RootState, RootEvent, ScopedState, ScopedEvent>: S
 
   init(
     parent: StoreBoxBase<RootState, RootEvent>,
-    getValue: @escaping (RootState) -> ScopedState,
-    event: @escaping (ScopedEvent) -> RootEvent
+    getValue: @Sendable @escaping (RootState) -> ScopedState,
+    event: @Sendable @escaping (ScopedEvent) -> RootEvent
   ) {
     self.parent = parent
     self.getValue = getValue
@@ -78,14 +88,16 @@ internal class ScopedStoreBox<RootState, RootEvent, ScopedState, ScopedEvent>: S
   }
 
   override func scoped<S, E>(
-    getValue: @escaping (ScopedState) -> S,
-    event: @escaping (E) -> ScopedEvent
+    getValue: @Sendable @escaping (ScopedState) -> S,
+    event: @Sendable @escaping (E) -> ScopedEvent
   ) -> StoreBoxBase<S, E> {
-    ScopedStoreBox<RootState, RootEvent, S, E>(
+    let outerGetValue = self.getValue
+    let outerEventTransform = self.eventTransform
+    return ScopedStoreBox<RootState, RootEvent, S, E>(
       parent: self.parent) { rootState in
-        getValue(self.getValue(rootState))
+        getValue(outerGetValue(rootState))
       } event: { e in
-        self.eventTransform(event(e))
+        outerEventTransform(event(e))
       }
   }
 }
@@ -93,6 +105,9 @@ internal class ScopedStoreBox<RootState, RootEvent, ScopedState, ScopedEvent>: S
 internal class StoreBoxBase<State, Event> {
   /// Loop Internal SPI
   var _current: State { subclassMustImplement() }
+
+  /// Loop Internal SPI
+  var _isIdle: Bool { subclassMustImplement() }
 
   var publisher: AnyPublisher<State, Never> { subclassMustImplement() }
 
@@ -102,22 +117,29 @@ internal class StoreBoxBase<State, Event> {
 
   final func scoped<S, E>(
     to scope: WritableKeyPath<State, S>,
-    event: @escaping (E) -> Event
+    event: @Sendable @escaping (E) -> Event
   ) -> StoreBoxBase<S, E> {
-    self.scoped(
+    let box = SendableKeyPath(keyPath: scope)
+    return self.scoped(
       getValue: { state in
-        return state[keyPath: scope]
+        return state[keyPath: box.keyPath]
       },
       event: event
     )
   }
 
   func scoped<S, E>(
-    getValue: @escaping (State) -> S,
-    event: @escaping (E) -> Event
+    getValue: @Sendable @escaping (State) -> S,
+    event: @Sendable @escaping (E) -> Event
   ) -> StoreBoxBase<S, E> {
     subclassMustImplement()
   }
+}
+
+// Key paths are immutable metadata, so sharing one across threads is safe.
+// The wrapper keeps key-path projections free of non-Sendable captures.
+private struct SendableKeyPath<Root, Value>: @unchecked Sendable {
+  let keyPath: WritableKeyPath<Root, Value>
 }
 
 @inline(never)

@@ -59,13 +59,13 @@ extension SwitchStoreView where State: Equatable & Sendable {
 /// A convenient view helper that lets you match cases of the ``SwitchStoreView`` state
 public struct CaseLetStoreView<GlobalState, GlobalEvent, LocalState, LocalEvent, Content: View>: View {
   @EnvironmentObject private var store: StoreObservableObject<GlobalState, GlobalEvent>
-  public let toLocalState: (GlobalState) -> LocalState?
-  public let fromLocalEvent: (LocalEvent) -> GlobalEvent
+  public let toLocalState: @Sendable (GlobalState) -> LocalState?
+  public let fromLocalEvent: @Sendable (LocalEvent) -> GlobalEvent
   public let content: (Store<LocalState, LocalEvent>) -> Content
 
   public init(
-    state toLocalState: @escaping (GlobalState) -> LocalState?,
-    action fromLocalEvent: @escaping (LocalEvent) -> GlobalEvent,
+    state toLocalState: @Sendable @escaping (GlobalState) -> LocalState?,
+    action fromLocalEvent: @Sendable @escaping (LocalEvent) -> GlobalEvent,
     @ViewBuilder then content: @escaping (Store<LocalState, LocalEvent>) -> Content
   ) {
     self.toLocalState = toLocalState

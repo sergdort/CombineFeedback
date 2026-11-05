@@ -64,8 +64,8 @@ public struct StoreBinding<State, Event>: DynamicProperty {
   }
 
   public func scoped<ScopedState, ScopedEvent>(
-    to value: @escaping (State) -> ScopedState,
-    event: @escaping (ScopedEvent) -> Event,
+    to value: @Sendable @escaping (State) -> ScopedState,
+    event: @Sendable @escaping (ScopedEvent) -> Event,
     removeDuplicates isDuplicate: @escaping @Sendable (ScopedState, ScopedState) -> Bool
   ) -> StoreBinding<ScopedState, ScopedEvent> {
     StoreBinding<ScopedState, ScopedEvent>(
@@ -83,8 +83,8 @@ public extension StoreBinding where State: Equatable & Sendable {
 
 public extension StoreBinding {
   func scoped<ScopedState, ScopedEvent>(
-    to value: @escaping (State) -> ScopedState,
-    event: @escaping (ScopedEvent) -> Event
+    to value: @Sendable @escaping (State) -> ScopedState,
+    event: @Sendable @escaping (ScopedEvent) -> Event
   ) -> StoreBinding<ScopedState, ScopedEvent> where ScopedState: Equatable & Sendable {
     scoped(to: value, event: event, removeDuplicates: { $0 == $1 })
   }
