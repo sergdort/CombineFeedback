@@ -41,11 +41,17 @@ Add the product to your test target:
 ```swift
 let store = TestStore(initial: State, machine: SomeMachine)
 
-store.send(_ event: Event)                              // drive the loop
+store.send(_ event: Event, timeout:)                     // drive the loop; returns when it is idle
 await store.wait(timeout:until:) { state in Bool }      // suspend until a state is reached
 store.state                                             // the current state
 ```
 
+- `send` returns after the loop has reduced the event and is idle. When
+  another thread holds the loop (an `AsyncSequence` observation, for example),
+  `Store.send` only queues the event, so `TestStore.send` blocks until that
+  thread drains it. Two sends in a row therefore reduce in order before the
+  test can suspend. If the loop stays busy for `timeout` (default **1s**),
+  `send` reports a failure at the call site.
 - `wait` completes as soon as the loop has reached a matching state **and** the
   loop is idle: no queued event, and no thread still running the reducer or the
   feedbacks. With immediate mocks that takes microseconds.

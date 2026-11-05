@@ -57,9 +57,47 @@ public final class TestStore<State, Event>: @unchecked Sendable {
   /// The current state of the machine.
   public var state: State { store.state }
 
-  /// Sends an event into the loop, exactly as the production store would.
-  public func send(_ event: Event) {
+  /// Sends an event into the loop, then blocks until the loop has reduced it
+  /// and is idle.
+  ///
+  /// `Store.send` reduces on the caller's thread when the reducer lock is free.
+  /// When another thread holds the lock (an `AsyncSequence` observation, for
+  /// example), `Store.send` only queues the event, and that thread reduces it
+  /// later. Without the block, a test could suspend between two sends, and work
+  /// that the second event cancels could start in that gap on the test's actor.
+  /// With the block, each `send` returns after its event and the feedbacks that
+  /// it starts have run.
+  ///
+  /// If the loop is still busy after `timeout`, this reports an issue at the
+  /// call site and returns. That happens when a feedback on another thread
+  /// waits for the caller's thread, for example with `DispatchQueue.main.sync`.
+  public func send(
+    _ event: Event,
+    timeout: TimeInterval = 1,
+    fileID: StaticString = #fileID,
+    filePath: StaticString = #filePath,
+    line: UInt = #line,
+    column: UInt = #column
+  ) {
     store.send(event: event)
+    // The loop has no idle signal, so poll it. The poll ends when the loop
+    // drains, which is microseconds with immediate mocks. The deadline only
+    // fires when the loop never drains.
+    let deadline = Date().addingTimeInterval(timeout)
+    while !store.isIdle {
+      if Date() >= deadline {
+        reportIssue(
+          "send(_:) timed out after \(Int(timeout * 1000))ms — the loop is still busy on another thread.\n"
+            + "  Last state: \(Self.dump(store.state))",
+          fileID: fileID,
+          filePath: filePath,
+          line: line,
+          column: column
+        )
+        return
+      }
+      usleep(50)
+    }
   }
 
   /// Suspends until some state the loop has reached satisfies `predicate` and
