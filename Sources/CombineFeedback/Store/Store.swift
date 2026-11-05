@@ -12,6 +12,16 @@ open class Store<State, Event> {
     box.publisher
   }
 
+  /// `true` when no event waits in the queue and no thread runs the reducer or
+  /// the feedbacks. A scoped store reports the loop of its root store.
+  ///
+  /// This is for `CombineFeedbackTest` only. The value can change as soon as it
+  /// is read, so production code must not depend on it.
+  @_spi(Testing)
+  public var isIdle: Bool {
+    box._isIdle
+  }
+
   init(box: StoreBoxBase<State, Event>) {
     self.box = box
   }

@@ -5,10 +5,15 @@ internal class RootStoreBox<State, Event>: StoreBoxBase<State, Event> {
   private let subject: CurrentValueSubject<State, Never>
 
   private let inputObserver: (Event) -> Void
+  private let activity = LoopActivity()
   private var bag = Set<AnyCancellable>()
 
   override var _current: State {
     subject.value
+  }
+
+  override var _isIdle: Bool {
+    activity.isIdle
   }
 
   override var publisher: AnyPublisher<State, Never> {
@@ -26,7 +31,8 @@ internal class RootStoreBox<State, Event>: StoreBoxBase<State, Event> {
     Publishers.FeedbackLoop(
       initial: initial,
       reduce: resolved.reducer,
-      feedbacks: resolved.feedbacks.appending(input.feedback)
+      feedbacks: resolved.feedbacks.appending(input.feedback),
+      activity: activity
     )
     .sink(receiveValue: { [subject] state in
       subject.send(state)
@@ -57,6 +63,10 @@ internal class ScopedStoreBox<RootState, RootEvent, ScopedState, ScopedEvent>: S
 
   override var _current: ScopedState {
     getValue(parent._current)
+  }
+
+  override var _isIdle: Bool {
+    parent._isIdle
   }
 
   override var publisher: AnyPublisher<ScopedState, Never> {
@@ -95,6 +105,9 @@ internal class ScopedStoreBox<RootState, RootEvent, ScopedState, ScopedEvent>: S
 internal class StoreBoxBase<State, Event> {
   /// Loop Internal SPI
   var _current: State { subclassMustImplement() }
+
+  /// Loop Internal SPI
+  var _isIdle: Bool { subclassMustImplement() }
 
   var publisher: AnyPublisher<State, Never> { subclassMustImplement() }
 
