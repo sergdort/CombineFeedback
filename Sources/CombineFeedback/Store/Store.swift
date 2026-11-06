@@ -12,16 +12,6 @@ open class Store<State, Event> {
     box.publisher
   }
 
-  /// `true` when no event waits in the queue and no thread runs the reducer or
-  /// the feedbacks. A scoped store reports the loop of its root store.
-  ///
-  /// This is for `CombineFeedbackTest` only. The value can change as soon as it
-  /// is read, so production code must not depend on it.
-  @_spi(Testing)
-  public var isIdle: Bool {
-    box._isIdle
-  }
-
   init(box: StoreBoxBase<State, Event>) {
     self.box = box
   }
@@ -32,7 +22,30 @@ open class Store<State, Event> {
   ) where M.State == State, M.Event == Event {
     self.box = RootStoreBox(
       initial: initial,
-      machine: machine
+      machine: machine,
+      drainsOnMainThread: false
+    )
+  }
+
+  /// Creates a store whose reducer and feedbacks run only on the main thread.
+  ///
+  /// An event sent from another thread (an `AsyncSequence` observation, for
+  /// example) waits in the queue until the main queue drains it. So a `send`
+  /// on the main thread reduces the event and starts its feedbacks before it
+  /// returns, and no event from another thread reduces in between.
+  ///
+  /// This is for `CombineFeedbackTest` only. The public initializer creates a
+  /// store that drains on the thread that sends the event.
+  @_spi(Testing)
+  public init<M: StateMachine>(
+    initial: State,
+    machine: M,
+    drainsOnMainThread: Bool
+  ) where M.State == State, M.Event == Event {
+    self.box = RootStoreBox(
+      initial: initial,
+      machine: machine,
+      drainsOnMainThread: drainsOnMainThread
     )
   }
 

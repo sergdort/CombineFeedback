@@ -7,6 +7,7 @@ final class ExampleTests: XCTestCase {}
 
 /// Exercises the real `Movies` state machine (fetch + pagination + retry) with a
 /// stubbed `fetchMovies` dependency, using the `CombineFeedbackTest` TestStore.
+@MainActor
 final class MoviesTestStoreTests: XCTestCase {
   private func movie(_ id: Int) -> Movie {
     Movie(id: id, overview: "overview \(id)", title: "Title \(id)", posterPath: nil)
