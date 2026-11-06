@@ -6,18 +6,18 @@ extension Publishers {
     let initial: Output
     let reduce: Reducer<Output, Event>
     let feedbacks: [Feedback<Output, Event>]
-    let activity: LoopActivity?
+    let drainsOnMainThread: Bool
 
     init(
       initial: Output,
       reduce: Reducer<Output, Event>,
       feedbacks: [Feedback<Output, Event>],
-      activity: LoopActivity? = nil
+      drainsOnMainThread: Bool
     ) {
       self.initial = initial
       self.reduce = reduce
       self.feedbacks = feedbacks
-      self.activity = activity
+      self.drainsOnMainThread = drainsOnMainThread
     }
 
     func receive<S>(subscriber: S) where S: Combine.Subscriber, Failure == S.Failure, Output == S.Input {
@@ -25,9 +25,9 @@ extension Publishers {
         state: initial,
         feedbacks: feedbacks,
         sink: subscriber,
-        reducer: reduce
+        reducer: reduce,
+        drainsOnMainThread: drainsOnMainThread
       )
-      activity?.attach { [weak floodgate] in floodgate?.isIdle ?? true }
       subscriber.receive(subscription: floodgate)
       floodgate.bootstrap()
     }

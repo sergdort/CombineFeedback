@@ -10,7 +10,8 @@ public extension Publishers {
     return Publishers.FeedbackLoop(
       initial: initial,
       reduce: resolved.reducer,
-      feedbacks: resolved.feedbacks
+      feedbacks: resolved.feedbacks,
+      drainsOnMainThread: false
     )
     .eraseToAnyPublisher()
   }

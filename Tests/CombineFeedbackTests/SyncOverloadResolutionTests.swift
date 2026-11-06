@@ -94,6 +94,7 @@ private struct SyncChangeCheckMachine: StateMachine {
   }
 }
 
+@MainActor
 final class SyncOverloadResolutionTests: XCTestCase {
   func testSyncVoidEventClosureResolvesAndRuns() async {
     let store = TestStore(initial: SyncEventCheckMachine.State(), machine: SyncEventCheckMachine())

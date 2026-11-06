@@ -46,15 +46,14 @@ await store.wait(timeout:until:) { state in Bool }      // suspend until a state
 store.state                                             // the current state
 ```
 
-- `wait` completes as soon as the loop has reached a matching state **and** the
-  loop is idle: no queued event, and no thread still running the reducer or the
-  feedbacks. With immediate mocks that takes microseconds.
-- The idle check matters when events arrive on other threads (an
-  `AsyncSequence` observation, for example). The loop records a state before it
-  runs the feedbacks and releases its lock. Without the check, a `send` right
-  after `wait` could only queue its event, and the other thread would reduce it
-  later. After `wait` returns, a `send` reduces and runs its feedbacks before it
-  returns, unless an effect sends a new event at the same time.
+- `wait` completes the **instant** the loop reaches a matching state — with
+  immediate mocks that's microseconds.
+- `TestStore` is `@MainActor`, and it reduces events only on the main thread.
+  When `send` returns, the loop has reduced the event and started its
+  feedbacks. An event from another thread (an `AsyncSequence` observation, for
+  example) waits in the queue, and the main queue reduces it when the test
+  suspends at an `await`. So no event reduces between two lines of synchronous
+  test code.
 - `timeout` defaults to **100ms** and is per-call overridable. A passing test
   never spends it; the timeout only fires when a machine never arrives (a real
   bug), reporting a failure at the call site.

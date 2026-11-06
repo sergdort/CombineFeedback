@@ -5,15 +5,8 @@ final class Floodgate<State, Event, S: Subscriber>: Subscription where S.Input =
   struct QueueState {
     var events: [(Event, Token)] = []
     var isOuterLifetimeEnded = false
-    /// The number of threads that hold, or just released, the reducer lock to
-    /// drain events. It covers the reducer, the sink, and the feedbacks.
-    var drainers = 0
     var hasEvents: Bool {
       events.isEmpty == false && isOuterLifetimeEnded == false
-    }
-    /// No event waits in the queue and no thread drains the loop.
-    var isIdle: Bool {
-      isOuterLifetimeEnded || (events.isEmpty && drainers == 0)
     }
   }
 
@@ -28,6 +21,10 @@ final class Floodgate<State, Event, S: Subscriber>: Subscription where S.Input =
   private let reducer: Reducer<State, Event>
   private let feedbacks: [Feedback<State, Event>]
   private let sink: S
+  /// When `true`, only the main thread drains the loop. An event that arrives
+  /// on another thread waits in the queue, and the main queue drains it later.
+  /// Only `CombineFeedbackTest` sets this, through `Store`'s testing SPI.
+  private let drainsOnMainThread: Bool
   private lazy var eventConsumer = FeedbackEventConsumer<Event>(
     process: { [weak self] event, token in self?.process(event, for: token) },
     dequeueAllEvents: { [weak self] token in self?.dequeueAllEvents(for: token) }
@@ -37,30 +34,19 @@ final class Floodgate<State, Event, S: Subscriber>: Subscription where S.Input =
     state: State,
     feedbacks: [Feedback<State, Event>],
     sink: S,
-    reducer: Reducer<State, Event>
+    reducer: Reducer<State, Event>,
+    drainsOnMainThread: Bool
   ) {
     self.state = state
     self.feedbacks = feedbacks
     self.sink = sink
     self.reducer = reducer
-  }
-
-  /// `true` when no event waits in the queue and no thread is inside a drain.
-  ///
-  /// A drain publishes each new state to the sink *before* it runs the
-  /// feedbacks and releases the reducer lock. So a state that an observer sees
-  /// does not prove the loop is idle. This value does.
-  var isIdle: Bool {
-    queue.withValue { $0.isIdle }
+    self.drainsOnMainThread = drainsOnMainThread
   }
 
   func bootstrap() {
     reducerLock.lock()
-    queue.modify { $0.drainers += 1 }
-    defer {
-      reducerLock.unlock()
-      queue.modify { $0.drainers -= 1 }
-    }
+    defer { reducerLock.unlock() }
 
     guard !hasStarted else { return }
     hasStarted = true
@@ -86,16 +72,29 @@ final class Floodgate<State, Event, S: Subscriber>: Subscription where S.Input =
   }
 
   private func process(_ event: Event, for token: Token) {
+    // Enqueue on the calling thread, so `dequeueAllEvents(for:)` still removes
+    // the event if its source is cancelled before the main queue drains it.
     enqueue(event, for: token)
 
+    if drainsOnMainThread && !Thread.isMainThread {
+      let request = MainThreadDrain(floodgate: self)
+      DispatchQueue.main.async { request.floodgate?.drainIfPossible() }
+      return
+    }
+    drainIfPossible()
+  }
+
+  /// `reducerLock` and `queue` guard the floodgate's state on every thread, so
+  /// a drain request may cross to the main queue.
+  private struct MainThreadDrain: @unchecked Sendable {
+    weak var floodgate: Floodgate?
+  }
+
+  private func drainIfPossible() {
     if reducerLock.try() {
       repeat {
-        queue.modify { $0.drainers += 1 }
         drainEvents()
         reducerLock.unlock()
-        // Count the drain until after the unlock, so `isIdle` never reports a
-        // loop whose lock is still held.
-        queue.modify { $0.drainers -= 1 }
       } while queue.withValue({ $0.hasEvents }) && reducerLock.try()
       // ^^^
       // Restart the event draining after we unlock the reducer lock, iff:

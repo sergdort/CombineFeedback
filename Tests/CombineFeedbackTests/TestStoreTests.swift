@@ -68,6 +68,7 @@ private struct Fetcher: StateMachine {
   }
 }
 
+@MainActor
 final class TestStoreTests: XCTestCase {
   // With an immediate mock, the loop reaches `.idle` with data essentially
   // instantly, well under the default 100ms budget.
