@@ -182,6 +182,73 @@ final class OnStoreStartTests: XCTestCase {
     XCTAssertEqual(reducedValues.values, ["block"])
     cancellable.cancel()
   }
+
+  func test_onStoreStart_cancel_after_next_returns_still_terminates_the_sequence() async throws {
+    guard #available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, *) else {
+      throw XCTSkip("Typed AsyncSequence.Failure is unavailable on this OS")
+    }
+
+    // Producers such as AsyncStream learn that an observer is gone only when a
+    // cancelled task calls next(). This sequence cancels the observing task
+    // after next() returns a value, which is the window where cancellation
+    // used to end the loop without telling the producer.
+    let source = ControlledAsyncSequence<OnStoreStartEvent>()
+    let reducedValues = LockedArray<String>()
+    let system = Publishers.system(
+      initial: OnStoreStartState(),
+      machine: Machine {
+        makeReducer(blockControl: nil, reducedValues: reducedValues)
+        OnStoreStart<
+          OnStoreStartState,
+          OnStoreStartEvent,
+          CancelsObserverAfterEachValue<ControlledAsyncSequence<OnStoreStartEvent>.Sequence>
+        > {
+          CancelsObserverAfterEachValue(base: source.sequence)
+        }
+      }
+    )
+
+    let cancellable = system.sink { _ in }
+    await source.waitForIterator()
+    source.yield(.append("after cancel"))
+
+    let terminated = expectation(description: "the source sequence terminates")
+    Task {
+      await source.waitForTermination()
+      terminated.fulfill()
+    }
+    await fulfillment(of: [terminated], timeout: 2)
+
+    XCTAssertEqual(reducedValues.values, [])
+    cancellable.cancel()
+  }
+}
+
+/// Cancels the task that iterates it after each value it returns, so a test can
+/// place cancellation between `next()` and the loop body without timing.
+@available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, *)
+private struct CancelsObserverAfterEachValue<Base: AsyncSequence & Sendable>: AsyncSequence, Sendable
+where Base.Failure == Never {
+  typealias Element = Base.Element
+  typealias Failure = Never
+
+  let base: Base
+
+  func makeAsyncIterator() -> Iterator {
+    Iterator(base: base.makeAsyncIterator())
+  }
+
+  struct Iterator: AsyncIteratorProtocol {
+    var base: Base.AsyncIterator
+
+    mutating func next() async -> Element? {
+      let value = await base.next(isolation: nil)
+      if value != nil {
+        withUnsafeCurrentTask { $0?.cancel() }
+      }
+      return value
+    }
+  }
 }
 
 @available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, *)
