@@ -560,11 +560,11 @@ where Sequence.Failure == Never {
       // never crosses a task boundary, so the sequence need not expose a
       // Sendable iterator to callers.
       self.handle = Task { [self] in
-        for await value in sequence {
-          guard !Task.isCancelled else {
-            subscriber.receive(completion: .finished)
-            return
-          }
+        // After `cancel()`, values are dropped, but the loop keeps calling
+        // `next()`. A cancelled `next()` is how the sequence learns that its
+        // observer is gone (for example, `AsyncStream` runs `onTermination`),
+        // so returning early here would leak the producer's subscription.
+        for await value in sequence where !Task.isCancelled {
           _ = subscriber.receive(value)
         }
         subscriber.receive(completion: .finished)
