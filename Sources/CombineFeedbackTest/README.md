@@ -51,9 +51,10 @@ store.state                                             // the current state
 - `TestStore` is `@MainActor`, and it reduces events only on the main thread.
   When `send` returns, the loop has reduced the event and started its
   feedbacks. An event from another thread (an `AsyncSequence` observation, for
-  example) waits in the queue, and the main queue reduces it when the test
-  suspends at an `await`. So no event reduces between two lines of synchronous
-  test code.
+  example) never reduces while a `send` runs. It reduces at the start of the
+  next `send`, or when the test suspends at an `await`. So no event reduces
+  between two lines of synchronous test code, and a read of `state` right
+  after `send` does not see an answer that arrived during that `send`.
 - `timeout` defaults to **100ms** and is per-call overridable. A passing test
   never spends it; the timeout only fires when a machine never arrives (a real
   bug), reporting a failure at the call site.
