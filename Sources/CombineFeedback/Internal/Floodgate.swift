@@ -81,21 +81,28 @@ final class Floodgate<State, Event, S: Subscriber>: Subscription where S.Input =
   }
 
   private func process(_ event: Event, for token: Token) {
-    guard drainsOnMainThread else {
+    if drainsOnMainThread {
+      processDrainingOnMainThread(event, for: token)
+    } else {
       enqueue(event, for: token)
       drainIfPossible()
-      return
     }
-    // Test mode. An event from another thread waits in `pending`, so a drain
-    // that is already running never sees it. Keep it in the queue state, so
-    // `dequeueAllEvents(for:)` still removes it if its source is cancelled.
+  }
+
+  /// The test store's path (`drainsOnMainThread` is `true`). `Store` never
+  /// takes it.
+  ///
+  /// An event from another thread waits in `pending`, so a drain that is
+  /// already running never sees it. It stays in the queue state, so
+  /// `dequeueAllEvents(for:)` still removes it if its source is cancelled.
+  private func processDrainingOnMainThread(_ event: Event, for token: Token) {
     guard Thread.isMainThread else {
       queue.modify { $0.pending.append((event, token)) }
       let request = MainThreadDrain(floodgate: self)
       DispatchQueue.main.async { request.floodgate?.admitPendingAndDrain() }
       return
     }
-    // Only the main thread takes `reducerLock` in test mode, and it holds the
+    // On this path only the main thread takes `reducerLock`, and it holds the
     // lock while it bootstraps or drains. So a failed `try` means this event
     // comes from a feedback inside that drain: append it and let the running
     // drain reduce it. A successful `try` starts an outer drain: admit the
