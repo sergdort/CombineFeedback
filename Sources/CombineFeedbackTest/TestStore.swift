@@ -21,17 +21,24 @@ import IssueReporting
 ///
 /// The test store reduces events only on the main thread, so it is isolated to
 /// the main actor. Events from observations and effects that finish on other
-/// threads wait in the queue, and the main queue reduces them when the test
-/// suspends. This gives two rules that hold in every test:
+/// threads wait until the next `send` starts, or until the main queue runs
+/// when the test suspends. This gives three rules that hold in every test:
 ///
 /// - When `send` returns, the loop has reduced the event and started its
-///   feedbacks.
-/// - No event reduces between two lines of synchronous test code. Events from
-///   other threads reduce only at an `await`.
+///   feedbacks. Events that the feedbacks send synchronously have also reduced.
+/// - An event from another thread never reduces while a `send` runs. It
+///   reduces at the start of the next `send`, before that `send`'s event, or
+///   at an `await`.
+/// - No event reduces between two lines of synchronous test code.
+///
+/// So a read of `state` right after `send` sees the result of that `send` and
+/// of the events that arrived before it. If an earlier effect can still answer,
+/// its answer may or may not have arrived: read through `wait` instead.
 ///
 /// A production `Store` reduces an event on the thread that sends it. Every
 /// order of events the test store produces is also an order that production
-/// can produce.
+/// can produce, unless a feedback blocks the main thread until another
+/// thread's event arrives.
 @MainActor
 public final class TestStore<State, Event> {
   /// The underlying production store. Exposed so tests can `scope` or inspect it.

@@ -30,9 +30,10 @@ open class Store<State, Event> {
   /// Creates a store whose reducer and feedbacks run only on the main thread.
   ///
   /// An event sent from another thread (an `AsyncSequence` observation, for
-  /// example) waits in the queue until the main queue drains it. So a `send`
-  /// on the main thread reduces the event and starts its feedbacks before it
-  /// returns, and no event from another thread reduces in between.
+  /// example) waits until the next `send` on the main thread starts, or until
+  /// the main queue drains it. So a `send` on the main thread reduces the event
+  /// and starts its feedbacks before it returns, and no event from another
+  /// thread reduces while it runs.
   ///
   /// This is for `CombineFeedbackTest` only. The public initializer creates a
   /// store that drains on the thread that sends the event.

@@ -4,9 +4,17 @@ import Combine
 final class Floodgate<State, Event, S: Subscriber>: Subscription where S.Input == State, S.Failure == Never {
   struct QueueState {
     var events: [(Event, Token)] = []
+    /// Events from other threads that no drain may see yet. Used only when
+    /// `drainsOnMainThread` is set. See `process(_:for:)`.
+    var pending: [(Event, Token)] = []
     var isOuterLifetimeEnded = false
     var hasEvents: Bool {
       events.isEmpty == false && isOuterLifetimeEnded == false
+    }
+
+    mutating func admitPending() {
+      events.append(contentsOf: pending)
+      pending.removeAll()
     }
   }
 
@@ -22,8 +30,9 @@ final class Floodgate<State, Event, S: Subscriber>: Subscription where S.Input =
   private let feedbacks: [Feedback<State, Event>]
   private let sink: S
   /// When `true`, only the main thread drains the loop. An event that arrives
-  /// on another thread waits in the queue, and the main queue drains it later.
-  /// Only `CombineFeedbackTest` sets this, through `Store`'s testing SPI.
+  /// on another thread waits in `pending` until the next outer drain on the
+  /// main thread starts. Only `CombineFeedbackTest` sets this, through
+  /// `Store`'s testing SPI.
   private let drainsOnMainThread: Bool
   private lazy var eventConsumer = FeedbackEventConsumer<Event>(
     process: { [weak self] event, token in self?.process(event, for: token) },
@@ -72,16 +81,31 @@ final class Floodgate<State, Event, S: Subscriber>: Subscription where S.Input =
   }
 
   private func process(_ event: Event, for token: Token) {
-    // Enqueue on the calling thread, so `dequeueAllEvents(for:)` still removes
-    // the event if its source is cancelled before the main queue drains it.
-    enqueue(event, for: token)
-
-    if drainsOnMainThread && !Thread.isMainThread {
-      let request = MainThreadDrain(floodgate: self)
-      DispatchQueue.main.async { request.floodgate?.drainIfPossible() }
+    guard drainsOnMainThread else {
+      enqueue(event, for: token)
+      drainIfPossible()
       return
     }
-    drainIfPossible()
+    // Test mode. An event from another thread waits in `pending`, so a drain
+    // that is already running never sees it. Keep it in the queue state, so
+    // `dequeueAllEvents(for:)` still removes it if its source is cancelled.
+    guard Thread.isMainThread else {
+      queue.modify { $0.pending.append((event, token)) }
+      let request = MainThreadDrain(floodgate: self)
+      DispatchQueue.main.async { request.floodgate?.admitPendingAndDrain() }
+      return
+    }
+    // Only the main thread takes `reducerLock` in test mode, and it holds the
+    // lock while it bootstraps or drains. So a failed `try` means this event
+    // comes from a feedback inside that drain: append it and let the running
+    // drain reduce it. A successful `try` starts an outer drain: admit the
+    // events that arrived before it first, in the order they arrived.
+    let startsDrain = reducerLock.try()
+    queue.modify {
+      if startsDrain { $0.admitPending() }
+      $0.events.append((event, token))
+    }
+    if startsDrain { drainHoldingLock() }
   }
 
   /// `reducerLock` and `queue` guard the floodgate's state on every thread, so
@@ -90,37 +114,48 @@ final class Floodgate<State, Event, S: Subscriber>: Subscription where S.Input =
     weak var floodgate: Floodgate?
   }
 
+  private func admitPendingAndDrain() {
+    queue.modify { $0.admitPending() }
+    drainIfPossible()
+  }
+
   private func drainIfPossible() {
-    if reducerLock.try() {
-      repeat {
-        drainEvents()
-        reducerLock.unlock()
-      } while queue.withValue({ $0.hasEvents }) && reducerLock.try()
-      // ^^^
-      // Restart the event draining after we unlock the reducer lock, iff:
-      //
-      // 1. the queue still has unprocessed events; and
-      // 2. no concurrent actor has taken the reducer lock, which implies no event draining would be started
-      //    unless we take active action.
-      //
-      // This eliminates a race condition in the following sequence of operations:
-      //
-      // |              Thread A              |              Thread B              |
-      // |------------------------------------|------------------------------------|
-      // |     concurrent dequeue: no item    |                                    |
-      // |                                    |         concurrent enqueue         |
-      // |                                    |         trylock lock: BUSY         |
-      // |            unlock lock             |                                    |
-      // |                                    |                                    |
-      // |             <<<  The enqueued event is left unprocessed. >>>            |
-      //
-      // The trylock-unlock duo has a synchronize-with relationship, which ensures that Thread A must see any
-      // concurrent enqueue that *happens before* the trylock.
-    }
+    if reducerLock.try() { drainHoldingLock() }
+  }
+
+  /// Call only while holding `reducerLock`. Releases it before it returns.
+  private func drainHoldingLock() {
+    repeat {
+      drainEvents()
+      reducerLock.unlock()
+    } while queue.withValue({ $0.hasEvents }) && reducerLock.try()
+    // ^^^
+    // Restart the event draining after we unlock the reducer lock, iff:
+    //
+    // 1. the queue still has unprocessed events; and
+    // 2. no concurrent actor has taken the reducer lock, which implies no event draining would be started
+    //    unless we take active action.
+    //
+    // This eliminates a race condition in the following sequence of operations:
+    //
+    // |              Thread A              |              Thread B              |
+    // |------------------------------------|------------------------------------|
+    // |     concurrent dequeue: no item    |                                    |
+    // |                                    |         concurrent enqueue         |
+    // |                                    |         trylock lock: BUSY         |
+    // |            unlock lock             |                                    |
+    // |                                    |                                    |
+    // |             <<<  The enqueued event is left unprocessed. >>>            |
+    //
+    // The trylock-unlock duo has a synchronize-with relationship, which ensures that Thread A must see any
+    // concurrent enqueue that *happens before* the trylock.
   }
 
   private func dequeueAllEvents(for token: Token) {
-    queue.modify { $0.events.removeAll(where: { _, t in t == token }) }
+    queue.modify {
+      $0.events.removeAll(where: { _, t in t == token })
+      $0.pending.removeAll(where: { _, t in t == token })
+    }
   }
 
   private func enqueue(_ event: Event, for token: Token) {
