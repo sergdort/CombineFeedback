@@ -321,6 +321,10 @@ public struct SideEffect<State, Event>: StateMachine {
   /// reentrant events are drained after the current event, without recursive reduction.
   /// Cancellation prevents future invocations, but cannot interrupt an effect
   /// already running. Use the async initializer for work that may suspend or block.
+  ///
+  /// The Store does not own work that the effect starts itself, such as an unstructured `Task`.
+  /// Store teardown does not cancel that work. Use this for work that must finish after the
+  /// Store goes away, for example a stop command that must reach the main actor.
   public init(
     synchronous effect: @escaping (State, Event) -> Void
   ) {
@@ -334,6 +338,12 @@ public struct SideEffect<State, Event>: StateMachine {
     }
   }
 
+  /// Runs an async effect for each event, with the post-reduction state.
+  ///
+  /// Each event starts one `Task` when the event is drained. Invocations run concurrently, in
+  /// no guaranteed order. Store teardown cancels running invocations cooperatively. Do not use
+  /// this initializer for work that must finish after the Store goes away: start that work from
+  /// the synchronous initializer instead.
   public init(
     _ effect: @escaping (State, Event) async -> Void
   ) {
